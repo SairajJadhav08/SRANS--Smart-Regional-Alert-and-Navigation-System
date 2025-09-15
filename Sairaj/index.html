@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Regional Alert & Navigation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(to right, #283c86, #45a247);
+            --accent-color: #ffcc00;
+            --danger-color: #ff5733;
+            --dark-overlay: rgba(0, 0, 0, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--primary-gradient);
+            color: white;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background: var(--dark-overlay);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .navbar-links {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        .navbar a:hover {
+            color: var(--accent-color);
+        }
+
+        .login-button {
+            background: var(--danger-color);
+            padding: 10px 15px;
+            border-radius: 20px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .login-button:hover {
+            background: #e04e2a;
+        }
+
+        .main-container {
+            margin-top: 70px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 60px;
+        }
+
+        .section {
+            padding: 40px 50px;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            transition: transform 0.3s;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background: var(--accent-color);
+            color: #333;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #e0b800;
+        }
+
+        .map-container {
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-placeholder {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .alert-box {
+            background: rgba(255, 59, 48, 0.2);
+            border-left: 4px solid #ff3b30;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: left;
+            display: none;
+        }
+
+        .alert-box.active {
+            display: block;
+        }
+
+        .footer {
+            background: var(--dark-overlay);
+            padding: 20px;
+            margin-top: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .user-info {
+            display: none;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .navbar-links {
+                margin-top: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .navbar a {
+                margin: 5px;
+            }
+
+            .section {
+                padding: 30px 20px;
+            }
+        }
+
+        .alert-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .alert-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .alert-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .alert-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Smart Regional Alert & Navigation</h1>
+        <div class="navbar-links">
+            <a href="javascript:void(0);" onclick="showPage('home')"><i class="fas fa-home"></i> Home</a>
+            <a href="javascript:void(0);" onclick="showPage('features')"><i class="fas fa-star"></i> Features</a>
+            <a href="javascript:void(0);" onclick="showPage('alerts')"><i class="fas fa-bell"></i> Alerts</a>
+            <a href="javascript:void(0);" onclick="showPage('map')"><i class="fas fa-map-marked-alt"></i> Map</a>
+            <a href="javascript:void(0);" onclick="showPage('about')"><i class="fas fa-info-circle"></i> About</a>
+            <a href="javascript:void(0);" onclick="showPage('contact')"><i class="fas fa-envelope"></i> Contact</a>
+            <a href="javascript:void(0);" class="login-button" onclick="showLoginOptions()" id="loginButton">
+                <i class="fas fa-user"></i> Login
+            </a>
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <a href="javascript:void(0);" onclick="logout()">Logout</a>
+            </div>
+        </div>
+    </div>
+    <div class="main-container">
+        <div id="home" class="section active">
+            <h2>Welcome to Smart Regional Alert & Navigation System</h2>
+            <p class="card">Stay informed about real-time alerts and navigate your region efficiently.</p>
+
+            <div class="alert-box" id="homeAlert">
+                <h3><i class="fas fa-exclamation-triangle"></i> Active Alert</h3>
+                <p id="activeAlertText">Road closure on MG Road due to construction work. Expect delays.</p>
+                <button onclick="dismissAlert('homeAlert')">Dismiss</button>
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-bell"></i></div>
+                    <h3>Live Alerts</h3>
+                    <p>Get instant notifications about emergencies, road closures, and other disruptions.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-route"></i></div>
+                    <h3>Smart Navigation</h3>
+                    <p>Find the best routes to avoid roadblocks and traffic congestion.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-building"></i></div>
+                    <h3>Government Updates</h3>
+                    <p>Stay informed about local government projects and regulations.</p>
+                </div>
+            </div>
+
+            <button onclick="showPage('alerts')">Check Current Alerts</button>
+        </div>
+
+        <div id="features" class="section">
+            <h2>Powerful Features</h2>
+            <p>Explore the capabilities of our Smart Regional Alert & Navigation System</p>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-bell"></i></div>
+                    <h3>Live Alerts</h3>
+                    <p>Get instant updates on emergencies and disruptions with categorized priority levels.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-route"></i></div>
+                    <h3>Navigation Assistance</h3>
+                    <p>Find the best routes to avoid roadblocks and traffic with real-time updates.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-building"></i></div>
+                    <h3>Government Updates</h3>
+                    <p>Stay informed about local government projects and regulations affecting your region.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-car"></i></div>
+                    <h3>Traffic Management</h3>
+                    <p>Reduce congestion and improve travel efficiency with crowd-sourced traffic data.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <h3>Event Scheduling</h3>
+                    <p>Plan around upcoming events that might affect your daily commute or activities.</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><i class="fas fa-user-shield"></i></div>
+                    <h3>Security Notifications</h3>
+                    <p>Receive safety alerts for your registered locations for enhanced security.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="alerts" class="section">
+            <h2>Real-Time Alerts</h2>
+            <p>Stay ahead with up-to-the-minute information.</p>
+
+            <div class="alert-grid">
+                <div class="alert-item" onclick="showAlerts('traffic')">
+                    <div class="alert-icon"><i class="fas fa-traffic-light"></i></div>
+                    <h3>Traffic Alerts</h3>
+                    <p>Real-time traffic updates to navigate the most efficient path.</p>
+                </div>
+                <div class="alert-item" onclick="showAlerts('emergency')">
+                    <div class="alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <h3>Emergency Alerts</h3>
+                    <p>Immediate notifications on emergencies for quick response.</p>
+                </div>
+                <div class="alert-item" onclick="showAlerts('construction')">
+                    <div class="alert-icon"><i class="fas fa-wrench"></i></div>
+                    <h3>Construction Alerts</h3>
+                    <p>Stay informed on construction zones to avoid delays.</p>
+                </div>
+                <div class="alert-item" onclick="showAlerts('weather')">
+                    <div class="alert-icon"><i class="fas fa-cloud-sun-rain"></i></div>
+                    <h3>Weather Alerts</h3>
+                    <p>Be prepared for any weather conditions with real-time alerts.</p>
+                </div>
+            </div>
+
+            <div id="trafficAlerts" class="hidden">
+                <h3>Traffic Alerts</h3>
+                <p>Coming Soon!</p>
+            </div>
+
+            <div id="emergencyAlerts" class="hidden">
+                <h3>Emergency Alerts</h3>
+                <ul id="emergencyAlertList">
+                    <li>No emergency alerts at this time.</li>
+                </ul>
+            </div>
+
+            <div id="constructionAlerts" class="hidden">
+                <h3>Construction Alerts</h3>
+                <p>Coming Soon!</p>
+            </div>
+
+            <div id="weatherAlerts" class="hidden">
+                <h3>Weather Alerts</h3>
+                <ul id="weatherAlertList">
+                    <li>No weather alerts at this time.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="map" class="section">
+            <h2>Interactive Map</h2>
+            <p>Visualize real-time conditions in your region.</p>
+
+            <div class="map-container">
+                <div class="map-placeholder">
+                    <i class="fas fa-map-marked-alt" style="font-size: 5rem; margin-bottom: 20px;"></i>
+                    <p>Interactive map will be displayed here.</p>
+                    <button>Load Map</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="about" class="section">
+            <h2>About Our System</h2>
+            <p>Learn about our mission to keep communities connected and safe.</p>
+
+            <div class="card">
+                <h3>Our Mission</h3>
+                <p>We strive to provide timely and accurate information to help you navigate your region safely and efficiently. We are dedicated to empowering communities by keeping them informed about critical events and updates.</p>
+
+                <h3>Team</h3>
+                <p>Our team consists of dedicated developers, community managers, and data analysts who are passionate about leveraging technology for the betterment of society.</p>
+            </div>
+        </div>
+
+        <div id="contact" class="section">
+            <h2>Contact Us</h2>
+            <p>Reach out for support, feedback, or inquiries.</p>
+
+            <div class="card">
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label for="name">Your Name</label>
+                        <input type="text" id="name" name="name" placeholder="Enter your name">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Your Email</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="5" placeholder="Enter your message"></textarea>
+                    </div>
+                    <button type="submit">Send Message</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="loginOptions" class="section">
+            <h2>Choose Login Type</h2>
+            <button onclick="showPage('governmentLogin')">Government Login</button>
+            <button onclick="showPage('login')">User Login</button>
+        </div>
+
+        <div id="governmentLogin" class="section">
+            <h2>Government Login</h2>
+            <p>Access government features by logging into your account.</p>
+
+            <div class="card">
+                <form id="governmentLoginForm">
+                    <div class="form-group">
+                        <label for="govUsername">Username</label>
+                        <input type="text" id="govUsername" name="govUsername" placeholder="Enter your username">
+                    </div>
+                    <div class="form-group">
+                        <label for="govPassword">Password</label>
+                        <input type="password" id="govPassword" name="govPassword" placeholder="Enter your password">
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="governmentDashboard" class="section">
+            <h2>Government Dashboard</h2>
+            <p>Manage alerts and system updates.</p>
+            <button onclick="showPage('updateAlertOptions')">Update Alert</button>
+            <button onclick="showPage('addAlertOptions')">Add Alert</button>
+            <button onclick="showPage('deleteAlertOptions')">Delete Alert</button>
+        </div>
+
+        <div id="updateAlertOptions" class="section">
+            <h2>Update Alert</h2>
+            <button onclick="showPage('updateWeatherAlert')">Update Weather Alert</button>
+            <button onclick="showPage('updateEmergencyAlert')">Update Emergency Alert</button>
+        </div>
+
+        <div id="updateWeatherAlert" class="section">
+            <h2>Update Weather Alert</h2>
+            <div class="card">
+                <form id="updateWeatherForm">
+                    <div class="form-group">
+                        <label for="weatherAlertId">Alert ID</label>
+                        <input type="text" id="weatherAlertId" name="weatherAlertId" placeholder="Enter Alert ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="newWeatherMessage">New Message</label>
+                        <textarea id="newWeatherMessage" name="newWeatherMessage" rows="5" placeholder="Enter new message"></textarea>
+                    </div>
+                    <button type="submit" onclick="updateAlert('weather', document.getElementById('weatherAlertId').value, document.getElementById('newWeatherMessage').value)">Update Alert</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="updateEmergencyAlert" class="section">
+            <h2>Update Emergency Alert</h2>
+            <div class="card">
+                <form id="updateEmergencyForm">
+                    <div class="form-group">
+                        <label for="emergencyAlertId">Alert ID</label>
+                        <input type="text" id="emergencyAlertId" name="emergencyAlertId" placeholder="Enter Alert ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="newEmergencyMessage">New Message</label>
+                        <textarea id="newEmergencyMessage" name="newEmergencyMessage" rows="5" placeholder="Enter new message"></textarea>
+                    </div>
+                    <button type="submit" onclick="updateAlert('emergency', document.getElementById('emergencyAlertId').value, document.getElementById('newEmergencyMessage').value)">Update Alert</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="addAlertOptions" class="section">
+            <h2>Add Alert</h2>
+            <button onclick="showPage('addWeatherAlert')">Add Weather Alert</button>
+            <button onclick="showPage('addEmergencyAlert')">Add Emergency Alert</button>
+        </div>
+
+        <div id="addWeatherAlert" class="section">
+            <h2>Add Weather Alert</h2>
+            <div class="card">
+                <form id="addWeatherForm">
+                    <div class="form-group">
+                        <label for="newWeatherAlertMessage">Alert Message</label>
+                        <textarea id="newWeatherAlertMessage" name="newWeatherAlertMessage" rows="5" placeholder="Enter alert message"></textarea>
+                    </div>
+                    <button type="submit" onclick="addAlert('weather', document.getElementById('newWeatherAlertMessage').value)">Add Alert</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="addEmergencyAlert" class="section">
+            <h2>Add Emergency Alert</h2>
+            <div class="card">
+                <form id="addEmergencyForm">
+                    <div class="form-group">
+                        <label for="newEmergencyAlertMessage">Alert Message</label>
+                        <textarea id="newEmergencyAlertMessage" name="newEmergencyAlertMessage" rows="5" placeholder="Enter alert message"></textarea>
+                    </div>
+                    <button type="submit" onclick="addAlert('emergency', document.getElementById('newEmergencyAlertMessage').value)">Add Alert</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="deleteAlertOptions" class="section">
+            <h2>Delete Alert</h2>
+            <button onclick="showPage('deleteWeatherAlert')">Delete Weather Alert</button>
+            <button onclick="showPage('deleteEmergencyAlert')">Delete Emergency Alert</button>
+        </div>
+
+        <div id="deleteWeatherAlert" class="section">
+            <h2>Delete Weather Alert</h2>
+            <div class="card">
+                <form id="deleteWeatherForm">
+                    <div class="form-group">
+                        <label for="deleteWeatherAlertId">Alert ID</label>
+                        <input type="text" id="deleteWeatherAlertId" name="deleteWeatherAlertId" placeholder="Enter Alert ID to delete">
+                    </div>
+                    <button type="submit" onclick="deleteAlert('weather', document.getElementById('deleteWeatherAlertId').value)">Delete Alert</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="deleteEmergencyAlert" class="section">
+            <h2>Delete Emergency Alert</h2>
+            <div class="card">
+                <form id="deleteEmergencyForm">
+                    <div class="form-group">
+                        <label for="deleteEmergencyAlertId">Alert ID</label>
+                        <input type="text" id="deleteEmergencyAlertId" name="deleteEmergencyAlertId" placeholder="Enter Alert ID to delete">
+                    </div>
+                    <button type="submit" onclick="deleteAlert('emergency', document.getElementById('deleteEmergencyAlertId').value)">Delete Alert</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="login" class="section">
+            <h2>User Login</h2>
+            <p>Access advanced features by logging into your account.</p>
+
+            <div class="card">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" placeholder="Enter your username">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password">
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+                <p>
+                    <a href="javascript:void(0);" onclick="showPage('register')">Don't have an account? Register here.</a>
+                </p>
+            </div>
+        </div>
+
+        <div id="register" class="section">
+            <h2>Register</h2>
+            <p>Create a new account to unlock exclusive features.</p>
+
+            <div class="card">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="newUsername">Username</label>
+                        <input type="text" id="newUsername" name="newUsername" placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label for="newEmail">Email</label>
+                        <input type="email" id="newEmail" name="newEmail" placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Password</label>
+                        <input type="password" id="newPassword" name="newPassword" placeholder="Choose a password">
+                    </div>
+                    <button type="submit">Register</button>
+                </form>
+                <p>
+                    <a href="javascript:void(0);" onclick="showPage('login')">Already have an account? Login here.</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <p>&copy; 2025 Smart Regional Alert & Navigation</p>
+    </div>
+    <script>
+        let weatherAlerts = [];
+        let emergencyAlerts = [];
+
+        function showPage(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            } else {
+                console.error('Section not found:', sectionId);
+            }
+        }
+
+        function dismissAlert(alertId) {
+            const alertBox = document.getElementById(alertId);
+            if (alertBox) {
+                alertBox.classList.remove('active');
+            }
+        }
+
+        function showLoginOptions() {
+            showPage('loginOptions');
+        }
+
+        function showAlerts(type) {
+            const alertSections = ['trafficAlerts', 'emergencyAlerts', 'constructionAlerts', 'weatherAlerts'];
+            alertSections.forEach(sectionId => {
+                document.getElementById(sectionId).classList.add('hidden');
+            });
+
+            document.getElementById(`${type}Alerts`).classList.remove('hidden');
+
+            updateAlertLists();
+        }
+
+        document.getElementById('contactForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('Form submission is simulated. No actual data will be sent.');
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+
+            document.getElementById('loginButton').classList.add('hidden');
+            document.getElementById('userInfo').style.display = 'flex';
+            document.getElementById('userAvatar').innerText = username.charAt(0).toUpperCase();
+
+            showPage('home');
+            updateAlertLists();
+        });
+
+        document.getElementById('governmentLoginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            showPage('governmentDashboard');
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            alert('Registration is simulated. You can now log in with the details you entered.');
+            showPage('login');
+        });
+
+        function logout() {
+            document.getElementById('loginButton').classList.remove('hidden');
+            document.getElementById('userInfo').style.display = 'none';
+            showPage('home');
+        }
+
+        function addAlert(type, message) {
+            if (type === 'weather') {
+                weatherAlerts.push(message);
+            } else if (type === 'emergency') {
+                emergencyAlerts.push(message);
+            }
+            updateAlertLists();
+            showPage('governmentDashboard');
+            alert(`${type} alert added`);
+        }
+
+        function updateAlert(type, id, message) {
+            if (type === 'weather') {
+                if (weatherAlerts[id]) {
+                    weatherAlerts[id] = message;
+                }
+            } else if (type === 'emergency') {
+                if (emergencyAlerts[id]) {
+                    emergencyAlerts[id] = message;
+                }
+            }
+            updateAlertLists();
+            showPage('governmentDashboard');
+            alert(`${type} alert updated`);
+        }
+
+        function deleteAlert(type, id) {
+            if (type === 'weather' && weatherAlerts[id]) {
+                weatherAlerts.splice(id, 1);
+            } else if (type === 'emergency' && emergencyAlerts[id]) {
+                emergencyAlerts.splice(id, 1);
+            }
+            updateAlertLists();
+            showPage('governmentDashboard');
+            alert(`${type} alert deleted`);
+        }
+
+        function updateAlertLists() {
+            const weatherAlertsList = document.getElementById('weatherAlertList');
+            const emergencyAlertsList = document.getElementById('emergencyAlertList');
+
+            weatherAlertsList.innerHTML = '';
+            emergencyAlertsList.innerHTML = '';
+
+            if (weatherAlerts.length === 0) {
+                weatherAlertsList.innerHTML = '<li>No weather alerts at this time.</li>';
+            } else {
+                weatherAlerts.forEach((alert, index) => {
+                    weatherAlertsList.innerHTML += `<li>${alert} (ID: ${index})</li>`;
+                });
+            }
+
+            if (emergencyAlerts.length === 0) {
+                emergencyAlertsList.innerHTML = '<li>No emergency alerts at this time.</li>';
+            } else {
+                emergencyAlerts.forEach((alert, index) => {
+                    emergencyAlertsList.innerHTML += `<li>${alert} (ID: ${index})</li>`;
+                });
+            }
+        }
+    </script>
+</body>
+</html>

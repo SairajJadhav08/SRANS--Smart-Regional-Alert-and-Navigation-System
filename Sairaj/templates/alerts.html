@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title is-1">Real-Time Alerts</h1>
+            <h2 class="subtitle is-4">Stay ahead with up-to-the-minute information</h2>
+        </div>
+    </div>
+</section>
+
+<!-- Category Tabs -->
+<section class="section pt-5 pb-0">
+    <div class="container">
+        <div class="tabs is-centered is-boxed is-medium">
+            <ul>
+                <li class="{{ 'is-active' if not current_type else '' }}">
+                    <a href="{{ url_for('alerts') }}">
+                        <span class="icon"><i class="fas fa-list"></i></span>
+                        <span>All Alerts</span>
+                    </a>
+                </li>
+                <li class="{{ 'is-active' if current_type == 'traffic' else '' }}">
+                    <a href="{{ url_for('alerts_by_type', alert_type='traffic') }}">
+                        <span class="icon has-text-danger"><i class="fas fa-car-crash"></i></span>
+                        <span>Traffic</span>
+                    </a>
+                </li>
+                <li class="{{ 'is-active' if current_type == 'emergency' else '' }}">
+                    <a href="{{ url_for('alerts_by_type', alert_type='emergency') }}">
+                        <span class="icon has-text-danger"><i class="fas fa-exclamation-triangle"></i></span>
+                        <span>Emergency</span>
+                    </a>
+                </li>
+                <li class="{{ 'is-active' if current_type == 'construction' else '' }}">
+                    <a href="{{ url_for('alerts_by_type', alert_type='construction') }}">
+                        <span class="icon has-text-warning"><i class="fas fa-hard-hat"></i></span>
+                        <span>Construction</span>
+                    </a>
+                </li>
+                <li class="{{ 'is-active' if current_type == 'weather' else '' }}">
+                    <a href="{{ url_for('alerts_by_type', alert_type='weather') }}">
+                        <span class="icon has-text-info"><i class="fas fa-cloud-rain"></i></span>
+                        <span>Weather</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Alerts Content -->
+<section class="section">
+    <div class="container">
+        {% if alerts %}
+            <div class="columns is-multiline">
+                {% for alert in alerts %}
+                    <div class="column is-4">
+                        <div class="card alert-{{ alert.alert_type|lower }}">
+                            <header class="card-header">
+                                <p class="card-header-title">
+                                    <span class="icon-text">
+                                        <span class="icon">
+                                            {% if alert.alert_type == 'Traffic' %}
+                                                <i class="fas fa-car-crash has-text-danger"></i>
+                                            {% elif alert.alert_type == 'Emergency' %}
+                                                <i class="fas fa-exclamation-triangle has-text-danger"></i>
+                                            {% elif alert.alert_type == 'Construction' %}
+                                                <i class="fas fa-hard-hat has-text-warning"></i>
+                                            {% elif alert.alert_type == 'Weather' %}
+                                                <i class="fas fa-cloud-rain has-text-info"></i>
+                                            {% endif %}
+                                        </span>
+                                        <span>{{ alert.alert_type }}</span>
+                                    </span>
+                                </p>
+                                <p class="card-header-icon">
+                                    <time datetime="{{ alert.created_at }}">
+                                        {{ alert.created_at.strftime('%b %d, %Y') }}
+                                    </time>
+                                </p>
+                            </header>
+                            <div class="card-content">
+                                <div class="content">
+                                    <h4 class="title is-5">{{ alert.title }}</h4>
+                                    <p>{{ alert.description }}</p>
+                                </div>
+                            </div>
+                            <footer class="card-footer">
+                                <a href="{{ url_for('map') }}?lat={{ alert.location_lat }}&lng={{ alert.location_lng }}" class="card-footer-item">
+                                    <span class="icon-text">
+                                        <span class="icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </span>
+                                        <span>View on Map</span>
+                                    </span>
+                                </a>
+                            </footer>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="has-text-centered my-6">
+                <span class="icon is-large">
+                    <i class="fas fa-info-circle fa-3x has-text-grey-light"></i>
+                </span>
+                <h3 class="title is-4 mt-4 has-text-grey">No Alerts Available</h3>
+                <p class="subtitle is-6 has-text-grey">
+                    {% if current_type %}
+                        There are currently no {{ current_type }} alerts in your region.
+                    {% else %}
+                        There are currently no alerts in your region.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Map Preview -->
+<section class="section has-background-light">
+    <div class="container">
+        <h2 class="title is-3 has-text-centered mb-6">Alert Locations</h2>
+        <div id="alertMap" style="height: 400px; border-radius: 6px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);"></div>
+    </div>
+</section>
+
+<!-- Subscribe Section -->
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-8">
+                <div class="box has-background-primary-light p-6">
+                    <div class="columns is-vcentered">
+                        <div class="column is-7">
+                            <h3 class="title is-4">Get Alerts in Real-Time</h3>
+                            <p class="subtitle is-6">Register an account to receive instant notifications when new alerts are issued in your area.</p>
+                        </div>
+                        <div class="column is-5">
+                            {% if 'user_id' not in session %}
+                                <a href="{{ url_for('register') }}" class="button is-primary is-fullwidth">
+                                    <span class="icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </span>
+                                    <span>Register Now</span>
+                                </a>
+                            {% else %}
+                                <div class="notification is-success is-light">
+                                    <span class="icon-text">
+                                        <span class="icon">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                        <span>You're logged in and will receive alerts</span>
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function initMap() {
+        // Create the map centered on a default location
+        const map = new google.maps.Map(document.getElementById("alertMap"), {
+            zoom: 10,
+            center: { lat: 37.7749, lng: -122.4194 }, // Default center (San Francisco)
+            mapTypeId: "roadmap",
+        });
+        
+        // Add markers for each alert
+        const alerts = [
+            {% for alert in alerts %}
+                {
+                    position: { lat: {{ alert.location_lat or 0 }}, lng: {{ alert.location_lng or 0 }} },
+                    title: "{{ alert.title }}",
+                    type: "{{ alert.alert_type }}",
+                    description: "{{ alert.description|replace('\n', ' ')|replace('"', '\\"') }}"
+                }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        if (alerts.length > 0) {
+            const bounds = new google.maps.LatLngBounds();
+            
+            alerts.forEach((alert) => {
+                // Skip alerts with no location data
+                if (alert.position.lat === 0 && alert.position.lng === 0) {
+                    return;
+                }
+                
+                // Determine marker icon based on alert type
+                let icon = {
+                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png", // Default
+                    scaledSize: new google.maps.Size(32, 32)
+                };
+                
+                if (alert.type === "Traffic") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+                } else if (alert.type === "Emergency") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/purple-dot.png";
+                } else if (alert.type === "Construction") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
+                } else if (alert.type === "Weather") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+                }
+                
+                // Create marker
+                const marker = new google.maps.Marker({
+                    position: alert.position,
+                    map: map,
+                    title: alert.title,
+                    icon: icon
+                });
+                
+                // Create info window
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div style="max-width: 300px;">
+                            <h3 style="font-weight: bold; margin-bottom: 5px;">${alert.title}</h3>
+                            <span style="display: inline-block; padding: 2px 8px; background-color: #f5f5f5; border-radius: 4px; margin-bottom: 8px;">${alert.type}</span>
+                            <p>${alert.description}</p>
+                        </div>
+                    `
+                });
+                
+                // Add click listener
+                marker.addListener("click", () => {
+                    infoWindow.open(map, marker);
+                });
+                
+                // Extend bounds
+                bounds.extend(alert.position);
+            });
+            
+            // Fit map to bounds if we have valid alerts with locations
+            if (!bounds.isEmpty()) {
+                map.fitBounds(bounds);
+            }
+        }
+    }
+    
+    // Initialize the map when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // The map script with callback=initMap will automatically call initMap when loaded
+    });
+</script>
+{% endblock %} 

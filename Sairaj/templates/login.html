@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title is-1">Login</h1>
+            <h2 class="subtitle is-4">Access your account</h2>
+        </div>
+    </div>
+</section>
+
+<!-- Login Section -->
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-6">
+                <div class="card">
+                    <div class="card-content">
+                        <h3 class="title is-4 has-text-centered mb-5">Welcome Back</h3>
+                        
+                        <!-- Login Tabs -->
+                        <div class="tabs is-centered is-boxed mb-5">
+                            <ul>
+                                <li class="is-active" id="user-login-tab">
+                                    <a>
+                                        <span class="icon"><i class="fas fa-user"></i></span>
+                                        <span>User</span>
+                                    </a>
+                                </li>
+                                <li id="government-login-tab">
+                                    <a>
+                                        <span class="icon"><i class="fas fa-building"></i></span>
+                                        <span>Government</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <form action="{{ url_for('login') }}" method="POST">
+                            <!-- Hidden field to indicate login type -->
+                            <input type="hidden" name="user_type" id="user-type-input" value="user">
+                            
+                            <div class="field">
+                                <label class="label">Username</label>
+                                <div class="control has-icons-left">
+                                    <input class="input" type="text" name="username" placeholder="Enter your username" required>
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Password</label>
+                                <div class="control has-icons-left">
+                                    <input class="input" type="password" name="password" placeholder="Enter your password" required>
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <div class="control">
+                                    <label class="checkbox">
+                                        <input type="checkbox" name="remember_me">
+                                        Remember me
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <div class="control">
+                                    <button type="submit" class="button is-primary is-fullwidth" id="login-btn">
+                                        <span class="icon">
+                                            <i class="fas fa-sign-in-alt"></i>
+                                        </span>
+                                        <span>Login</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="has-text-centered mt-5">
+                            <p>Don't have an account? <a href="{{ url_for('register') }}">Sign up now</a></p>
+                            <p class="mt-2"><a href="#">Forgot your password?</a></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Login Info -->
+                <div class="box mt-5">
+                    <h4 class="title is-5 has-text-centered mb-4">Login Options</h4>
+                    
+                    <div class="content has-text-centered">
+                        <p><strong>User Login:</strong> Access alerts and navigation features.</p>
+                        <p><strong>Government Login:</strong> Manage and create alerts for your region.</p>
+                        <p class="is-size-7 mt-2">Note: Government accounts require verification. <a href="{{ url_for('contact') }}">Contact us</a> for more information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="section has-background-light">
+    <div class="container">
+        <h3 class="title is-3 has-text-centered mb-6">Benefits of Creating an Account</h3>
+        
+        <div class="columns is-multiline">
+            <!-- Benefit 1 -->
+            <div class="column is-4">
+                <div class="box has-text-centered h-100">
+                    <span class="icon is-large mb-4">
+                        <i class="fas fa-bell fa-3x has-text-primary"></i>
+                    </span>
+                    <h4 class="title is-4">Personalized Alerts</h4>
+                    <p>Receive alerts based on your location and preferences, ensuring you get information that matters to you.</p>
+                </div>
+            </div>
+            
+            <!-- Benefit 2 -->
+            <div class="column is-4">
+                <div class="box has-text-centered h-100">
+                    <span class="icon is-large mb-4">
+                        <i class="fas fa-route fa-3x has-text-primary"></i>
+                    </span>
+                    <h4 class="title is-4">Save Routes</h4>
+                    <p>Save your frequent routes and get notified of any disruptions that might affect your journey.</p>
+                </div>
+            </div>
+            
+            <!-- Benefit 3 -->
+            <div class="column is-4">
+                <div class="box has-text-centered h-100">
+                    <span class="icon is-large mb-4">
+                        <i class="fas fa-history fa-3x has-text-primary"></i>
+                    </span>
+                    <h4 class="title is-4">Alert History</h4>
+                    <p>Access your alert history and view past notifications that you may have missed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle the tab switching for login options
+        const userTab = document.getElementById('user-login-tab');
+        const govTab = document.getElementById('government-login-tab');
+        const userTypeInput = document.getElementById('user-type-input');
+        const loginBtn = document.getElementById('login-btn');
+        
+        userTab.addEventListener('click', function() {
+            userTab.classList.add('is-active');
+            govTab.classList.remove('is-active');
+            userTypeInput.value = 'user';
+            loginBtn.innerHTML = '<span class="icon"><i class="fas fa-sign-in-alt"></i></span><span>Login</span>';
+        });
+        
+        govTab.addEventListener('click', function() {
+            govTab.classList.add('is-active');
+            userTab.classList.remove('is-active');
+            userTypeInput.value = 'government';
+            loginBtn.innerHTML = '<span class="icon"><i class="fas fa-building"></i></span><span>Government Login</span>';
+        });
+    });
+</script>
+{% endblock %} 

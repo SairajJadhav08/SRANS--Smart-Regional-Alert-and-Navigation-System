@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container">
+            <div class="columns is-vcentered">
+                <div class="column">
+                    <h1 class="title is-1">Government Dashboard</h1>
+                    <h2 class="subtitle is-4">Manage alerts and notifications for your region</h2>
+                </div>
+                <div class="column is-narrow">
+                    {% if current_user.is_verified %}
+                    <a href="{{ url_for('new_alert') }}" class="button is-white is-medium">
+                        <span class="icon">
+                            <i class="fas fa-plus"></i>
+                        </span>
+                        <span>Create New Alert</span>
+                    </a>
+                    {% else %}
+                    <button class="button is-white is-medium" disabled title="Account verification required to create alerts" data-tooltip="Account verification required">
+                        <span class="icon">
+                            <i class="fas fa-plus"></i>
+                        </span>
+                        <span>Create New Alert</span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if not current_user.is_verified and current_user.is_government %}
+<!-- Verification Pending Notice -->
+<section class="section pt-4 pb-0">
+    <div class="container">
+        <div class="notification is-warning">
+            <div class="columns is-vcentered">
+                <div class="column">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </span>
+                        <span><strong>Account Verification Pending</strong></span>
+                    </span>
+                    <p class="mt-2">Your government account is currently under review. Some features may be limited until verification is complete.</p>
+                </div>
+                <div class="column is-narrow">
+                    <a href="{{ url_for('contact') }}" class="button is-warning is-light">
+                        <span class="icon">
+                            <i class="fas fa-question-circle"></i>
+                        </span>
+                        <span>Need Help?</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Dashboard Overview -->
+<section class="section">
+    <div class="container">
+        {% if not current_user.is_verified %}
+        <!-- Verification Status Section for Unverified Government Users -->
+        <div class="card mb-6">
+            <div class="card-content">
+                <div class="content">
+                    <div class="columns is-vcentered">
+                        <div class="column is-2 has-text-centered">
+                            <span class="icon is-large">
+                                <i class="fas fa-user-shield fa-3x has-text-warning"></i>
+                            </span>
+                        </div>
+                        <div class="column">
+                            <h3 class="title is-4">Government Account Verification</h3>
+                            <p>Your account is awaiting verification by an administrator. Once verified, you'll be able to:</p>
+                            <ul class="mt-3">
+                                <li><i class="fas fa-check-circle has-text-success mr-2"></i> Create and publish alerts</li>
+                                <li><i class="fas fa-check-circle has-text-success mr-2"></i> Manage emergency notifications</li>
+                                <li><i class="fas fa-check-circle has-text-success mr-2"></i> Access analytics and reporting</li>
+                            </ul>
+                            <p class="is-italic mt-3">This process typically takes 1-2 business days. Please contact us if you have any questions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Quick Stats -->
+        <div class="columns is-multiline">
+            <!-- Active Alerts -->
+            <div class="column is-3">
+                <div class="box dashboard-tile has-background-primary has-text-white">
+                    <article class="media">
+                        <div class="media-left">
+                            <span class="icon is-large">
+                                <i class="fas fa-bell fa-2x"></i>
+                            </span>
+                        </div>
+                        <div class="media-content">
+                            <div class="content">
+                                <p class="title has-text-white is-4">{{ alerts|length }}</p>
+                                <p class="subtitle has-text-white is-6">Active Alerts</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+            
+            <!-- Traffic Alerts -->
+            <div class="column is-3">
+                <div class="box dashboard-tile has-background-danger has-text-white">
+                    <article class="media">
+                        <div class="media-left">
+                            <span class="icon is-large">
+                                <i class="fas fa-car-crash fa-2x"></i>
+                            </span>
+                        </div>
+                        <div class="media-content">
+                            <div class="content">
+                                <p class="title has-text-white is-4">{{ alerts|selectattr('alert_type', 'equalto', 'Traffic')|list|length }}</p>
+                                <p class="subtitle has-text-white is-6">Traffic Alerts</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+            
+            <!-- Emergency Alerts -->
+            <div class="column is-3">
+                <div class="box dashboard-tile has-background-warning has-text-dark">
+                    <article class="media">
+                        <div class="media-left">
+                            <span class="icon is-large">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            </span>
+                        </div>
+                        <div class="media-content">
+                            <div class="content">
+                                <p class="title has-text-dark is-4">{{ alerts|selectattr('alert_type', 'equalto', 'Emergency')|list|length }}</p>
+                                <p class="subtitle has-text-dark is-6">Emergency Alerts</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+            
+            <!-- Weather Alerts -->
+            <div class="column is-3">
+                <div class="box dashboard-tile has-background-info has-text-white">
+                    <article class="media">
+                        <div class="media-left">
+                            <span class="icon is-large">
+                                <i class="fas fa-cloud-rain fa-2x"></i>
+                            </span>
+                        </div>
+                        <div class="media-content">
+                            <div class="content">
+                                <p class="title has-text-white is-4">{{ alerts|selectattr('alert_type', 'equalto', 'Weather')|list|length }}</p>
+                                <p class="subtitle has-text-white is-6">Weather Alerts</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alert Management -->
+        <div class="card mt-6">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fas fa-bell"></i>
+                        </span>
+                        <span>Alert Management</span>
+                    </span>
+                </p>
+                <div class="card-header-icon">
+                    <div class="field has-addons">
+                        <div class="control">
+                            <input class="input" type="text" placeholder="Search alerts..." id="search-input">
+                        </div>
+                        <div class="control">
+                            <button class="button is-primary" id="search-btn">
+                                <span class="icon">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="card-content">
+                <div class="content">
+                    <div class="field is-grouped mb-5">
+                        <div class="control">
+                            <div class="select">
+                                <select id="filter-type">
+                                    <option value="all">All Types</option>
+                                    <option value="Traffic">Traffic</option>
+                                    <option value="Emergency">Emergency</option>
+                                    <option value="Construction">Construction</option>
+                                    <option value="Weather">Weather</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control">
+                            <div class="select">
+                                <select id="sort-by">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="type">By Type</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control is-expanded"></div>
+                        
+                        <div class="control">
+                            <button class="button is-primary" id="bulk-action-btn" disabled>
+                                <span class="icon">
+                                    <i class="fas fa-tasks"></i>
+                                </span>
+                                <span>Bulk Actions</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if alerts %}
+                        <div class="table-container">
+                            <table class="table is-fullwidth is-hoverable">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <label class="checkbox">
+                                                <input type="checkbox" id="select-all">
+                                            </label>
+                                        </th>
+                                        <th>Title</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alerts-table-body">
+                                    {% for alert in alerts %}
+                                        <tr class="alert-row" data-type="{{ alert.alert_type }}">
+                                            <td>
+                                                <label class="checkbox">
+                                                    <input type="checkbox" class="alert-checkbox" data-id="{{ alert.id }}">
+                                                </label>
+                                            </td>
+                                            <td>{{ alert.title }}</td>
+                                            <td>
+                                                <span class="tag 
+                                                    {% if alert.alert_type == 'Traffic' %}is-danger
+                                                    {% elif alert.alert_type == 'Emergency' %}is-warning
+                                                    {% elif alert.alert_type == 'Construction' %}is-warning
+                                                    {% elif alert.alert_type == 'Weather' %}is-info
+                                                    {% endif %}">
+                                                    {{ alert.alert_type }}
+                                                </span>
+                                            </td>
+                                            <td>{{ alert.description|truncate(50) }}</td>
+                                            <td>{{ alert.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                <div class="buttons are-small">
+                                                    <a href="{{ url_for('edit_alert', alert_id=alert.id) }}" class="button is-primary">
+                                                        <span class="icon">
+                                                            <i class="fas fa-edit"></i>
+                                                        </span>
+                                                    </a>
+                                                    <button class="button is-danger delete-alert-btn" data-id="{{ alert.id }}">
+                                                        <span class="icon">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="has-text-centered my-6">
+                            <span class="icon is-large">
+                                <i class="fas fa-info-circle fa-3x has-text-grey-light"></i>
+                            </span>
+                            <h3 class="title is-4 mt-4 has-text-grey">No Alerts Available</h3>
+                            <p class="subtitle is-6 has-text-grey">You haven't created any alerts yet.</p>
+                            <a href="{{ url_for('new_alert') }}" class="button is-primary mt-3">
+                                <span class="icon">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                                <span>Create First Alert</span>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Deletion Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Confirm Deletion</p>
+            <button class="delete" aria-label="close" id="close-modal"></button>
+        </header>
+        <section class="modal-card-body">
+            <p>Are you sure you want to delete this alert? This action cannot be undone.</p>
+        </section>
+        <footer class="modal-card-foot">
+            <form id="delete-form" method="POST" action="">
+                <button type="submit" class="button is-danger">Delete Alert</button>
+                <button type="button" class="button" id="cancel-delete">Cancel</button>
+            </form>
+        </footer>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal" id="bulk-modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Bulk Actions</p>
+            <button class="delete" aria-label="close" id="close-bulk-modal"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="field">
+                <label class="label">Select Action</label>
+                <div class="control">
+                    <div class="select is-fullwidth">
+                        <select id="bulk-action-select">
+                            <option value="" disabled selected>Choose an action</option>
+                            <option value="delete">Delete Selected Alerts</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="notification is-warning">
+                <p><strong>Warning:</strong> Bulk actions will affect all selected alerts. This action cannot be undone.</p>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button is-primary" id="apply-bulk-action" disabled>Apply</button>
+            <button class="button" id="cancel-bulk-action">Cancel</button>
+        </footer>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle search functionality
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const alertRows = document.querySelectorAll('.alert-row');
+        
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') performSearch();
+        });
+        
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            
+            alertRows.forEach(row => {
+                const title = row.children[1].textContent.toLowerCase();
+                const type = row.children[2].textContent.toLowerCase();
+                const description = row.children[3].textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || type.includes(searchTerm) || description.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // Handle filtering by type
+        const filterType = document.getElementById('filter-type');
+        
+        filterType.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            alertRows.forEach(row => {
+                if (selectedType === 'all' || row.dataset.type === selectedType) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Handle sorting
+        const sortBy = document.getElementById('sort-by');
+        const tableBody = document.getElementById('alerts-table-body');
+        
+        sortBy.addEventListener('change', function() {
+            const selectedSort = this.value;
+            const rows = Array.from(alertRows);
+            
+            rows.sort((a, b) => {
+                if (selectedSort === 'newest') {
+                    const dateA = new Date(a.children[4].textContent);
+                    const dateB = new Date(b.children[4].textContent);
+                    return dateB - dateA; // newest first
+                } else if (selectedSort === 'oldest') {
+                    const dateA = new Date(a.children[4].textContent);
+                    const dateB = new Date(b.children[4].textContent);
+                    return dateA - dateB; // oldest first
+                } else if (selectedSort === 'type') {
+                    const typeA = a.dataset.type;
+                    const typeB = b.dataset.type;
+                    return typeA.localeCompare(typeB); // alphabetical by type
+                }
+            });
+            
+            // Re-append the sorted rows
+            rows.forEach(row => tableBody.appendChild(row));
+        });
+        
+        // Handle alert deletion
+        const deleteModal = document.getElementById('delete-modal');
+        const deleteForm = document.getElementById('delete-form');
+        const closeModal = document.getElementById('close-modal');
+        const cancelDelete = document.getElementById('cancel-delete');
+        const deleteButtons = document.querySelectorAll('.delete-alert-btn');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const alertId = this.dataset.id;
+                deleteForm.setAttribute('action', `/delete_alert/${alertId}`);
+                deleteModal.classList.add('is-active');
+            });
+        });
+        
+        closeModal.addEventListener('click', () => deleteModal.classList.remove('is-active'));
+        cancelDelete.addEventListener('click', () => deleteModal.classList.remove('is-active'));
+        
+        // Handle bulk actions
+        const selectAll = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.alert-checkbox');
+        const bulkActionBtn = document.getElementById('bulk-action-btn');
+        const bulkModal = document.getElementById('bulk-modal');
+        const closeBulkModal = document.getElementById('close-bulk-modal');
+        const cancelBulkAction = document.getElementById('cancel-bulk-action');
+        const bulkActionSelect = document.getElementById('bulk-action-select');
+        const applyBulkAction = document.getElementById('apply-bulk-action');
+        
+        // Toggle select all checkboxes
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            
+            updateBulkActionButton();
+        });
+        
+        // Update bulk action button state when individual checkboxes change
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkActionButton);
+        });
+        
+        function updateBulkActionButton() {
+            const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+            bulkActionBtn.disabled = !anyChecked;
+        }
+        
+        // Show bulk action modal
+        bulkActionBtn.addEventListener('click', function() {
+            bulkModal.classList.add('is-active');
+        });
+        
+        // Close bulk action modal
+        closeBulkModal.addEventListener('click', () => bulkModal.classList.remove('is-active'));
+        cancelBulkAction.addEventListener('click', () => bulkModal.classList.remove('is-active'));
+        
+        // Enable/disable apply button based on selection
+        bulkActionSelect.addEventListener('change', function() {
+            applyBulkAction.disabled = !this.value;
+        });
+        
+        // Apply bulk action
+        applyBulkAction.addEventListener('click', function() {
+            const selectedAction = bulkActionSelect.value;
+            
+            if (selectedAction === 'delete') {
+                const selectedIds = Array.from(checkboxes)
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.dataset.id);
+                
+                if (selectedIds.length > 0) {
+                    // Create a hidden form to submit multiple delete requests
+                    const bulkForm = document.createElement('form');
+                    bulkForm.method = 'POST';
+                    bulkForm.action = '/bulk_delete_alerts';
+                    bulkForm.style.display = 'none';
+                    
+                    // Add the selected IDs as hidden inputs
+                    const idsInput = document.createElement('input');
+                    idsInput.type = 'hidden';
+                    idsInput.name = 'alert_ids';
+                    idsInput.value = JSON.stringify(selectedIds);
+                    bulkForm.appendChild(idsInput);
+                    
+                    // Add the form to the document and submit it
+                    document.body.appendChild(bulkForm);
+                    bulkForm.submit();
+                }
+                
+                bulkModal.classList.remove('is-active');
+            }
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,20 @@
+Make a python web application using flask, Site name is Smart Regional Alert & Navigation which shows live alerts
+Use Bulma for CSS framework for using styling the website and Sqlite database
+
+Navigation will have Home, Features, Alerts, Map, About, Contact.
+
+On home page show heading "Welcome to Smart Regional Alert & Navigation System" and sub-heading "Stay informed about real-time alerts and navigate your region efficiently." and below that Show three cards : 1."Live Alerts - Get instant notifications about emergencies, road closures, and other disruptions." 2, Smart Navigation - Find the best routes to avoid roadblocks and traffic congestion. , 3 Government Updates - Stay informed about local government projects and regulations.
+
+On Features page show heading "Powerful Features" and sub-heading "Explore the capabilities of our Smart Regional Alert & Navigation System" and cards telling the Features of the website 
+
+On Alerts page show heading "Real-Time Alerts" and sub-heading "Stay ahead with up-to-the-minute information." and show 4 cards 1. Traffic Alerts - Real-time traffic updates to navigate the most efficient path., 2.Emergency Alerts - Immediate notifications on emergencies for quick response., 3.Construction Alerts - Stay informed on construction zones to avoid delays., 4.Weather Alerts - Be prepared for any weather conditions with real-time alerts. 
+
+On Map show heading Interactive Map and sub-heading and show google map with current location of the user with traffic status
+
+On About page show heading About Our System and sub-heading Learn about our mission to keep communities connected and safe. and show Our Mission: We strive to provide timely and accurate information to help you navigate your region safely and efficiently. We are dedicated to empowering communities by keeping them informed about critical events and updates. and Team : Our team consists of dedicated developers, community managers, and data analysts who are passionate about leveraging technology for the betterment of society.
+
+On Contact page show demo page Contact us page 
+
+Add Login functionality with two types of user Government login and User Login 
+
+User who has login using Government login will have option to add Alerts 1, Traffic Alerts , 2. Emergency Alerts, 3.Construction Alerts, 4.Weather Alerts

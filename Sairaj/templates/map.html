@@ -1,0 +1,806 @@
+{% extends "base.html" %}
+
+{% block title %}Map - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block head %}
+<!-- Google Maps API with Places library -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA0s1a7phLN0iaD6-UE7m4qP-z21pH0eSc&libraries=places&callback=initMap" async defer></script>
+<style>
+    /* Map page specific styles */
+    .alert-item {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border-left-width: 4px;
+    }
+    
+    .alert-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .alert-item.has-background-light {
+        border-left-color: #3273dc;
+        background-color: #f5f9ff !important;
+    }
+    
+    /* Alert type colors */
+    .alert-item[data-type="Traffic"] {
+        border-left-color: #ff3860;
+    }
+    
+    .alert-item[data-type="Emergency"] {
+        border-left-color: #ff0000;
+    }
+    
+    .alert-item[data-type="Construction"] {
+        border-left-color: #ffdd57;
+    }
+    
+    .alert-item[data-type="Weather"] {
+        border-left-color: #209cee;
+    }
+    
+    /* Direction panel styling */
+    #directions-panel {
+        padding: 10px;
+    }
+    
+    #directions-panel .adp-directions {
+        width: 100%;
+    }
+    
+    #directions-panel .adp-placemark {
+        background-color: #f5f5f5;
+        border: 1px solid #e0e0e0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title is-1">Interactive Map</h1>
+            <h2 class="subtitle is-4">Explore and navigate your region with live traffic updates</h2>
+        </div>
+    </div>
+</section>
+
+<!-- Map Controls -->
+<section class="section pt-5 pb-3">
+    <div class="container">
+        <div class="columns is-mobile is-multiline">
+            <!-- Map Controls -->
+            <div class="column is-8">
+                <div class="field is-grouped is-grouped-multiline">
+                    <div class="control">
+                        <div class="buttons has-addons">
+                            <button class="button is-info" id="btn-traffic">
+                                <span class="icon">
+                                    <i class="fas fa-traffic-light"></i>
+                                </span>
+                                <span>Traffic</span>
+                            </button>
+                            <button class="button" id="btn-terrain">
+                                <span class="icon">
+                                    <i class="fas fa-mountain"></i>
+                                </span>
+                                <span>Terrain</span>
+                            </button>
+                            <button class="button" id="btn-satellite">
+                                <span class="icon">
+                                    <i class="fas fa-satellite"></i>
+                                </span>
+                                <span>Satellite</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="control">
+                        <button class="button is-primary" id="btn-my-location">
+                            <span class="icon">
+                                <i class="fas fa-location-arrow"></i>
+                            </span>
+                            <span>My Location</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Alert Filter -->
+            <div class="column is-4">
+                <div class="field">
+                    <div class="control has-icons-left">
+                        <div class="select is-fullwidth">
+                            <select id="alert-filter">
+                                <option value="all">All Alerts</option>
+                                <option value="Traffic">Traffic Alerts</option>
+                                <option value="Emergency">Emergency Alerts</option>
+                                <option value="Construction">Construction Alerts</option>
+                                <option value="Weather">Weather Alerts</option>
+                            </select>
+                        </div>
+                        <div class="icon is-small is-left">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map Section -->
+<section class="section pt-3">
+    <div class="container">
+        <div class="columns">
+            <!-- Main Map -->
+            <div class="column is-9">
+                <div class="card">
+                    <div class="card-content p-0">
+                        <div id="map" style="height: 600px; width: 100%; border-radius: 6px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar with Alerts -->
+            <div class="column is-3">
+                <div class="card">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="icon-text">
+                                <span class="icon">
+                                    <i class="fas fa-bell"></i>
+                                </span>
+                                <span>Nearby Alerts</span>
+                            </span>
+                        </p>
+                    </header>
+                    <div class="card-content" style="max-height: 530px; overflow-y: auto;">
+                        <div id="alerts-list">
+                            {% if alerts %}
+                                {% for alert in alerts %}
+                                <div class="box mb-3 alert-item" data-type="{{ alert.alert_type }}" data-lat="{{ alert.location_lat }}" data-lng="{{ alert.location_lng }}">
+                                    <article class="media">
+                                        <div class="media-left">
+                                            <span class="icon is-medium">
+                                                {% if alert.alert_type == 'Traffic' %}
+                                                    <i class="fas fa-car-crash has-text-danger"></i>
+                                                {% elif alert.alert_type == 'Emergency' %}
+                                                    <i class="fas fa-exclamation-triangle has-text-danger"></i>
+                                                {% elif alert.alert_type == 'Construction' %}
+                                                    <i class="fas fa-hard-hat has-text-warning"></i>
+                                                {% elif alert.alert_type == 'Weather' %}
+                                                    <i class="fas fa-cloud-rain has-text-info"></i>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="media-content">
+                                            <p class="is-6"><strong>{{ alert.title }}</strong></p>
+                                            <p class="is-7">{{ alert.description|truncate(60) }}</p>
+                                            <div class="is-flex is-justify-content-space-between is-align-items-center mt-1">
+                                                <span class="tag is-small 
+                                                    {% if alert.alert_type == 'Traffic' %}is-danger
+                                                    {% elif alert.alert_type == 'Emergency' %}is-warning
+                                                    {% elif alert.alert_type == 'Construction' %}is-warning
+                                                    {% elif alert.alert_type == 'Weather' %}is-info
+                                                    {% endif %}">
+                                                    {{ alert.alert_type }}
+                                                </span>
+                                                <a href="#" class="is-size-7 view-on-map">View on map</a>
+                                            </div>
+                                        </div>
+                                    </article>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="has-text-centered my-6">
+                                    <span class="icon is-large">
+                                        <i class="fas fa-info-circle has-text-grey-light"></i>
+                                    </span>
+                                    <p class="mt-3 has-text-grey">No alerts available</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Directions Section (initially hidden) -->
+<section class="section pt-3" id="directions-section" style="display: none;">
+    <div class="container">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon-text">
+                        <span class="icon">
+                            <i class="fas fa-directions"></i>
+                        </span>
+                        <span>Directions</span>
+                    </span>
+                </p>
+                <button class="card-header-icon" id="close-directions" aria-label="close">
+                    <span class="icon">
+                        <i class="fas fa-times"></i>
+                    </span>
+                </button>
+            </header>
+            <div class="card-content">
+                <div class="columns">
+                    <div class="column is-4">
+                        <div class="field">
+                            <label class="label">Starting Point</label>
+                            <div class="control has-icons-left">
+                                <input id="start-location" class="input" type="text" placeholder="Enter starting point">
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <label class="label">Destination</label>
+                            <div class="control has-icons-left">
+                                <input id="end-location" class="input" type="text" placeholder="Enter destination" readonly>
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-flag-checkered"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <label class="label">Travel Mode</label>
+                            <div class="control has-icons-left">
+                                <div class="select is-fullwidth">
+                                    <select id="travel-mode">
+                                        <option value="DRIVING">Driving</option>
+                                        <option value="WALKING">Walking</option>
+                                        <option value="BICYCLING">Bicycling</option>
+                                        <option value="TRANSIT">Transit</option>
+                                    </select>
+                                </div>
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-car"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <div class="control">
+                                <button id="get-directions" class="button is-primary is-fullwidth">
+                                    <span class="icon">
+                                        <i class="fas fa-route"></i>
+                                    </span>
+                                    <span>Get Directions</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-8">
+                        <div id="directions-panel" style="height: 350px; overflow-y: auto;">
+                            <div id="directions-results"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let map;
+    let trafficLayer;
+    let markers = [];
+    let directionsService;
+    let directionsRenderer;
+    let infoWindow;
+    let userLocationMarker;
+    
+    function initMap() {
+        // Create map
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: 18.5204, lng: 73.8567 }, // Default center (Pune, India)
+            zoom: 12,
+            mapTypeId: "roadmap",
+            mapTypeControl: false,
+            fullscreenControl: true,
+            streetViewControl: true,
+            zoomControl: true,
+        });
+        
+        // Initialize traffic layer (on by default)
+        trafficLayer = new google.maps.TrafficLayer();
+        trafficLayer.setMap(map);
+        
+        // Initialize info window
+        infoWindow = new google.maps.InfoWindow();
+        
+        // Initialize directions service
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            panel: document.getElementById("directions-results"),
+            suppressMarkers: false,
+            polylineOptions: {
+                strokeColor: '#3273dc',
+                strokeWeight: 5,
+                strokeOpacity: 0.7
+            }
+        });
+        
+        // Add markers for each alert
+        const alerts = [
+            {% for alert in alerts %}
+                {
+                    position: { lat: {{ alert.location_lat or 0 }}, lng: {{ alert.location_lng or 0 }} },
+                    title: "{{ alert.title }}",
+                    type: "{{ alert.alert_type }}",
+                    description: "{{ alert.description|replace('\n', ' ')|replace('"', '\\"') }}"
+                }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Load alert markers
+        loadAlertMarkers(alerts);
+        
+        // Check for URL parameters to center map on specific alert
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = parseFloat(urlParams.get('lat'));
+        const lng = parseFloat(urlParams.get('lng'));
+        
+        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+            map.setCenter({ lat, lng });
+            map.setZoom(15);
+        }
+        
+        // Set up event listeners
+        setupEventListeners();
+    }
+    
+    function loadAlertMarkers(alerts) {
+        // Clear existing markers
+        clearMarkers();
+        
+        if (alerts.length > 0) {
+            const bounds = new google.maps.LatLngBounds();
+            
+            alerts.forEach((alert) => {
+                // Skip alerts with no location data
+                if (alert.position.lat === 0 && alert.position.lng === 0) {
+                    return;
+                }
+                
+                // Determine marker icon based on alert type
+                let icon = {
+                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png", // Default
+                    scaledSize: new google.maps.Size(32, 32)
+                };
+                
+                if (alert.type === "Traffic") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+                } else if (alert.type === "Emergency") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/purple-dot.png";
+                } else if (alert.type === "Construction") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
+                } else if (alert.type === "Weather") {
+                    icon.url = "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+                }
+                
+                // Create marker
+                const marker = new google.maps.Marker({
+                    position: alert.position,
+                    map: map,
+                    title: alert.title,
+                    icon: icon,
+                    animation: google.maps.Animation.DROP
+                });
+                
+                // Add click listener to open info window
+                marker.addListener("click", () => {
+                    infoWindow.setContent(`
+                        <div style="max-width: 300px;">
+                            <h3 style="font-weight: bold; margin-bottom: 5px;">${alert.title}</h3>
+                            <span style="display: inline-block; padding: 2px 8px; background-color: #f5f5f5; border-radius: 4px; margin-bottom: 8px;">${alert.type}</span>
+                            <p>${alert.description}</p>
+                            <div style="margin-top: 10px;">
+                                <button id="directions-to-here" style="padding: 5px 10px; background-color: #3273dc; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-directions"></i> Directions to here
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                    
+                    infoWindow.open(map, marker);
+                    
+                    // Highlight corresponding alert in sidebar
+                    highlightAlertInSidebar(alert.position.lat, alert.position.lng);
+                    
+                    // Add click event to directions button
+                    setTimeout(() => {
+                        const directionsBtn = document.getElementById("directions-to-here");
+                        if (directionsBtn) {
+                            directionsBtn.addEventListener("click", () => {
+                                showDirectionsPanel(alert.position);
+                            });
+                        }
+                    }, 100);
+                });
+                
+                // Save marker for later reference
+                markers.push({
+                    marker: marker,
+                    type: alert.type
+                });
+                
+                // Extend bounds to include this marker
+                bounds.extend(alert.position);
+            });
+            
+            // Fit map to bounds if we have valid alerts with locations
+            if (!bounds.isEmpty() && markers.length > 0) {
+                map.fitBounds(bounds);
+            }
+        }
+    }
+    
+    function clearMarkers() {
+        markers.forEach(markerObj => {
+            markerObj.marker.setMap(null);
+        });
+        markers = [];
+    }
+    
+    function highlightAlertInSidebar(lat, lng) {
+        // Remove highlight from all alerts
+        document.querySelectorAll('.alert-item').forEach(item => {
+            item.classList.remove('has-background-light');
+        });
+        
+        // Find and highlight the matching alert
+        document.querySelectorAll('.alert-item').forEach(item => {
+            const itemLat = parseFloat(item.dataset.lat);
+            const itemLng = parseFloat(item.dataset.lng);
+            
+            if (Math.abs(itemLat - lat) < 0.0001 && Math.abs(itemLng - lng) < 0.0001) {
+                item.classList.add('has-background-light');
+                
+                // Scroll the sidebar to make the highlighted alert visible
+                const alertsList = document.getElementById('alerts-list');
+                if (alertsList) {
+                    const offsetTop = item.offsetTop;
+                    alertsList.scrollTop = offsetTop - 50;
+                }
+            }
+        });
+    }
+    
+    function filterMarkers(type) {
+        markers.forEach(markerObj => {
+            if (type === "all" || markerObj.type === type) {
+                markerObj.marker.setMap(map);
+            } else {
+                markerObj.marker.setMap(null);
+            }
+        });
+        
+        // Also filter the alert list in the sidebar
+        const alertItems = document.querySelectorAll('.alert-item');
+        alertItems.forEach(item => {
+            if (type === "all" || item.dataset.type === type) {
+                item.style.display = "block";
+            } else {
+                item.style.display = "none";
+            }
+        });
+    }
+    
+    function showDirectionsPanel(destination) {
+        const directionsSection = document.getElementById("directions-section");
+        directionsSection.style.display = "block";
+        
+        // Scroll to directions section
+        directionsSection.scrollIntoView({ behavior: "smooth" });
+        
+        // Set destination in the form
+        const destStr = `${destination.lat}, ${destination.lng}`;
+        document.getElementById("end-location").value = destStr;
+        
+        // Define starting point
+        let startingPoint;
+        if (userLocationMarker) {
+            const userPos = userLocationMarker.getPosition();
+            startingPoint = `${userPos.lat()}, ${userPos.lng()}`;
+        } else {
+            // Set Pune city center as default starting point if no user location
+            startingPoint = "Pune City Center, Pune, Maharashtra, India";
+        }
+        document.getElementById("start-location").value = startingPoint;
+        
+        // Add direct links to external map services as alternatives
+        const directionsResults = document.getElementById("directions-results");
+        const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startingPoint)}&destination=${encodeURIComponent(destStr)}&travelmode=driving`;
+        const osmUrl = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${encodeURIComponent(startingPoint)};${encodeURIComponent(destStr)}`;
+        
+        directionsResults.innerHTML = `
+            <div class="notification is-info is-light">
+                <p><strong>Tip:</strong> You can also get directions from these external services:</p>
+                <div class="buttons mt-2">
+                    <a href="${googleMapsUrl}" target="_blank" class="button is-small is-info">
+                        <span class="icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </span>
+                        <span>Google Maps</span>
+                    </a>
+
+                </div>
+            </div>
+        `;
+    }
+    
+    function calculateAndDisplayRoute() {
+        const start = document.getElementById("start-location").value;
+        const end = document.getElementById("end-location").value;
+        const travelMode = document.getElementById("travel-mode").value;
+        
+        if (!start || !end) {
+            alert("Please enter both starting point and destination");
+            return;
+        }
+        
+        // Clear previous results
+        document.getElementById("directions-results").innerHTML = `
+            <div class="has-text-centered my-4">
+                <div class="loader is-loading" style="display: inline-block; height: 40px; width: 40px;"></div>
+                <p class="mt-2">Calculating route...</p>
+            </div>
+        `;
+        
+        // Try using the built-in directions service first
+        directionsService.route(
+            {
+                origin: start,
+                destination: end,
+                travelMode: google.maps.TravelMode[travelMode],
+                avoidTolls: false,
+                avoidHighways: false,
+            },
+            (response, status) => {
+                if (status === "OK") {
+                    directionsRenderer.setDirections(response);
+                } else {
+                    // If API fails, provide fallback options
+                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(start)}&destination=${encodeURIComponent(end)}&travelmode=${travelMode.toLowerCase()}`;
+                    
+                    // Create OpenStreetMap URL as additional fallback
+                    // Note: OpenStreetMap uses different format for coordinates
+                    let osmTravelMode = 'driving';
+                    if (travelMode === 'WALKING') osmTravelMode = 'foot';
+                    else if (travelMode === 'BICYCLING') osmTravelMode = 'bicycle';
+                    
+                    const osmUrl = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_${osmTravelMode}&route=${encodeURIComponent(start)};${encodeURIComponent(end)}`;
+                    
+                    // Show fallback message with multiple options
+                    document.getElementById("directions-results").innerHTML = `
+                        <div class="notification is-warning">
+                            <p><strong>Directions couldn't be displayed directly on this page.</strong></p>
+                            <p class="mt-2">This may be due to API restrictions. You can use one of these external services instead:</p>
+                            
+                            <div class="buttons mt-3">
+                                <a href="${googleMapsUrl}" target="_blank" class="button is-info">
+                                    <span class="icon">
+                                        <i class="fas fa-map-marked-alt"></i>
+                                    </span>
+                                    <span>Google Maps</span>
+                                </a>
+
+                            </div>
+                            
+                            <p class="is-size-7 mt-3">Error: ${status}</p>
+                        </div>
+                    `;
+                    
+                    // Reset the renderer to clear any previous routes
+                    directionsRenderer.set('directions', null);
+                }
+            }
+        );
+    }
+    
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    
+                    map.setCenter(pos);
+                    map.setZoom(15);
+                    
+                    // Add or update user location marker
+                    if (userLocationMarker) {
+                        userLocationMarker.setPosition(pos);
+                    } else {
+                        userLocationMarker = new google.maps.Marker({
+                            position: pos,
+                            map: map,
+                            icon: {
+                                url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+                                scaledSize: new google.maps.Size(40, 40),
+                            },
+                            title: "Your Location",
+                            zIndex: 1000,
+                            animation: google.maps.Animation.DROP,
+                        });
+                    }
+                    
+                    // Show info window with user's location
+                    infoWindow.setContent("<div><strong>Your Location</strong></div>");
+                    infoWindow.open(map, userLocationMarker);
+                },
+                () => {
+                    alert("Error: The Geolocation service failed. Please allow location access to use this feature.");
+                }
+            );
+        } else {
+            alert("Error: Your browser doesn't support geolocation.");
+        }
+    }
+    
+    function setupEventListeners() {
+        // Traffic button
+        document.getElementById("btn-traffic").addEventListener("click", function() {
+            this.classList.toggle("is-info");
+            if (this.classList.contains("is-info")) {
+                trafficLayer.setMap(map);
+            } else {
+                trafficLayer.setMap(null);
+            }
+        });
+        
+        // Terrain button
+        document.getElementById("btn-terrain").addEventListener("click", function() {
+            const satelliteBtn = document.getElementById("btn-satellite");
+            
+            if (!this.classList.contains("is-info")) {
+                this.classList.add("is-info");
+                satelliteBtn.classList.remove("is-info");
+                map.setMapTypeId("terrain");
+            } else {
+                this.classList.remove("is-info");
+                map.setMapTypeId("roadmap");
+            }
+        });
+        
+        // Satellite button
+        document.getElementById("btn-satellite").addEventListener("click", function() {
+            const terrainBtn = document.getElementById("btn-terrain");
+            
+            if (!this.classList.contains("is-info")) {
+                this.classList.add("is-info");
+                terrainBtn.classList.remove("is-info");
+                map.setMapTypeId("satellite");
+            } else {
+                this.classList.remove("is-info");
+                map.setMapTypeId("roadmap");
+            }
+        });
+        
+        // My location button
+        document.getElementById("btn-my-location").addEventListener("click", getUserLocation);
+        
+        // Alert filter
+        document.getElementById("alert-filter").addEventListener("change", function() {
+            filterMarkers(this.value);
+        });
+        
+        // Get directions button
+        document.getElementById("get-directions").addEventListener("click", calculateAndDisplayRoute);
+        
+        // Close directions panel
+        document.getElementById("close-directions").addEventListener("click", function() {
+            document.getElementById("directions-section").style.display = "none";
+            // Clear directions
+            directionsRenderer.set('directions', null);
+            // Reset the map
+            directionsRenderer.setMap(map);
+        });
+        
+        // Make entire alert item clickable
+        document.querySelectorAll(".alert-item").forEach(item => {
+            item.addEventListener("click", function(e) {
+                // Don't trigger if they clicked the view-on-map link directly (that has its own handler)
+                if (e.target.classList.contains('view-on-map')) {
+                    return;
+                }
+                
+                const lat = parseFloat(this.dataset.lat);
+                const lng = parseFloat(this.dataset.lng);
+                
+                if (lat && lng) {
+                    // Center map on the selected location with smooth animation
+                    map.panTo({ lat, lng });
+                    map.setZoom(15);
+                    
+                    // Highlight this alert in the sidebar
+                    highlightAlertInSidebar(lat, lng);
+                    
+                    // Find and click the corresponding marker
+                    let markerFound = false;
+                    markers.forEach(markerObj => {
+                        const pos = markerObj.marker.getPosition();
+                        if (Math.abs(pos.lat() - lat) < 0.0001 && Math.abs(pos.lng() - lng) < 0.0001) {
+                            // Highlight the marker with bounce animation
+                            markerObj.marker.setAnimation(google.maps.Animation.BOUNCE);
+                            setTimeout(() => {
+                                markerObj.marker.setAnimation(null);
+                            }, 2100); // Stop bouncing after 2.1 seconds (3 bounces)
+                            
+                            // Open the info window
+                            google.maps.event.trigger(markerObj.marker, "click");
+                            markerFound = true;
+                        }
+                    });
+                    
+                    // If no marker was found, create a temporary one
+                    if (!markerFound) {
+                        // If there's an existing temporary marker, remove it
+                        if (window.tempMarker) {
+                            window.tempMarker.setMap(null);
+                        }
+                        
+                        // Create a new temporary marker
+                        window.tempMarker = new google.maps.Marker({
+                            position: { lat, lng },
+                            map: map,
+                            icon: {
+                                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                                scaledSize: new google.maps.Size(40, 40),
+                            },
+                            animation: google.maps.Animation.DROP,
+                            zIndex: 1000
+                        });
+                        
+                        // Add click listener to show directions
+                        window.tempMarker.addListener("click", () => {
+                            showDirectionsPanel({ lat, lng });
+                        });
+                    }
+                }
+            });
+        });
+        
+        // View on map links in alert sidebar
+        document.querySelectorAll(".view-on-map").forEach(link => {
+            link.addEventListener("click", function(e) {
+                e.preventDefault();
+                // Get data from parent alert-item
+                const alertItem = this.closest('.alert-item');
+                const lat = parseFloat(alertItem.dataset.lat);
+                const lng = parseFloat(alertItem.dataset.lng);
+                
+                if (lat && lng) {
+                    // Show directions panel directly
+                    showDirectionsPanel({ lat, lng });
+                    
+                    // Also highlight on map
+                    map.panTo({ lat, lng });
+                    map.setZoom(15);
+                    
+                    // Highlight this alert in the sidebar
+                    highlightAlertInSidebar(lat, lng);
+                }
+            });
+        });
+    }
+</script>
+{% endblock %} 

@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block title %}My Saved Routes - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title is-1">My Saved Routes</h1>
+            <h2 class="subtitle is-4">View and manage your favorite paths</h2>
+        </div>
+    </div>
+</section>
+
+<!-- Routes Section -->
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-10">
+                <!-- Routes Management Tools -->
+                <div class="level mb-5">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <a href="{{ url_for('map') }}" class="button is-primary">
+                                <span class="icon">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                                <span>Create New Route</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <div class="field has-addons">
+                                <div class="control">
+                                    <input class="input" type="text" id="route-search" placeholder="Search your routes">
+                                </div>
+                                <div class="control">
+                                    <button class="button is-info">
+                                        <span class="icon">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if routes %}
+                <!-- Routes Grid -->
+                <div class="columns is-multiline" id="routes-container">
+                    {% for route in routes %}
+                    <div class="column is-4 route-item">
+                        <div class="card h-100">
+                            <div class="card-content">
+                                <div class="media">
+                                    <div class="media-left">
+                                        <span class="icon is-large has-text-info">
+                                            <i class="fas fa-route fa-2x"></i>
+                                        </span>
+                                    </div>
+                                    <div class="media-content">
+                                        <p class="title is-5">{{ route.name }}</p>
+                                        <p class="subtitle is-6">Added on {{ route.created_at.strftime('%b %d, %Y') }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="content">
+                                    <div class="route-preview mb-4" style="height: 150px; background-color: #f5f5f5; border-radius: 6px; position: relative; overflow: hidden;">
+                                        <div id="map-{{ route.id }}" style="height: 100%; width: 100%;"></div>
+                                    </div>
+                                    
+                                    <div class="route-details">
+                                        <div class="columns is-mobile mb-2">
+                                            <div class="column is-2">
+                                                <span class="icon has-text-success">
+                                                    <i class="fas fa-flag-checkered"></i>
+                                                </span>
+                                            </div>
+                                            <div class="column">
+                                                <span class="has-text-weight-bold">Start:</span>
+                                                <span class="is-size-7">{{ route.start_lat }}, {{ route.start_lng }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="columns is-mobile">
+                                            <div class="column is-2">
+                                                <span class="icon has-text-danger">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </span>
+                                            </div>
+                                            <div class="column">
+                                                <span class="has-text-weight-bold">End:</span>
+                                                <span class="is-size-7">{{ route.end_lat }}, {{ route.end_lng }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <footer class="card-footer">
+                                <a href="{{ url_for('map') }}?start_lat={{ route.start_lat }}&start_lng={{ route.start_lng }}&end_lat={{ route.end_lat }}&end_lng={{ route.end_lng }}" class="card-footer-item">
+                                    <span class="icon-text">
+                                        <span class="icon">
+                                            <i class="fas fa-directions"></i>
+                                        </span>
+                                        <span>Navigate</span>
+                                    </span>
+                                </a>
+                                <a href="#" class="card-footer-item js-modal-trigger" data-target="delete-modal-{{ route.id }}">
+                                    <span class="icon-text">
+                                        <span class="icon has-text-danger">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </span>
+                                        <span>Delete</span>
+                                    </span>
+                                </a>
+                                
+                                <!-- Delete Confirmation Modal -->
+                                <div id="delete-modal-{{ route.id }}" class="modal">
+                                    <div class="modal-background"></div>
+                                    <div class="modal-card">
+                                        <header class="modal-card-head">
+                                            <p class="modal-card-title">Confirm Deletion</p>
+                                            <button class="delete" aria-label="close"></button>
+                                        </header>
+                                        <section class="modal-card-body">
+                                            <p>Are you sure you want to delete the route <strong>{{ route.name }}</strong>?</p>
+                                            <p class="has-text-danger">This action cannot be undone.</p>
+                                        </section>
+                                        <footer class="modal-card-foot">
+                                            <form action="{{ url_for('delete_route', route_id=route.id) }}" method="POST">
+                                                <button type="submit" class="button is-danger">Delete Route</button>
+                                            </form>
+                                            <button class="button modal-cancel">Cancel</button>
+                                        </footer>
+                                    </div>
+                                </div>
+                            </footer>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <!-- No Routes State -->
+                <div class="box has-text-centered p-6">
+                    <span class="icon is-large mb-4">
+                        <i class="fas fa-map fa-3x has-text-grey-light"></i>
+                    </span>
+                    <h3 class="title is-4">No Saved Routes</h3>
+                    <p class="subtitle is-6 mb-5">You haven't saved any routes yet. Create your first route to get started!</p>
+                    <a href="{{ url_for('map') }}" class="button is-primary is-medium">
+                        <span class="icon">
+                            <i class="fas fa-plus"></i>
+                        </span>
+                        <span>Create New Route</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Routes Tips -->
+<section class="section has-background-light">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-10">
+                <h3 class="title is-3 has-text-centered mb-5">Route Management Tips</h3>
+                
+                <div class="columns is-multiline">
+                    <div class="column is-4">
+                        <div class="box h-100">
+                            <h4 class="title is-5">
+                                <span class="icon-text">
+                                    <span class="icon has-text-info">
+                                        <i class="fas fa-save"></i>
+                                    </span>
+                                    <span>Save Your Frequent Routes</span>
+                                </span>
+                            </h4>
+                            <div class="content">
+                                <p>Save routes you travel frequently to quickly check for alerts and disruptions along your path before you depart.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-4">
+                        <div class="box h-100">
+                            <h4 class="title is-5">
+                                <span class="icon-text">
+                                    <span class="icon has-text-success">
+                                        <i class="fas fa-bell"></i>
+                                    </span>
+                                    <span>Get Route Notifications</span>
+                                </span>
+                            </h4>
+                            <div class="content">
+                                <p>When logged in, you'll automatically receive notifications about alerts affecting your saved routes.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-4">
+                        <div class="box h-100">
+                            <h4 class="title is-5">
+                                <span class="icon-text">
+                                    <span class="icon has-text-primary">
+                                        <i class="fas fa-clipboard-list"></i>
+                                    </span>
+                                    <span>Organize Your Routes</span>
+                                </span>
+                            </h4>
+                            <div class="content">
+                                <p>Give your routes descriptive names like "Home to Work" or "School Pickup" to easily identify them later.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize maps for each route
+        {% for route in routes %}
+        initRouteMap({{ route.id }}, 
+                     { lat: {{ route.start_lat }}, lng: {{ route.start_lng }} }, 
+                     { lat: {{ route.end_lat }}, lng: {{ route.end_lng }} });
+        {% endfor %}
+        
+        // Modal functionality
+        const $modalTriggers = Array.prototype.slice.call(document.querySelectorAll('.js-modal-trigger'), 0);
+        
+        $modalTriggers.forEach($trigger => {
+            const modal = $trigger.dataset.target;
+            const $target = document.getElementById(modal);
+            
+            $trigger.addEventListener('click', () => {
+                $target.classList.add('is-active');
+            });
+            
+            const $modalClose = $target.querySelectorAll('.delete, .modal-cancel');
+            $modalClose.forEach($close => {
+                $close.addEventListener('click', () => {
+                    $target.classList.remove('is-active');
+                });
+            });
+            
+            // Close modal when clicking on background
+            $target.querySelector('.modal-background').addEventListener('click', () => {
+                $target.classList.remove('is-active');
+            });
+        });
+        
+        // Search functionality
+        const routeSearch = document.getElementById('route-search');
+        if (routeSearch) {
+            routeSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const routeItems = document.querySelectorAll('.route-item');
+                
+                routeItems.forEach(item => {
+                    const routeName = item.querySelector('.title').textContent.toLowerCase();
+                    
+                    if (routeName.includes(searchTerm)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+    
+    function initRouteMap(routeId, start, end) {
+        const map = new google.maps.Map(document.getElementById(`map-${routeId}`), {
+            zoom: 12,
+            center: { lat: (start.lat + end.lat) / 2, lng: (start.lng + end.lng) / 2 },
+            disableDefaultUI: true,
+            zoomControl: false,
+            gestureHandling: 'none'
+        });
+        
+        // Start marker
+        const startMarker = new google.maps.Marker({
+            position: start,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 7,
+                fillColor: '#3273dc',
+                fillOpacity: 1,
+                strokeColor: '#ffffff',
+                strokeWeight: 2
+            },
+            title: 'Start'
+        });
+        
+        // End marker
+        const endMarker = new google.maps.Marker({
+            position: end,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 7,
+                fillColor: '#ff3860',
+                fillOpacity: 1,
+                strokeColor: '#ffffff',
+                strokeWeight: 2
+            },
+            title: 'End'
+        });
+        
+        // Create bounds to fit both markers
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(start);
+        bounds.extend(end);
+        map.fitBounds(bounds);
+        
+        // Draw route line
+        const routeLine = new google.maps.Polyline({
+            path: [start, end],
+            geodesic: true,
+            strokeColor: '#3273dc',
+            strokeOpacity: 0.8,
+            strokeWeight: 3,
+            map: map
+        });
+    }
+</script>
+{% endblock %} 

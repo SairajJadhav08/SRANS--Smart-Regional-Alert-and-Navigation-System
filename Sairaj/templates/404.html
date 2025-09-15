@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-danger">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title is-1">404</h1>
+            <h2 class="subtitle is-3">You've ventured off the map</h2>
+        </div>
+    </div>
+</section>
+
+<!-- Error Content -->
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-8">
+                <div class="box has-text-centered p-6 mb-6">
+                    <div class="mb-6">
+                        <span class="icon is-large">
+                            <i class="fas fa-map-marked-alt fa-5x has-text-danger-light"></i>
+                        </span>
+                    </div>
+                    
+                    <div class="content">
+                        <h3 class="title is-3">Oops! This route doesn't exist</h3>
+                        <p class="subtitle is-5 mb-5">The page you're looking for can't be found. It might have been moved, deleted, or never existed in the first place.</p>
+                        
+                        <div class="notification is-warning is-light mb-5">
+                            <p>
+                                <span class="icon"><i class="fas fa-compass"></i></span>
+                                <strong>Location coordinates:</strong> 404.PAGE.NOT.FOUND
+                            </p>
+                        </div>
+                        
+                        <div id="map-container" class="mb-6" style="height: 300px; width: 100%; border-radius: 8px; overflow: hidden; position: relative;">
+                            <div id="error-map" style="height: 100%; width: 100%;">
+                                <!-- Map will be inserted here via JavaScript -->
+                            </div>
+                            <div class="has-text-centered" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(255, 255, 255, 0.9); padding: 1rem; border-radius: 8px; box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2); pointer-events: none;">
+                                <span class="icon is-large">
+                                    <i class="fas fa-question-circle fa-2x has-text-danger"></i>
+                                </span>
+                                <h4 class="title is-5 mb-0">Destination Unknown</h4>
+                            </div>
+                        </div>
+                        
+                        <h4 class="title is-4 mb-4">Let's get you back on track</h4>
+                        
+                        <div class="buttons is-centered">
+                            <a href="{{ url_for('index') }}" class="button is-primary is-medium">
+                                <span class="icon">
+                                    <i class="fas fa-home"></i>
+                                </span>
+                                <span>Return Home</span>
+                            </a>
+                            <a href="{{ url_for('map') }}" class="button is-info is-medium">
+                                <span class="icon">
+                                    <i class="fas fa-map"></i>
+                                </span>
+                                <span>Check the Map</span>
+                            </a>
+                            <a href="{{ url_for('alerts') }}" class="button is-warning is-medium">
+                                <span class="icon">
+                                    <i class="fas fa-bell"></i>
+                                </span>
+                                <span>View Alerts</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Common Detours -->
+                <div class="card mb-6">
+                    <header class="card-header">
+                        <p class="card-header-title">
+                            <span class="icon-text">
+                                <span class="icon">
+                                    <i class="fas fa-route"></i>
+                                </span>
+                                <span>Popular Destinations</span>
+                            </span>
+                        </p>
+                    </header>
+                    <div class="card-content">
+                        <div class="content">
+                            <div class="columns is-multiline">
+                                <div class="column is-6">
+                                    <a href="{{ url_for('features') }}" class="is-flex is-align-items-center">
+                                        <span class="icon mr-2 has-text-info">
+                                            <i class="fas fa-star"></i>
+                                        </span>
+                                        <span>Features Overview</span>
+                                    </a>
+                                </div>
+                                <div class="column is-6">
+                                    <a href="{{ url_for('contact') }}" class="is-flex is-align-items-center">
+                                        <span class="icon mr-2 has-text-info">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                        <span>Contact Us</span>
+                                    </a>
+                                </div>
+                                <div class="column is-6">
+                                    <a href="{{ url_for('about') }}" class="is-flex is-align-items-center">
+                                        <span class="icon mr-2 has-text-info">
+                                            <i class="fas fa-info-circle"></i>
+                                        </span>
+                                        <span>About the System</span>
+                                    </a>
+                                </div>
+                                <div class="column is-6">
+                                    <a href="{{ url_for('register') }}" class="is-flex is-align-items-center">
+                                        <span class="icon mr-2 has-text-info">
+                                            <i class="fas fa-user-plus"></i>
+                                        </span>
+                                        <span>Create an Account</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Report the Issue -->
+                <div class="has-text-centered">
+                    <p>Believe this is a mistake? <a href="{{ url_for('contact') }}">Report this issue</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Interactive "error" map
+    function initMap() {
+        // Create a map with a dark style
+        const styledMapType = new google.maps.StyledMapType(
+            [
+                {
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#f5f5f5"}]
+                },
+                {
+                    "elementType": "labels.icon",
+                    "stylers": [{"visibility": "off"}]
+                },
+                {
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#616161"}]
+                },
+                {
+                    "elementType": "labels.text.stroke",
+                    "stylers": [{"color": "#f5f5f5"}]
+                },
+                {
+                    "featureType": "administrative.land_parcel",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#bdbdbd"}]
+                },
+                {
+                    "featureType": "poi",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#eeeeee"}]
+                },
+                {
+                    "featureType": "poi",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#757575"}]
+                },
+                {
+                    "featureType": "poi.park",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#e5e5e5"}]
+                },
+                {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#9e9e9e"}]
+                },
+                {
+                    "featureType": "road",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#ffffff"}]
+                },
+                {
+                    "featureType": "road",
+                    "elementType": "geometry.fill",
+                    "stylers": [{"color": "#ff6666"}]
+                },
+                {
+                    "featureType": "road.arterial",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#757575"}]
+                },
+                {
+                    "featureType": "road.highway",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#dadada"}]
+                },
+                {
+                    "featureType": "road.highway",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#616161"}]
+                },
+                {
+                    "featureType": "road.local",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#9e9e9e"}]
+                },
+                {
+                    "featureType": "transit.line",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#e5e5e5"}]
+                },
+                {
+                    "featureType": "transit.station",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#eeeeee"}]
+                },
+                {
+                    "featureType": "water",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#c9c9c9"}]
+                },
+                {
+                    "featureType": "water",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#9e9e9e"}]
+                }
+            ],
+            {name: "Error Map"}
+        );
+
+        // Define some fake roads in a 404 pattern
+        const errorCenter = { lat: 37.7749, lng: -122.4194 };
+        
+        const map = new google.maps.Map(document.getElementById("error-map"), {
+            center: errorCenter,
+            zoom: 14,
+            disableDefaultUI: true,
+            zoomControl: false,
+            mapTypeControlOptions: {
+                mapTypeIds: ["roadmap", "styled_map"],
+            },
+        });
+        
+        map.mapTypes.set("styled_map", styledMapType);
+        map.setMapTypeId("styled_map");
+        
+        // Add animated "searching" marker
+        const marker = new google.maps.Marker({
+            position: errorCenter,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#f14668",
+                fillOpacity: 0.6,
+                strokeColor: "#f14668",
+                strokeWeight: 2,
+            },
+            title: "404 Location",
+        });
+        
+        // Animate the marker
+        let growing = true;
+        setInterval(() => {
+            const icon = marker.getIcon();
+            
+            if (growing) {
+                icon.scale += 0.3;
+                icon.fillOpacity -= 0.02;
+                if (icon.scale >= 20) {
+                    growing = false;
+                }
+            } else {
+                icon.scale -= 0.3;
+                icon.fillOpacity += 0.02;
+                if (icon.scale <= 10) {
+                    growing = true;
+                }
+            }
+            
+            marker.setIcon(icon);
+        }, 100);
+        
+        // Create a "404" pattern of roads
+        const lineSymbol = {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillOpacity: 1,
+            scale: 3,
+        };
+        
+        // 4
+        const four1 = new google.maps.Polyline({
+            path: [
+                { lat: errorCenter.lat + 0.015, lng: errorCenter.lng - 0.01 },
+                { lat: errorCenter.lat + 0.015, lng: errorCenter.lng - 0.005 },
+                { lat: errorCenter.lat, lng: errorCenter.lng - 0.005 },
+                { lat: errorCenter.lat, lng: errorCenter.lng - 0.01 },
+                { lat: errorCenter.lat, lng: errorCenter.lng + 0.01 },
+            ],
+            icons: [{
+                icon: lineSymbol,
+                offset: "0",
+                repeat: "15px",
+            }],
+            strokeColor: "#f14668",
+            strokeOpacity: 0.8,
+            strokeWeight: 5,
+            map: map,
+        });
+        
+        // 0 (circle)
+        const center0 = { lat: errorCenter.lat + 0.007, lng: errorCenter.lng + 0.02 };
+        const radius0 = 0.006;
+        
+        const points0 = [];
+        for (let i = 0; i < 360; i += 5) {
+            const angle = i * Math.PI / 180;
+            points0.push({
+                lat: center0.lat + Math.sin(angle) * radius0,
+                lng: center0.lng + Math.cos(angle) * radius0,
+            });
+        }
+        
+        const zero = new google.maps.Polyline({
+            path: points0,
+            icons: [{
+                icon: lineSymbol,
+                offset: "0",
+                repeat: "15px",
+            }],
+            strokeColor: "#f14668",
+            strokeOpacity: 0.8,
+            strokeWeight: 5,
+            map: map,
+        });
+        
+        // 4 (second)
+        const four2 = new google.maps.Polyline({
+            path: [
+                { lat: errorCenter.lat + 0.015, lng: errorCenter.lng + 0.05 },
+                { lat: errorCenter.lat + 0.015, lng: errorCenter.lng + 0.045 },
+                { lat: errorCenter.lat, lng: errorCenter.lng + 0.045 },
+                { lat: errorCenter.lat, lng: errorCenter.lng + 0.04 },
+                { lat: errorCenter.lat, lng: errorCenter.lng + 0.06 },
+            ],
+            icons: [{
+                icon: lineSymbol,
+                offset: "0",
+                repeat: "15px",
+            }],
+            strokeColor: "#f14668",
+            strokeOpacity: 0.8,
+            strokeWeight: 5,
+            map: map,
+        });
+        
+        // Fit map to the 404 pattern
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend({ lat: errorCenter.lat + 0.02, lng: errorCenter.lng - 0.015 });
+        bounds.extend({ lat: errorCenter.lat - 0.01, lng: errorCenter.lng + 0.07 });
+        map.fitBounds(bounds);
+    }
+</script>
+{% endblock %} 

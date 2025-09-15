@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+
+{% block title %}Create Alert - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block head %}
+<!-- Google Maps API with Places library -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA0s1a7phLN0iaD6-UE7m4qP-z21pH0eSc&libraries=places&callback=initMap" async defer></script>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container">
+            <div class="columns is-vcentered">
+                <div class="column">
+                    <h1 class="title is-1">Create New Alert</h1>
+                    <h2 class="subtitle is-4">Notify citizens about important events in your region</h2>
+                </div>
+                <div class="column is-narrow">
+                    <a href="{{ url_for('dashboard') }}" class="button is-white is-outlined is-medium">
+                        <span class="icon">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                        <span>Back to Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Alert Form Section -->
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-10">
+                <div class="card">
+                    <div class="card-content">
+                        <form action="{{ url_for('new_alert') }}" method="POST">
+                            <div class="field">
+                                <label class="label">Alert Type</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select name="alert_type" id="alert-type" required>
+                                            <option value="" disabled selected>Select alert type</option>
+                                            <option value="Traffic">Traffic Alert</option>
+                                            <option value="Emergency">Emergency Alert</option>
+                                            <option value="Construction">Construction Alert</option>
+                                            <option value="Weather">Weather Alert</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <p class="help">The type of alert determines how it's displayed to users</p>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Alert Title</label>
+                                <div class="control">
+                                    <input class="input" type="text" name="title" placeholder="Enter a clear, concise title" required>
+                                </div>
+                                <p class="help">Keep titles brief but descriptive (e.g., "Highway 101 Closure")</p>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Alert Description</label>
+                                <div class="control">
+                                    <textarea class="textarea" name="description" placeholder="Provide detailed information about the alert" rows="5" required></textarea>
+                                </div>
+                                <p class="help">Include relevant details such as timing, impact, and recommended actions</p>
+                            </div>
+                            
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">Location</label>
+                                        <div class="control">
+                                            <input class="input" type="text" id="location-search" placeholder="Search for a location">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="column is-3">
+                                    <div class="field">
+                                        <label class="label">Latitude</label>
+                                        <div class="control">
+                                            <input class="input" type="number" name="lat" id="lat-input" step="0.000001" placeholder="Latitude" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="column is-3">
+                                    <div class="field">
+                                        <label class="label">Longitude</label>
+                                        <div class="control">
+                                            <input class="input" type="number" name="lng" id="lng-input" step="0.000001" placeholder="Longitude" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <label class="label">Select Location on Map</label>
+                                <div id="map" style="height: 400px; width: 100%; border-radius: 6px; margin-bottom: 20px;"></div>
+                                <p class="help">Click on the map to set the alert location</p>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="columns">
+                                <div class="column is-6">
+                                    <h4 class="title is-5">Alert Preview</h4>
+                                    <div class="box" id="alert-preview">
+                                        <article class="media">
+                                            <div class="media-left">
+                                                <span class="icon is-large">
+                                                    <i class="fas fa-bell fa-2x"></i>
+                                                </span>
+                                            </div>
+                                            <div class="media-content">
+                                                <div class="content">
+                                                    <p>
+                                                        <strong id="preview-title">Alert Title</strong>
+                                                        <br>
+                                                        <span class="tag is-info" id="preview-type">Alert Type</span>
+                                                        <br>
+                                                        <span id="preview-description">Alert description will appear here as you type...</span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    </div>
+                                </div>
+                                
+                                <div class="column is-6">
+                                    <h4 class="title is-5">Alert Guidelines</h4>
+                                    <div class="content">
+                                        <ul>
+                                            <li><strong>Be clear and specific</strong> about the nature of the alert.</li>
+                                            <li><strong>Include timing information</strong> if applicable (start/end times).</li>
+                                            <li><strong>Provide alternative routes</strong> for traffic and construction alerts.</li>
+                                            <li><strong>Include safety instructions</strong> for emergency and weather alerts.</li>
+                                            <li><strong>Avoid all caps</strong> except for emphasis on critical words.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="field is-grouped is-grouped-right mt-5">
+                                <div class="control">
+                                    <button type="button" class="button is-light" id="cancel-btn">Cancel</button>
+                                </div>
+                                <div class="control">
+                                    <button type="submit" class="button is-primary">
+                                        <span class="icon">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </span>
+                                        <span>Publish Alert</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Publish Confirmation Modal -->
+<div class="modal" id="publish-modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Confirm Alert Publication</p>
+            <button class="delete" aria-label="close" id="close-modal"></button>
+        </header>
+        <section class="modal-card-body">
+            <p>Are you sure you want to publish this alert? It will be immediately visible to all users in the affected area.</p>
+            
+            <div class="notification is-info is-light mt-3">
+                <p>
+                    <strong>Note:</strong> Please verify all information is accurate before publishing. This alert may trigger emergency responses.
+                </p>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button type="button" class="button is-primary" id="confirm-publish">Publish Alert</button>
+            <button type="button" class="button" id="cancel-publish">Cancel</button>
+        </footer>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let map;
+    let marker;
+    
+    function initMap() {
+        // Create the map centered on a default location
+        map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 12,
+            center: { lat: 37.7749, lng: -122.4194 }, // Default center (San Francisco)
+            mapTypeId: "roadmap",
+        });
+        
+        // Add click event to set marker
+        map.addListener("click", (event) => {
+            placeMarker(event.latLng);
+        });
+        
+        // Initialize the autocomplete search box
+        const input = document.getElementById("location-search");
+        const searchBox = new google.maps.places.SearchBox(input);
+        
+        // Bias the SearchBox results towards current map's viewport
+        map.addListener("bounds_changed", () => {
+            searchBox.setBounds(map.getBounds());
+        });
+        
+        // Listen for the event fired when the user selects a prediction and retrieve more details
+        searchBox.addListener("places_changed", () => {
+            const places = searchBox.getPlaces();
+            
+            if (places.length === 0) {
+                return;
+            }
+            
+            // For each place, get the location
+            const bounds = new google.maps.LatLngBounds();
+            
+            places.forEach((place) => {
+                if (!place.geometry || !place.geometry.location) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+                
+                // Set marker at the selected place
+                placeMarker(place.geometry.location);
+                
+                if (place.geometry.viewport) {
+                    // Only geocodes have viewport
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+            });
+            
+            map.fitBounds(bounds);
+        });
+    }
+    
+    function placeMarker(location) {
+        // Remove existing marker if any
+        if (marker) {
+            marker.setMap(null);
+        }
+        
+        // Create new marker
+        marker = new google.maps.Marker({
+            position: location,
+            map: map,
+            draggable: true,
+            animation: google.maps.Animation.DROP
+        });
+        
+        // Update latitude and longitude inputs
+        document.getElementById("lat-input").value = location.lat();
+        document.getElementById("lng-input").value = location.lng();
+        
+        // Add drag event to update lat/lng when marker is moved
+        marker.addListener("dragend", function() {
+            const position = marker.getPosition();
+            document.getElementById("lat-input").value = position.lat();
+            document.getElementById("lng-input").value = position.lng();
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle live preview updates
+        const titleInput = document.querySelector('input[name="title"]');
+        const descriptionInput = document.querySelector('textarea[name="description"]');
+        const alertTypeSelect = document.getElementById('alert-type');
+        
+        const previewTitle = document.getElementById('preview-title');
+        const previewDescription = document.getElementById('preview-description');
+        const previewType = document.getElementById('preview-type');
+        
+        titleInput.addEventListener('input', function() {
+            previewTitle.textContent = this.value || 'Alert Title';
+        });
+        
+        descriptionInput.addEventListener('input', function() {
+            previewDescription.textContent = this.value || 'Alert description will appear here as you type...';
+        });
+        
+        alertTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            previewType.textContent = selectedType || 'Alert Type';
+            
+            // Update tag color based on alert type
+            previewType.className = 'tag';
+            
+            if (selectedType === 'Traffic') {
+                previewType.classList.add('is-danger');
+                document.querySelector('#alert-preview .icon i').className = 'fas fa-car-crash fa-2x';
+            } else if (selectedType === 'Emergency') {
+                previewType.classList.add('is-warning');
+                document.querySelector('#alert-preview .icon i').className = 'fas fa-exclamation-triangle fa-2x';
+            } else if (selectedType === 'Construction') {
+                previewType.classList.add('is-warning');
+                document.querySelector('#alert-preview .icon i').className = 'fas fa-hard-hat fa-2x';
+            } else if (selectedType === 'Weather') {
+                previewType.classList.add('is-info');
+                document.querySelector('#alert-preview .icon i').className = 'fas fa-cloud-rain fa-2x';
+            } else {
+                previewType.classList.add('is-info');
+                document.querySelector('#alert-preview .icon i').className = 'fas fa-bell fa-2x';
+            }
+        });
+        
+        // Handle the publish confirmation modal
+        const form = document.querySelector('form');
+        const publishModal = document.getElementById('publish-modal');
+        const closeModal = document.getElementById('close-modal');
+        const confirmPublish = document.getElementById('confirm-publish');
+        const cancelPublish = document.getElementById('cancel-publish');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Perform form validation
+            const isValid = form.checkValidity();
+            
+            if (isValid) {
+                publishModal.classList.add('is-active');
+            } else {
+                // Trigger browser's built-in validation UI
+                document.createElement('button').click();
+            }
+        });
+        
+        closeModal.addEventListener('click', () => publishModal.classList.remove('is-active'));
+        cancelPublish.addEventListener('click', () => publishModal.classList.remove('is-active'));
+        
+        confirmPublish.addEventListener('click', function() {
+            form.submit();
+        });
+        
+        // Handle the cancel button
+        document.getElementById('cancel-btn').addEventListener('click', function() {
+            window.location.href = "{{ url_for('dashboard') }}";
+        });
+        
+        // Handle manual latitude/longitude input updates
+        const latInput = document.getElementById('lat-input');
+        const lngInput = document.getElementById('lng-input');
+        
+        function updateMarkerFromInputs() {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const location = new google.maps.LatLng(lat, lng);
+                placeMarker(location);
+                map.setCenter(location);
+            }
+        }
+        
+        latInput.addEventListener('change', updateMarkerFromInputs);
+        lngInput.addEventListener('change', updateMarkerFromInputs);
+    });
+</script>
+{% endblock %} 

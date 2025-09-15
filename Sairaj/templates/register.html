@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title is-1">Register</h1>
+            <h2 class="subtitle is-4">Create your account</h2>
+        </div>
+    </div>
+</section>
+
+<!-- Registration Section -->
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-8">
+                <div class="card">
+                    <div class="card-content">
+                        <h3 class="title is-4 has-text-centered mb-5">Join Smart Regional Alert & Navigation</h3>
+                        
+                        <!-- Registration Tabs -->
+                        <div class="tabs is-centered is-boxed mb-5">
+                            <ul>
+                                <li class="is-active" id="user-tab">
+                                    <a>
+                                        <span class="icon"><i class="fas fa-user"></i></span>
+                                        <span>User Registration</span>
+                                    </a>
+                                </li>
+                                <li id="government-tab">
+                                    <a>
+                                        <span class="icon"><i class="fas fa-building"></i></span>
+                                        <span>Government Registration</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Registration Form -->
+                        <form action="{{ url_for('register') }}" method="POST">
+                            <!-- Hidden field to indicate registration type -->
+                            <input type="hidden" name="user_type" id="user-type-input" value="user">
+                            
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">Username</label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" type="text" name="username" placeholder="Choose a username" required>
+                                            <span class="icon is-small is-left">
+                                                <i class="fas fa-user"></i>
+                                            </span>
+                                        </div>
+                                        <p class="help">Username must be at least 4 characters</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">Email</label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" type="email" name="email" placeholder="Your email address" required>
+                                            <span class="icon is-small is-left">
+                                                <i class="fas fa-envelope"></i>
+                                            </span>
+                                        </div>
+                                        <p class="help">We'll send a verification link to this address</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="columns">
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">Password</label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" type="password" name="password" id="password" placeholder="Create a password" required>
+                                            <span class="icon is-small is-left">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                        </div>
+                                        <p class="help">Password must be at least 8 characters</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="column">
+                                    <div class="field">
+                                        <label class="label">Confirm Password</label>
+                                        <div class="control has-icons-left">
+                                            <input class="input" type="password" name="confirm_password" id="confirm-password" placeholder="Confirm your password" required>
+                                            <span class="icon is-small is-left">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                        </div>
+                                        <p class="help is-danger" id="password-error" style="display: none;">Passwords do not match</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Government Registration Fields (Initially Hidden) -->
+                            <div id="government-fields" style="display: none;">
+                                <hr>
+                                <h4 class="title is-5 mb-3">Government Agency Information</h4>
+                                
+                                <div class="columns">
+                                    <div class="column">
+                                        <div class="field">
+                                            <label class="label">Agency Name</label>
+                                            <div class="control has-icons-left">
+                                                <input class="input" type="text" name="agency_name" placeholder="Full agency name">
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-building"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="column">
+                                        <div class="field">
+                                            <label class="label">Department</label>
+                                            <div class="control has-icons-left">
+                                                <input class="input" type="text" name="department" placeholder="Your department">
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-briefcase"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="field">
+                                    <label class="label">Official Email</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="email" name="official_email" placeholder="Your government email address">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                    </div>
+                                    <p class="help">Must be a valid government email domain</p>
+                                </div>
+                                
+                            </div>
+                            
+                            <div class="field mt-5">
+                                <div class="control">
+                                    <label class="checkbox">
+                                        <input type="checkbox" required>
+                                        I agree to the <a href="#">terms of service</a> and <a href="#">privacy policy</a>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="field">
+                                <div class="control">
+                                    <button type="submit" class="button is-primary is-fullwidth" id="register-btn">
+                                        <span class="icon">
+                                            <i class="fas fa-user-plus"></i>
+                                        </span>
+                                        <span>Register</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <div class="has-text-centered mt-4">
+                            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="section has-background-light">
+    <div class="container">
+        <h3 class="title is-3 has-text-centered mb-6">Why Register?</h3>
+        
+        <div class="columns">
+            <div class="column is-6">
+                <h4 class="title is-4 has-text-centered mb-4">For Users</h4>
+                <div class="box">
+                    <div class="content">
+                        <ul>
+                            <li><strong>Personalized Alerts:</strong> Receive alerts based on your location and preferences.</li>
+                            <li><strong>Save Locations:</strong> Save your home, work, and other important locations.</li>
+                            <li><strong>Custom Routes:</strong> Create and save your frequent travel routes.</li>
+                            <li><strong>Alert History:</strong> View a history of past alerts in your area.</li>
+                            <li><strong>Mobile Access:</strong> Access the system from any device, anywhere.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="column is-6">
+                <h4 class="title is-4 has-text-centered mb-4">For Government Agencies</h4>
+                <div class="box">
+                    <div class="content">
+                        <ul>
+                            <li><strong>Alert Management:</strong> Create, edit, and manage alerts for your jurisdiction.</li>
+                            <li><strong>Real-time Updates:</strong> Instantly notify citizens about important events.</li>
+                            <li><strong>Analytics:</strong> Access data on alert engagement and effectiveness.</li>
+                            <li><strong>Multi-user Access:</strong> Allow multiple staff members to manage the system.</li>
+                            <li><strong>Integration:</strong> Connect with existing emergency management systems.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle tab switching
+        const userTab = document.getElementById('user-tab');
+        const govTab = document.getElementById('government-tab');
+        const govFields = document.getElementById('government-fields');
+        const userTypeInput = document.getElementById('user-type-input');
+        const registerBtn = document.getElementById('register-btn');
+        
+        userTab.addEventListener('click', function() {
+            userTab.classList.add('is-active');
+            govTab.classList.remove('is-active');
+            govFields.style.display = 'none';
+            userTypeInput.value = 'user';
+            registerBtn.innerHTML = '<span class="icon"><i class="fas fa-user-plus"></i></span><span>Register</span>';
+        });
+        
+        govTab.addEventListener('click', function() {
+            govTab.classList.add('is-active');
+            userTab.classList.remove('is-active');
+            govFields.style.display = 'block';
+            userTypeInput.value = 'government';
+            registerBtn.innerHTML = '<span class="icon"><i class="fas fa-building"></i></span><span>Register as Government Agency</span>';
+        });
+        
+        // Password validation
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm-password');
+        const passwordError = document.getElementById('password-error');
+        
+        function validatePassword() {
+            if (password.value !== confirmPassword.value) {
+                passwordError.style.display = 'block';
+                confirmPassword.classList.add('is-danger');
+                return false;
+            } else {
+                passwordError.style.display = 'none';
+                confirmPassword.classList.remove('is-danger');
+                return true;
+            }
+        }
+        
+        password.addEventListener('change', validatePassword);
+        confirmPassword.addEventListener('keyup', validatePassword);
+        
+        // Form submission validation
+        const registerForm = document.querySelector('form');
+        registerForm.addEventListener('submit', function(event) {
+            if (password.value !== confirmPassword.value) {
+                event.preventDefault();
+                passwordError.style.display = 'block';
+                confirmPassword.classList.add('is-danger');
+            }
+        });
+    });
+</script>
+{% endblock %} 

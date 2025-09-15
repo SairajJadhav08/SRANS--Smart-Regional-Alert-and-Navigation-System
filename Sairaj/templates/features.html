@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Features - Smart Regional Alert & Navigation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero is-primary">
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <h1 class="title is-1">Powerful Features</h1>
+            <h2 class="subtitle is-4">Explore the capabilities of our Smart Regional Alert & Navigation System</h2>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="section">
+    <div class="container">
+        <!-- Feature Row 1 -->
+        <div class="columns is-variable is-8 mb-6">
+            <div class="column">
+                <div class="card has-background-light h-100">
+                    <div class="card-content">
+                        <div class="has-text-centered mb-5">
+                            <span class="icon is-large">
+                                <i class="fas fa-bell fa-3x has-text-danger"></i>
+                            </span>
+                        </div>
+                        <p class="title is-4 has-text-centered">Real-Time Alerts</p>
+                        <div class="content">
+                            <p>Our system provides immediate notifications about critical events in your area:</p>
+                            <ul>
+                                <li>Traffic incidents and congestion</li>
+                                <li>Emergency situations</li>
+                                <li>Construction activities</li>
+                                <li>Weather warnings</li>
+                            </ul>
+                            <p>Alerts are verified by government agencies to ensure accuracy and relevance.</p>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="{{ url_for('alerts') }}" class="card-footer-item button is-danger is-light">View Alerts</a>
+                    </footer>
+                </div>
+            </div>
+            
+            <div class="column">
+                <div class="card has-background-light h-100">
+                    <div class="card-content">
+                        <div class="has-text-centered mb-5">
+                            <span class="icon is-large">
+                                <i class="fas fa-map-marked-alt fa-3x has-text-info"></i>
+                            </span>
+                        </div>
+                        <p class="title is-4 has-text-centered">Interactive Mapping</p>
+                        <div class="content">
+                            <p>Navigate your region with our advanced mapping features:</p>
+                            <ul>
+                                <li>Real-time traffic overlay</li>
+                                <li>Location-based alerts visualization</li>
+                                <li>Current user location tracking (with permission)</li>
+                                <li>Alternative route suggestions</li>
+                            </ul>
+                            <p>Our map integrates seamlessly with Google Maps to provide reliable navigation.</p>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="{{ url_for('map') }}" class="card-footer-item button is-info is-light">Open Map</a>
+                    </footer>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature Row 2 -->
+        <div class="columns is-variable is-8 mb-6">
+            <div class="column">
+                <div class="card has-background-light h-100">
+                    <div class="card-content">
+                        <div class="has-text-centered mb-5">
+                            <span class="icon is-large">
+                                <i class="fas fa-user-shield fa-3x has-text-success"></i>
+                            </span>
+                        </div>
+                        <p class="title is-4 has-text-centered">User Management</p>
+                        <div class="content">
+                            <p>Our system offers comprehensive user management:</p>
+                            <ul>
+                                <li>Secure authentication system</li>
+                                <li>Role-based access control</li>
+                                <li>User profile customization</li>
+                                <li>Alert preferences and subscriptions</li>
+                            </ul>
+                            <p>Government users have special privileges to create and manage alerts for the public.</p>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="{{ url_for('register') }}" class="card-footer-item button is-success is-light">Register Now</a>
+                    </footer>
+                </div>
+            </div>
+            
+            <div class="column">
+                <div class="card has-background-light h-100">
+                    <div class="card-content">
+                        <div class="has-text-centered mb-5">
+                            <span class="icon is-large">
+                                <i class="fas fa-tachometer-alt fa-3x has-text-primary"></i>
+                            </span>
+                        </div>
+                        <p class="title is-4 has-text-centered">Government Dashboard</p>
+                        <div class="content">
+                            <p>Government agencies access a powerful administrative dashboard:</p>
+                            <ul>
+                                <li>Alert creation and management</li>
+                                <li>Analytics and reporting tools</li>
+                                <li>Batch operations for managing multiple alerts</li>
+                                <li>User activity monitoring</li>
+                            </ul>
+                            <p>The dashboard ensures efficient alert management during critical situations.</p>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        {% if session.get('role') == 'government' %}
+                            <a href="{{ url_for('dashboard') }}" class="card-footer-item button is-primary is-light">Access Dashboard</a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}" class="card-footer-item button is-primary is-light">Government Login</a>
+                        {% endif %}
+                    </footer>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature Row 3 -->
+        <div class="columns is-variable is-8">
+            <div class="column">
+                <div class="card has-background-light h-100">
+                    <div class="card-content">
+                        <div class="has-text-centered mb-5">
+                            <span class="icon is-large">
+                                <i class="fas fa-mobile-alt fa-3x has-text-warning"></i>
+                            </span>
+                        </div>
+                        <p class="title is-4 has-text-centered">Mobile Responsive</p>
+                        <div class="content">
+                            <p>Access our system from any device:</p>
+                            <ul>
+                                <li>Fully responsive design adapts to any screen size</li>
+                                <li>Optimized for smartphones and tablets</li>
+                                <li>Fast loading times on mobile networks</li>
+                                <li>Touch-friendly interface</li>
+                            </ul>
+                            <p>Stay connected and informed whether you're at home or on the go.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="column">
+                <div class="card has-background-light h-100">
+                    <div class="card-content">
+                        <div class="has-text-centered mb-5">
+                            <span class="icon is-large">
+                                <i class="fas fa-shield-alt fa-3x has-text-link"></i>
+                            </span>
+                        </div>
+                        <p class="title is-4 has-text-centered">Security & Privacy</p>
+                        <div class="content">
+                            <p>We prioritize your data security:</p>
+                            <ul>
+                                <li>Secure password hashing</li>
+                                <li>Optional location sharing</li>
+                                <li>Data encryption</li>
+                                <li>Regular security audits</li>
+                            </ul>
+                            <p>Your personal information is always protected with industry-standard security measures.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Technology Section -->
+<section class="section has-background-light">
+    <div class="container">
+        <h2 class="title is-2 has-text-centered mb-6">Powered By Modern Technology</h2>
+        
+        <div class="columns is-centered">
+            <div class="column is-10">
+                <div class="columns is-multiline">
+                    <!-- Flask -->
+                    <div class="column is-3">
+                        <div class="box has-text-centered">
+                            <img src="https://flask.palletsprojects.com/en/2.0.x/_images/flask-logo.png" alt="Flask" style="height: 80px;">
+                            <h4 class="title is-5 mt-4">Flask</h4>
+                            <p class="subtitle is-6">Backend Framework</p>
+                        </div>
+                    </div>
+                    
+                    <!-- SQLite -->
+                    <div class="column is-3">
+                        <div class="box has-text-centered">
+                            <img src="https://www.sqlite.org/images/sqlite370_banner.gif" alt="SQLite" style="height: 80px;">
+                            <h4 class="title is-5 mt-4">SQLite</h4>
+                            <p class="subtitle is-6">Database</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Bulma -->
+                    <div class="column is-3">
+                        <div class="box has-text-centered">
+                            <img src="https://bulma.io/images/bulma-logo.png" alt="Bulma" style="height: 80px;">
+                            <h4 class="title is-5 mt-4">Bulma</h4>
+                            <p class="subtitle is-6">CSS Framework</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Google Maps -->
+                    <div class="column is-3">
+                        <div class="box has-text-centered">
+                            <img src="https://www.gstatic.com/images/branding/product/2x/maps_96dp.png" alt="Google Maps" style="height: 80px;">
+                            <h4 class="title is-5 mt-4">Google Maps</h4>
+                            <p class="subtitle is-6">Map Integration</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="section">
+    <div class="container has-text-centered">
+        <h2 class="title is-2 mb-5">Ready to explore our features?</h2>
+        <div class="buttons is-centered">
+            <a href="{{ url_for('alerts') }}" class="button is-primary is-large">
+                <span class="icon">
+                    <i class="fas fa-bell"></i>
+                </span>
+                <span>View Alerts</span>
+            </a>
+            <a href="{{ url_for('map') }}" class="button is-info is-large">
+                <span class="icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </span>
+                <span>Explore Map</span>
+            </a>
+            <a href="{{ url_for('register') }}" class="button is-success is-large">
+                <span class="icon">
+                    <i class="fas fa-user-plus"></i>
+                </span>
+                <span>Sign Up</span>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %} 
