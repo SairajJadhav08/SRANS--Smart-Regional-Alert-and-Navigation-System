@@ -201,8 +201,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions:
 - 🐛 [Report bugs](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues)
+
+- Snapshots:
+  <img width="1437" height="978" alt="image" src="https://github.com/user-attachments/assets/5bd6746a-4973-4bc2-a956-2d0bb44b3e44" />
+
 - 💡 [Request features](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues)
 - 📧 Contact via the application's contact form
+<img width="1525" height="973" alt="image" src="https://github.com/user-attachments/assets/f88dc309-9d7e-4717-8740-f3066f49196d" />
+
+<img width="1566" height="968" alt="image" src="https://github.com/user-attachments/assets/9da5fee3-47db-4908-95ed-a2a02ed96339" />
+
 
 ---
 
