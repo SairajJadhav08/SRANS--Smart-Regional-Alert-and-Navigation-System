@@ -149,26 +149,26 @@ graph TB
     Health --> H3[Vaccination Centers]
     
     style Root fill:#6C63FF,stroke:#4D96FF,color:#fff,stroke-width:3px
-    style Traffic fill:#4285F4,stroke:#4D96FF,color:#fff
-    style Emergency fill:#EA4335,stroke:#4D96FF,color:#fff
-    style Weather fill:#34A853,stroke:#4D96FF,color:#fff
-    style Infrastructure fill:#FBBC04,stroke:#4D96FF,color:#000
-    style Health fill:#FF6B6B,stroke:#4D96FF,color:#fff
-    style T1 fill:#E8F0FE,stroke:#4285F4,color:#000
-    style T2 fill:#E8F0FE,stroke:#4285F4,color:#000
-    style T3 fill:#E8F0FE,stroke:#4285F4,color:#000
-    style E1 fill:#FCE8E6,stroke:#EA4335,color:#000
-    style E2 fill:#FCE8E6,stroke:#EA4335,color:#000
-    style E3 fill:#FCE8E6,stroke:#EA4335,color:#000
-    style W1 fill:#E6F4EA,stroke:#34A853,color:#000
-    style W2 fill:#E6F4EA,stroke:#34A853,color:#000
-    style W3 fill:#E6F4EA,stroke:#34A853,color:#000
-    style I1 fill:#FEF7E0,stroke:#FBBC04,color:#000
-    style I2 fill:#FEF7E0,stroke:#FBBC04,color:#000
-    style I3 fill:#FEF7E0,stroke:#FBBC04,color:#000
-    style H1 fill:#FFE5E5,stroke:#FF6B6B,color:#000
-    style H2 fill:#FFE5E5,stroke:#FF6B6B,color:#000
-    style H3 fill:#FFE5E5,stroke:#FF6B6B,color:#000
+    style Traffic fill:#4285F4,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Emergency fill:#EA4335,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Weather fill:#34A853,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Infrastructure fill:#B8860B,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Health fill:#FF6B6B,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style T1 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
+    style T2 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
+    style T3 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
+    style E1 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
+    style E2 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
+    style E3 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
+    style W1 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
+    style W2 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
+    style W3 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
+    style I1 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
+    style I2 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
+    style I3 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
+    style H1 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
+    style H2 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
+    style H3 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
 ```
 
 </div>
