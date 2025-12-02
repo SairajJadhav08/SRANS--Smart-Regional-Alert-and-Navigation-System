@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/SairajJadhav08/SRANS--Smart-Regional-Alert-and-Navigation-System/master/Project%20logo.png" alt="Smart Regional Alert and Navigation System Logo" width="280" height="auto">
-
 <br/>
 
 # 🔔 Smart Regional Alert and Navigation System
