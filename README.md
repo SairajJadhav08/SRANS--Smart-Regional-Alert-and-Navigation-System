@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="https://raw.githubusercontent.com/SairajJadhav08/SRANS--Smart-Regional-Alert-and-Navigation-System/master/Project%20logo.png" alt="Smart Regional Alert and Navigation System Logo" width="280" height="auto">
+
 <br/>
 
 # 🔔 Smart Regional Alert and Navigation System
@@ -117,28 +119,56 @@ graph TB
 <div align="center">
 
 ```mermaid
-mindmap
-  root((Alert Types))
-    Traffic
-      Accidents
-      Congestion
-      Road Closures
-    Emergency
-      Fires
-      Security Threats
-      Medical Emergencies
-    Weather
-      Floods
-      Storms
-      Extreme Conditions
-    Infrastructure
-      Power Outages
-      Road Construction
-      Roadblocks
-    Health
-      Disease Outbreaks
-      Health Advisories
-      Vaccination Centers
+graph TB
+    Root[Alert Types] 
+    
+    Root --> Traffic[Traffic]
+    Root --> Emergency[Emergency]
+    Root --> Weather[Weather]
+    Root --> Infrastructure[Infrastructure]
+    Root --> Health[Health]
+    
+    Traffic --> T1[Accidents]
+    Traffic --> T2[Congestion]
+    Traffic --> T3[Road Closures]
+    
+    Emergency --> E1[Fires]
+    Emergency --> E2[Security Threats]
+    Emergency --> E3[Medical Emergencies]
+    
+    Weather --> W1[Floods]
+    Weather --> W2[Storms]
+    Weather --> W3[Extreme Conditions]
+    
+    Infrastructure --> I1[Power Outages]
+    Infrastructure --> I2[Road Construction]
+    Infrastructure --> I3[Roadblocks]
+    
+    Health --> H1[Disease Outbreaks]
+    Health --> H2[Health Advisories]
+    Health --> H3[Vaccination Centers]
+    
+    style Root fill:#6C63FF,stroke:#4D96FF,color:#fff,stroke-width:3px
+    style Traffic fill:#4285F4,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Emergency fill:#EA4335,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Weather fill:#34A853,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Infrastructure fill:#B8860B,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style Health fill:#FF6B6B,stroke:#4D96FF,color:#fff,stroke-width:2px
+    style T1 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
+    style T2 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
+    style T3 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
+    style E1 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
+    style E2 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
+    style E3 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
+    style W1 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
+    style W2 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
+    style W3 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
+    style I1 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
+    style I2 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
+    style I3 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
+    style H1 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
+    style H2 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
+    style H3 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
 ```
 
 </div>
@@ -257,31 +287,62 @@ stateDiagram-v2
 <div align="center">
 
 ```mermaid
-mindmap
-  root((Smart Alert System))
-    Frontend
-      HTML5
-      CSS3
-      JavaScript
-      Bulma CSS
-      Responsive Design
-    Backend
-      Flask Framework
-      Python 3.7+
-      SQLAlchemy ORM
-      Werkzeug Security
-    Database
-      SQLite
-      Data Models
-      Relationships
-    External APIs
-      Google Maps API
-      Geocoding Service
-      Directions API
-    Infrastructure
-      Virtual Environment
-      Environment Variables
-      Session Management
+graph TB
+    Root[Smart Alert System]
+    
+    Root --> Frontend[Frontend]
+    Root --> Backend[Backend]
+    Root --> Database[Database]
+    Root --> APIs[External APIs]
+    Root --> Infrastructure[Infrastructure]
+    
+    Frontend --> F1[HTML5]
+    Frontend --> F2[CSS3]
+    Frontend --> F3[JavaScript]
+    Frontend --> F4[Bulma CSS]
+    Frontend --> F5[Responsive Design]
+    
+    Backend --> B1[Flask Framework]
+    Backend --> B2[Python 3.7+]
+    Backend --> B3[SQLAlchemy ORM]
+    Backend --> B4[Werkzeug Security]
+    
+    Database --> D1[SQLite]
+    Database --> D2[Data Models]
+    Database --> D3[Relationships]
+    
+    APIs --> A1[Google Maps API]
+    APIs --> A2[Geocoding Service]
+    APIs --> A3[Directions API]
+    
+    Infrastructure --> I1[Virtual Environment]
+    Infrastructure --> I2[Environment Variables]
+    Infrastructure --> I3[Session Management]
+    
+    style Root fill:#6C63FF,stroke:#4D96FF,color:#fff,stroke-width:3px
+    style Frontend fill:#00D1B2,stroke:#4D96FF,color:#fff
+    style Backend fill:#000000,stroke:#4D96FF,color:#fff
+    style Database fill:#003B57,stroke:#4D96FF,color:#fff
+    style APIs fill:#4285F4,stroke:#4D96FF,color:#fff
+    style Infrastructure fill:#FF6B6B,stroke:#4D96FF,color:#fff
+    style F1 fill:#E8F0FE,stroke:#00D1B2,color:#000
+    style F2 fill:#E8F0FE,stroke:#00D1B2,color:#000
+    style F3 fill:#E8F0FE,stroke:#00D1B2,color:#000
+    style F4 fill:#E8F0FE,stroke:#00D1B2,color:#000
+    style F5 fill:#E8F0FE,stroke:#00D1B2,color:#000
+    style B1 fill:#F5F5F5,stroke:#000000,color:#000
+    style B2 fill:#F5F5F5,stroke:#000000,color:#000
+    style B3 fill:#F5F5F5,stroke:#000000,color:#000
+    style B4 fill:#F5F5F5,stroke:#000000,color:#000
+    style D1 fill:#E8F0FE,stroke:#003B57,color:#000
+    style D2 fill:#E8F0FE,stroke:#003B57,color:#000
+    style D3 fill:#E8F0FE,stroke:#003B57,color:#000
+    style A1 fill:#E8F0FE,stroke:#4285F4,color:#000
+    style A2 fill:#E8F0FE,stroke:#4285F4,color:#000
+    style A3 fill:#E8F0FE,stroke:#4285F4,color:#000
+    style I1 fill:#FFE5E5,stroke:#FF6B6B,color:#000
+    style I2 fill:#FFE5E5,stroke:#FF6B6B,color:#000
+    style I3 fill:#FFE5E5,stroke:#FF6B6B,color:#000
 ```
 
 </div>
