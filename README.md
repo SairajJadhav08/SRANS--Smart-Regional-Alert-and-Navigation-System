@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="Project logo.png" alt="Smart Regional Alert and Navigation System Logo" width="280" height="auto">
-
 <br/>
 
 # 🔔 Smart Regional Alert and Navigation System
