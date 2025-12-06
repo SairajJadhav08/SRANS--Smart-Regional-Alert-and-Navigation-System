@@ -1,37 +1,39 @@
-<div style="display: flex; background-color: #2b2b2b; color: white; padding: 40px; border-radius: 10px; margin: 20px 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<table>
+<tr>
+<td width="300" valign="top" style="background-color: #2b2b2b; color: white; padding: 40px 30px; border-right: 1px solid #444;">
 
-<div style="flex: 0 0 300px; padding-right: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #444;">
-  <div style="margin-bottom: 30px;">
-    <img src="Logo.png" alt="SRANS Logo" style="width: 200px; height: 200px; border-radius: 50%; object-fit: contain; background: transparent;">
-  </div>
-  <div style="text-align: center;">
-    <h1 style="color: #FF6B35; font-size: 36px; font-weight: bold; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 2px;">SRANS</h1>
-    <p style="color: #90EE90; font-size: 14px; margin: 0; text-transform: uppercase; letter-spacing: 1px;">SMART REGIONAL ALERT</p>
-  </div>
+<div align="center">
+  <img src="Logo.png" alt="SRANS Logo" width="180" height="180" style="border-radius: 50%; margin-bottom: 30px;">
+  
+  <h1 style="color: #FF6B35; font-size: 32px; font-weight: bold; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 2px;">SRANS</h1>
+  
+  <p style="color: #90EE90; font-size: 14px; margin: 0; text-transform: uppercase; letter-spacing: 1px;">SMART REGIONAL ALERT</p>
 </div>
+</td>
+<td width="*" valign="middle" style="background-color: #2b2b2b; color: white; padding: 40px;">
 
-<div style="flex: 1; padding-left: 40px; display: flex; flex-direction: column; justify-content: center;">
-  <div style="display: flex; align-items: center; margin-bottom: 20px;">
-    <span style="font-size: 24px; margin-right: 15px;">🎯</span>
-    <h1 style="color: white; font-size: 48px; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 2px;">SRANS</h1>
-  </div>
+<div>
+  <h1 style="color: white; font-size: 48px; font-weight: bold; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 2px;">🎯 SRANS</h1>
   
   <hr style="border: none; border-top: 1px solid #555; margin: 20px 0;">
   
-  <p style="color: white; font-size: 20px; margin: 10px 0; line-height: 1.6;">
+  <p style="color: white; font-size: 20px; margin: 20px 0; line-height: 1.6;">
     Smart Regional Alert and Navigation System For Community Safety
   </p>
   
   <hr style="border: none; border-top: 1px solid #555; margin: 20px 0;">
   
-  <p style="color: white; font-size: 18px; margin: 10px 0; line-height: 1.6;">
+  <p style="color: white; font-size: 18px; margin: 20px 0; line-height: 1.6;">
     Empowering communities with real-time crisis intelligence through location-based alerts and smart navigation
   </p>
 </div>
 
-</div>
+</td>
+</tr>
+</table>
 
-<div align="center" style="margin: 30px 0;">
+<!-- Technology Badges -->
+<div align="center" style="margin: 40px 0; padding: 20px 0;">
 
 [![Python](https://img.shields.io/badge/Python-3.7+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-2.2.3-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
@@ -39,6 +41,10 @@
 [![Google Maps](https://img.shields.io/badge/Google_Maps-API-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)](https://developers.google.com/maps)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
+
+</div>
+
+<div align="center" style="margin: 20px 0;">
 
 [🚀 Live Demo](#) • [📖 Documentation](#-table-of-contents) • [🐛 Report Bug](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues) • [✨ Request Feature](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues)
 
