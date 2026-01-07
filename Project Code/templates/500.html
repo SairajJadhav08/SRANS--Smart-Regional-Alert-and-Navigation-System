@@ -21,33 +21,42 @@
                 <div class="box has-text-centered p-6 mb-6">
                     <div class="mb-6">
                         <!-- Interactive traffic light animation -->
-                        <div class="traffic-light mb-4" style="display: inline-block; background-color: #333; width: 80px; height: 200px; border-radius: 10px; padding: 15px; position: relative;">
-                            <div id="red-light" class="light red" style="background-color: #ff4d4d; width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 15px; box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);"></div>
-                            <div id="yellow-light" class="light yellow" style="background-color: #ffd699; width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 15px; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);"></div>
-                            <div id="green-light" class="light green" style="background-color: #b3ffb3; width: 50px; height: 50px; border-radius: 50%; margin: 0 auto; box-shadow: 0 0 10px rgba(0, 204, 0, 0.3);"></div>
+                        <div class="traffic-light mb-4"
+                            style="display: inline-block; background-color: #333; width: 80px; height: 200px; border-radius: 10px; padding: 15px; position: relative;">
+                            <div id="red-light" class="light red"
+                                style="background-color: #ff4d4d; width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 15px; box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);">
+                            </div>
+                            <div id="yellow-light" class="light yellow"
+                                style="background-color: #ffd699; width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 15px; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);">
+                            </div>
+                            <div id="green-light" class="light green"
+                                style="background-color: #b3ffb3; width: 50px; height: 50px; border-radius: 50%; margin: 0 auto; box-shadow: 0 0 10px rgba(0, 204, 0, 0.3);">
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div class="content">
                         <h3 class="title is-3">System Malfunction Detected</h3>
-                        <p class="subtitle is-5 mb-5">Our servers encountered an unexpected error while processing your request.</p>
-                        
+                        <p class="subtitle is-5 mb-5">Our servers encountered an unexpected error while processing your
+                            request.</p>
+
                         <div class="notification is-danger is-light mb-5">
                             <p>
                                 <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
                                 <strong>Error Code:</strong> 500.INTERNAL.SERVER.ERROR
                             </p>
                         </div>
-                        
-                        <div class="diagnostic-output mb-6" style="background-color: #1a1a1a; color: #33ff33; font-family: monospace; padding: 20px; border-radius: 6px; text-align: left; max-height: 200px; overflow-y: auto;">
+
+                        <div class="diagnostic-output mb-6"
+                            style="background-color: #1a1a1a; color: #33ff33; font-family: monospace; padding: 20px; border-radius: 6px; text-align: left; max-height: 200px; overflow-y: auto;">
                             <div id="diagnostic-text">
                                 > SYSTEM DIAGNOSTIC INITIATED<br>
                                 > CHECKING MAIN SERVICES...<br>
                             </div>
                         </div>
-                        
+
                         <h4 class="title is-4 mb-4">Recovery Options</h4>
-                        
+
                         <div class="buttons is-centered">
                             <button onclick="window.location.reload()" class="button is-primary is-medium">
                                 <span class="icon">
@@ -70,7 +79,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Technical Support -->
                 <div class="card mb-6">
                     <header class="card-header">
@@ -85,15 +94,16 @@
                     </header>
                     <div class="card-content">
                         <div class="content">
-                            <p>Our technical team has been automatically notified of this issue. You can help us improve by providing additional details about what you were doing when this error occurred.</p>
-                            
+                            <p>Our technical team has been automatically notified of this issue. You can help us improve
+                                by providing additional details about what you were doing when this error occurred.</p>
+
                             <div class="columns mt-4">
                                 <div class="column is-6">
                                     <div class="is-flex is-align-items-center mb-3">
                                         <span class="icon mr-2 has-text-danger">
                                             <i class="fas fa-envelope"></i>
                                         </span>
-                                        <span><strong>Email:</strong> support@smartalert.com</span>
+                                        <span><strong>Email:</strong> sairajjadhav433@gmail.com</span>
                                     </div>
                                 </div>
                                 <div class="column is-6">
@@ -101,11 +111,11 @@
                                         <span class="icon mr-2 has-text-danger">
                                             <i class="fas fa-phone"></i>
                                         </span>
-                                        <span><strong>Support Hotline:</strong> +1 (555) 123-4567</span>
+                                        <span><strong>Support Hotline:</strong> +91-9356860010</span>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="mt-5">
                                 <a href="{{ url_for('contact') }}" class="button is-danger is-outlined">
                                     <span class="icon">
@@ -117,7 +127,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Alternative Navigation -->
                 <div class="card">
                     <header class="card-header">
@@ -182,13 +192,13 @@
         const redLight = document.getElementById('red-light');
         const yellowLight = document.getElementById('yellow-light');
         const greenLight = document.getElementById('green-light');
-        
+
         // Initialize with red light on
         redLight.style.backgroundColor = '#ff0000';
         redLight.style.boxShadow = '0 0 20px rgba(255, 0, 0, 0.8)';
         yellowLight.style.backgroundColor = '#ffd699';
         greenLight.style.backgroundColor = '#b3ffb3';
-        
+
         // Traffic light sequence
         function trafficLightSequence() {
             // Red light
@@ -198,7 +208,7 @@
             yellowLight.style.boxShadow = '0 0 10px rgba(255, 204, 0, 0.3)';
             greenLight.style.backgroundColor = '#b3ffb3';
             greenLight.style.boxShadow = '0 0 10px rgba(0, 204, 0, 0.3)';
-            
+
             setTimeout(() => {
                 // Red and yellow lights
                 redLight.style.backgroundColor = '#ff0000';
@@ -207,7 +217,7 @@
                 yellowLight.style.boxShadow = '0 0 20px rgba(255, 204, 0, 0.8)';
                 greenLight.style.backgroundColor = '#b3ffb3';
                 greenLight.style.boxShadow = '0 0 10px rgba(0, 204, 0, 0.3)';
-                
+
                 setTimeout(() => {
                     // Green light
                     redLight.style.backgroundColor = '#ff4d4d';
@@ -216,7 +226,7 @@
                     yellowLight.style.boxShadow = '0 0 10px rgba(255, 204, 0, 0.3)';
                     greenLight.style.backgroundColor = '#00cc00';
                     greenLight.style.boxShadow = '0 0 20px rgba(0, 204, 0, 0.8)';
-                    
+
                     setTimeout(() => {
                         // Yellow light
                         redLight.style.backgroundColor = '#ff4d4d';
@@ -225,16 +235,16 @@
                         yellowLight.style.boxShadow = '0 0 20px rgba(255, 204, 0, 0.8)';
                         greenLight.style.backgroundColor = '#b3ffb3';
                         greenLight.style.boxShadow = '0 0 10px rgba(0, 204, 0, 0.3)';
-                        
+
                         setTimeout(trafficLightSequence, 1000);
                     }, 2000);
                 }, 1000);
             }, 1000);
         }
-        
+
         // Start the traffic light sequence
         trafficLightSequence();
-        
+
         // Terminal-like diagnostic output
         const diagnosticText = document.getElementById('diagnostic-text');
         const diagnosticMessages = [
@@ -255,15 +265,15 @@
             "> ERROR CODE: 500.INTERNAL.SERVER.ERROR",
             "> PLEASE STAND BY..."
         ];
-        
+
         let messageIndex = 0;
-        
+
         function addDiagnosticMessage() {
             if (messageIndex < diagnosticMessages.length) {
                 diagnosticText.innerHTML += diagnosticMessages[messageIndex] + "<br>";
                 diagnosticText.scrollTop = diagnosticText.scrollHeight;
                 messageIndex++;
-                
+
                 // Random typing delay between 200ms and 500ms
                 const typingDelay = Math.floor(Math.random() * 300) + 200;
                 setTimeout(addDiagnosticMessage, typingDelay);
@@ -278,9 +288,9 @@
                 }, 500);
             }
         }
-        
+
         // Start adding diagnostic messages
         setTimeout(addDiagnosticMessage, 800);
     });
 </script>
-{% endblock %} 
+{% endblock %}
