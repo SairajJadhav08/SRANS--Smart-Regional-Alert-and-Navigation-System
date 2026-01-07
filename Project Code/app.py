@@ -579,7 +579,9 @@ def init_db():
             
             db.session.commit()
 
+# Initialize database when the app starts (needed for Render)
+init_db()
+
 # Run the application
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True) 
