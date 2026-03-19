@@ -42,7 +42,8 @@
                         <div class="card">
                             <div class="card-image">
                                 <figure class="image is-3by2">
-                                    <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Live Alerts">
+                                    <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                                        alt="Live Alerts">
                                 </figure>
                             </div>
                             <div class="card-content">
@@ -57,20 +58,23 @@
                                     </div>
                                 </div>
                                 <div class="content">
-                                    Get instant notifications about emergencies, road closures, and other disruptions in your area. Stay informed to stay safe.
+                                    Get instant notifications about emergencies, road closures, and other disruptions in
+                                    your area. Stay informed to stay safe.
                                     <br><br>
-                                    <a href="{{ url_for('alerts') }}" class="button is-danger is-outlined is-fullwidth">View Alerts</a>
+                                    <a href="{{ url_for('alerts') }}"
+                                        class="button is-danger is-outlined is-fullwidth">View Alerts</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Smart Navigation Card -->
                     <div class="column is-4">
                         <div class="card">
                             <div class="card-image">
                                 <figure class="image is-3by2">
-                                    <img src="https://images.unsplash.com/photo-1508182314998-3bd49473002f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Smart Navigation">
+                                    <img src="https://images.unsplash.com/photo-1508182314998-3bd49473002f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                                        alt="Smart Navigation">
                                 </figure>
                             </div>
                             <div class="card-content">
@@ -85,20 +89,23 @@
                                     </div>
                                 </div>
                                 <div class="content">
-                                    Find the best routes to avoid roadblocks and traffic congestion. Our interactive map shows real-time traffic updates.
+                                    Find the best routes to avoid roadblocks and traffic congestion. Our interactive map
+                                    shows real-time traffic updates.
                                     <br><br>
-                                    <a href="{{ url_for('map') }}" class="button is-info is-outlined is-fullwidth">Open Map</a>
+                                    <a href="{{ url_for('map') }}" class="button is-info is-outlined is-fullwidth">Open
+                                        Map</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Government Updates Card -->
                     <div class="column is-4">
                         <div class="card">
                             <div class="card-image">
                                 <figure class="image is-3by2">
-                                    <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Government Updates">
+                                    <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                                        alt="Government Updates">
                                 </figure>
                             </div>
                             <div class="card-content">
@@ -113,9 +120,11 @@
                                     </div>
                                 </div>
                                 <div class="content">
-                                    Stay informed about local government projects, regulations, and important announcements that affect your community.
+                                    Stay informed about local government projects, regulations, and important
+                                    announcements that affect your community.
                                     <br><br>
-                                    <a href="{{ url_for('about') }}" class="button is-success is-outlined is-fullwidth">Learn More</a>
+                                    <a href="{{ url_for('about') }}"
+                                        class="button is-success is-outlined is-fullwidth">Learn More</a>
                                 </div>
                             </div>
                         </div>
@@ -130,7 +139,7 @@
 <section class="section has-background-light">
     <div class="container">
         <h2 class="title is-2 has-text-centered mb-6">How It Works</h2>
-        
+
         <div class="columns is-centered">
             <div class="column is-10">
                 <div class="columns is-multiline">
@@ -144,7 +153,7 @@
                             <p class="subtitle is-6">Sign up for free to access all features of our system.</p>
                         </div>
                     </div>
-                    
+
                     <!-- Step 2 -->
                     <div class="column is-4">
                         <div class="box has-text-centered">
@@ -155,7 +164,7 @@
                             <p class="subtitle is-6">Get notifications about important events in your region.</p>
                         </div>
                     </div>
-                    
+
                     <!-- Step 3 -->
                     <div class="column is-4">
                         <div class="box has-text-centered">
@@ -181,7 +190,8 @@
                     <div class="columns is-vcentered">
                         <div class="column is-8">
                             <h3 class="title is-3 has-text-white">Ready to get started?</h3>
-                            <p class="subtitle is-5 has-text-white">Create an account today and stay informed about what's happening in your region.</p>
+                            <p class="subtitle is-5 has-text-white">Create an account today and stay informed about
+                                what's happening in your region.</p>
                         </div>
                         <div class="column is-4 has-text-centered">
                             <a href="{{ url_for('register') }}" class="button is-white is-large">Sign Up Now</a>
@@ -192,4 +202,4 @@
         </div>
     </div>
 </section>
-{% endblock %} 
+{% endblock %}

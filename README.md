@@ -1,1688 +1,199 @@
-<table>
-<tr>
-<td width="300" valign="top" style="background-color: #2b2b2b; color: white; padding: 40px 30px; border-right: 1px solid #444;">
-
 <div align="center">
-  <img src="Logo.png" alt="SRANS Logo" width="180" height="180" style="border-radius: 50%; margin-bottom: 30px;">
-  
-  <h1 style="color: #FF6B35; font-size: 32px; font-weight: bold; margin: 20px 0 10px 0; text-transform: uppercase; letter-spacing: 2px;">SRANS</h1>
-  
-  <p style="color: #90EE90; font-size: 14px; margin: 0; text-transform: uppercase; letter-spacing: 1px;">SMART REGIONAL ALERT</p>
-</div>
-</td>
-<td width="*" valign="middle" style="background-color: #2b2b2b; color: white; padding: 40px;">
+  <img src="Logo.png" alt="SRANS Logo" width="120" height="120" style="border-radius: 50%;">
+  <h1>SRANS</h1>
+  <p><strong>Smart Regional Alert & Navigation System</strong></p>
+  <p>Empowering communities with real-time crisis intelligence through location-based alerts and smart navigation.</p>
 
-<div>
-  <h1 style="color: white; font-size: 48px; font-weight: bold; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 2px;">🎯 SRANS</h1>
-  
-  <hr style="border: none; border-top: 1px solid #555; margin: 20px 0;">
-  
-  <p style="color: white; font-size: 20px; margin: 20px 0; line-height: 1.6;">
-    Smart Regional Alert and Navigation System For Community Safety
-  </p>
-  
-  <hr style="border: none; border-top: 1px solid #555; margin: 20px 0;">
-  
-  <p style="color: white; font-size: 18px; margin: 20px 0; line-height: 1.6;">
-    Empowering communities with real-time crisis intelligence through location-based alerts and smart navigation
-  </p>
-</div>
-
-</td>
-</tr>
-</table>
-
-<!-- Technology Badges -->
-<div align="center" style="margin: 40px 0; padding: 20px 0;">
-
-[![Python](https://img.shields.io/badge/Python-3.7+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-2.2.3-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![Google Maps](https://img.shields.io/badge/Google_Maps-API-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)](https://developers.google.com/maps)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
-
-</div>
-
-<div align="center" style="margin: 20px 0;">
-
-[🚀 Live Demo](#) • [📖 Documentation](#-table-of-contents) • [🐛 Report Bug](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues) • [✨ Request Feature](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues)
-
+  [![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+  [![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+  [![Railway](https://img.shields.io/badge/Deploy-Railway-6E3FF3?style=flat-square&logo=railway&logoColor=white)](https://railway.app)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 </div>
 
 ---
 
-## ⚡ Quick Start
-
-<div align="center">
-
-```mermaid
-graph LR
-    A[📥 Clone Repo] --> B[🔧 Setup Venv]
-    B --> C[📦 Install Deps]
-    C --> D[🗝️ Add API Key]
-    D --> E[🚀 Run App]
-    E --> F[✨ Enjoy!]
-    
-    style A fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style E fill:#4D96FF,stroke:#6C63FF,color:#fff
-    style F fill:#00E5FF,stroke:#4D96FF,color:#000
-```
-
-**Get started in 5 minutes!** See [Installation & Setup](#-installation--setup) for detailed instructions.
-
-</div>
-
----
-
-## 📑 Table of Contents
-
-- [✨ Features](#-features)
-- [🎯 Use Cases](#-use-cases)
-- [🛠️ Technology Stack](#️-technology-stack)
-- [📋 Prerequisites](#-prerequisites)
-- [🚀 Installation & Setup](#-installation--setup)
-- [🎮 Usage Guide](#-usage-guide)
-- [📁 Project Structure](#-project-structure)
-- [🔌 API Reference](#-api-reference)
-- [🗄️ Database Schema](#️-database-schema)
-- [🎨 Screenshots](#-screenshots)
-- [🔧 Configuration](#-configuration)
-- [🚢 Deployment](#-deployment)
-- [🧪 Testing](#-testing)
-- [🛠️ Troubleshooting](#️-troubleshooting)
-- [🤝 Contributing](#-contributing)
-- [📝 License](#-license)
-- [👨‍💻 Author](#-author)
-- [🙏 Acknowledgments](#-acknowledgments)
-
----
-
-## 🏗️ System Architecture
-
-<div align="center">
+## 🏗️ Architecture
 
 ```mermaid
 graph TB
-    subgraph "Client Layer"
-        A[Web Browser] --> B[HTML/CSS/JS]
-        B --> C[Bulma CSS Framework]
-    end
-    
-    subgraph "Application Layer"
-        D[Flask Application] --> E[Route Handlers]
-        E --> F[Authentication Middleware]
-        E --> G[Business Logic]
-    end
-    
-    subgraph "Data Layer"
-        G --> H[SQLAlchemy ORM]
-        H --> I[(SQLite Database)]
-    end
-    
-    subgraph "External Services"
-        D --> J[Google Maps API]
-        J --> K[Geocoding Service]
-        J --> L[Directions Service]
-    end
-    
-    A --> D
-    D --> I
-    
-    style A fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style D fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style I fill:#00E5FF,stroke:#4D96FF,color:#000
-    style J fill:#4285F4,stroke:#4D96FF,color:#fff
-```
+    User["👤 Browser (HTML/CSS/JS)"]
+    Flask["⚙️ Flask App (app.py)"]
+    DB["🗄️ SQLite Database"]
+    GMaps["🗺️ Google Maps API"]
 
-</div>
+    User -->|HTTP Request| Flask
+    Flask -->|ORM Queries| DB
+    Flask -->|Map Embed| GMaps
+    GMaps -->|Maps + Routes| User
+```
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-### 🚨 **Comprehensive Alert Management**
-
-#### Alert Types Overview
-
-<div align="center">
-
-```mermaid
-graph TB
-    Root[Alert Types] 
-    
-    Root --> Traffic[Traffic]
-    Root --> Emergency[Emergency]
-    Root --> Weather[Weather]
-    Root --> Infrastructure[Infrastructure]
-    Root --> Health[Health]
-    
-    Traffic --> T1[Accidents]
-    Traffic --> T2[Congestion]
-    Traffic --> T3[Road Closures]
-    
-    Emergency --> E1[Fires]
-    Emergency --> E2[Security Threats]
-    Emergency --> E3[Medical Emergencies]
-    
-    Weather --> W1[Floods]
-    Weather --> W2[Storms]
-    Weather --> W3[Extreme Conditions]
-    
-    Infrastructure --> I1[Power Outages]
-    Infrastructure --> I2[Road Construction]
-    Infrastructure --> I3[Roadblocks]
-    
-    Health --> H1[Disease Outbreaks]
-    Health --> H2[Health Advisories]
-    Health --> H3[Vaccination Centers]
-    
-    style Root fill:#6C63FF,stroke:#4D96FF,color:#fff,stroke-width:3px
-    style Traffic fill:#4285F4,stroke:#4D96FF,color:#fff,stroke-width:2px
-    style Emergency fill:#EA4335,stroke:#4D96FF,color:#fff,stroke-width:2px
-    style Weather fill:#34A853,stroke:#4D96FF,color:#fff,stroke-width:2px
-    style Infrastructure fill:#B8860B,stroke:#4D96FF,color:#fff,stroke-width:2px
-    style Health fill:#FF6B6B,stroke:#4D96FF,color:#fff,stroke-width:2px
-    style T1 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
-    style T2 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
-    style T3 fill:#1A73E8,stroke:#4285F4,color:#fff,stroke-width:2px
-    style E1 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
-    style E2 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
-    style E3 fill:#C5221F,stroke:#EA4335,color:#fff,stroke-width:2px
-    style W1 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
-    style W2 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
-    style W3 fill:#137333,stroke:#34A853,color:#fff,stroke-width:2px
-    style I1 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
-    style I2 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
-    style I3 fill:#9A6E00,stroke:#B8860B,color:#fff,stroke-width:2px
-    style H1 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
-    style H2 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
-    style H3 fill:#CC0000,stroke:#FF6B6B,color:#fff,stroke-width:2px
-```
-
-</div>
-
-<table>
-<tr>
-<td width="50%">
-
-#### For Citizens
-- 🔔 **Real-time Notifications**: Instant alerts for traffic, emergencies, construction, weather, and disease outbreaks
-- 📍 **Location-Based Alerts**: GPS-enabled notifications specific to your region
-- 🏷️ **Multi-Category Filtering**: Traffic, Emergency, Construction, Weather, Disease, Power Cut, Flood, Roadblock
-- 🔍 **Advanced Search**: Filter alerts by type, severity, and location
-- 📱 **Mobile Responsive**: Access alerts on any device, anywhere
-- 💾 **Alert History**: View past alerts and their resolutions
-
-</td>
-<td width="50%">
-
-#### For Government Officials
-- 🎛️ **Admin Dashboard**: Comprehensive control panel for alert management
-- ✏️ **Create & Edit Alerts**: Rich text editor with location tagging
-- 🗑️ **Bulk Operations**: Delete multiple alerts simultaneously
-- 📊 **Analytics Dashboard**: Track alert engagement and reach
-- ✅ **Verification System**: Government account verification for credibility
-- 📧 **Contact Management**: View and respond to citizen inquiries
-
-</td>
-</tr>
-</table>
-
-### 🗺️ **Advanced Navigation & Mapping**
-
-- 🌍 **Interactive Google Maps**: Real-time traffic overlay and route visualization
-- 🧭 **Smart Route Planning**: Navigate around affected areas with alternative routes
-- 💾 **Saved Routes**: Bookmark frequently used routes for quick access
-- 📌 **Custom Markers**: Visual indicators for different alert types
-- 🔄 **Live Traffic Updates**: Real-time traffic conditions integration
-- 📏 **Distance Calculation**: Automatic route distance and time estimation
-
-### 👥 **Robust User Management**
-
-- 🔐 **Secure Authentication**: Password hashing with Werkzeug security
-- 👤 **Dual User Roles**: Regular users and verified government officials
-- ✉️ **Email Validation**: Built-in email verification system
-- 🔑 **Session Management**: Secure session handling with Flask
-- 🛡️ **Role-Based Access Control**: Granular permissions for different user types
-- 📝 **User Profiles**: Customizable user information and preferences
-
-### 📱 **Additional Capabilities**
-
-- 💬 **Contact System**: Direct communication channel with authorities
-- 🎨 **Modern UI/UX**: Beautiful, responsive design with Bulma CSS
-- 🗄️ **Efficient Database**: SQLite with SQLAlchemy ORM
-- ⚠️ **Error Handling**: Custom 404 and 500 error pages
-- 🌙 **Dark Mode Ready**: Prepared for theme switching
-- ♿ **Accessibility**: WCAG compliant design principles
+| Feature | Description |
+|---|---|
+| 🔔 **Live Alerts** | Traffic, Emergency, Weather, Construction, Flood, Health |
+| 🗺️ **Smart Navigation** | Google Maps integration with alert overlays and route saving |
+| 🏛️ **Dual Roles** | Regular Users + Verified Government Officials |
+| 🔐 **Secure Auth** | Werkzeug password hashing + Flask session management |
+| 📊 **Admin Dashboard** | Create, edit, delete, and bulk-manage alerts |
+| 📬 **Contact System** | Citizens can message government officials directly |
 
 ---
 
-## 🎯 Use Cases
-
-### Alert Lifecycle
-
-<div align="center">
-
-```mermaid
-stateDiagram-v2
-    [*] --> Created: Government Creates Alert
-    Created --> Published: Alert Verified
-    Published --> Active: Alert Goes Live
-    Active --> Viewed: User Views Alert
-    Active --> Expired: Time Limit Reached
-    Active --> Updated: Government Updates
-    Updated --> Active: Changes Applied
-    Active --> Resolved: Issue Resolved
-    Expired --> Archived: Auto Archive
-    Resolved --> Archived: Manual Archive
-    Archived --> [*]
-    
-    note right of Created
-        Alert created with
-        location, type, severity
-    end note
-    
-    note right of Active
-        Alert visible to all
-        users in region
-    end note
-    
-    note right of Resolved
-        Issue fixed,
-        alert marked resolved
-    end note
-```
-
-</div>
-
-### Use Case Scenarios
-
-| Scenario | How It Helps |
-|----------|--------------|
-| 🌊 **Natural Disasters** | Citizens receive immediate flood warnings, evacuation routes, and shelter locations |
-| 🚧 **Road Construction** | Commuters get notified about roadblocks and alternative routes before starting their journey |
-| ⚡ **Power Outages** | Residents stay informed about scheduled and emergency power cuts in their area |
-| 🦠 **Disease Outbreaks** | Health authorities can quickly disseminate information about disease hotspots and precautions |
-| 🚨 **Emergency Situations** | Real-time alerts for accidents, fires, or security threats with safety instructions |
-| 🚗 **Traffic Management** | Dynamic traffic updates help reduce congestion and improve commute times |
-
----
-
-## 🛠️ Technology Stack
-
-### Technology Stack Visualization
-
-<div align="center">
-
-```mermaid
-graph TB
-    Root[Smart Alert System]
-    
-    Root --> Frontend[Frontend]
-    Root --> Backend[Backend]
-    Root --> Database[Database]
-    Root --> APIs[External APIs]
-    Root --> Infrastructure[Infrastructure]
-    
-    Frontend --> F1[HTML5]
-    Frontend --> F2[CSS3]
-    Frontend --> F3[JavaScript]
-    Frontend --> F4[Bulma CSS]
-    Frontend --> F5[Responsive Design]
-    
-    Backend --> B1[Flask Framework]
-    Backend --> B2[Python 3.7+]
-    Backend --> B3[SQLAlchemy ORM]
-    Backend --> B4[Werkzeug Security]
-    
-    Database --> D1[SQLite]
-    Database --> D2[Data Models]
-    Database --> D3[Relationships]
-    
-    APIs --> A1[Google Maps API]
-    APIs --> A2[Geocoding Service]
-    APIs --> A3[Directions API]
-    
-    Infrastructure --> I1[Virtual Environment]
-    Infrastructure --> I2[Environment Variables]
-    Infrastructure --> I3[Session Management]
-    
-    style Root fill:#6C63FF,stroke:#4D96FF,color:#fff,stroke-width:3px
-    style Frontend fill:#00D1B2,stroke:#4D96FF,color:#fff
-    style Backend fill:#000000,stroke:#4D96FF,color:#fff
-    style Database fill:#003B57,stroke:#4D96FF,color:#fff
-    style APIs fill:#4285F4,stroke:#4D96FF,color:#fff
-    style Infrastructure fill:#FF6B6B,stroke:#4D96FF,color:#fff
-    style F1 fill:#E8F0FE,stroke:#00D1B2,color:#000
-    style F2 fill:#E8F0FE,stroke:#00D1B2,color:#000
-    style F3 fill:#E8F0FE,stroke:#00D1B2,color:#000
-    style F4 fill:#E8F0FE,stroke:#00D1B2,color:#000
-    style F5 fill:#E8F0FE,stroke:#00D1B2,color:#000
-    style B1 fill:#F5F5F5,stroke:#000000,color:#000
-    style B2 fill:#F5F5F5,stroke:#000000,color:#000
-    style B3 fill:#F5F5F5,stroke:#000000,color:#000
-    style B4 fill:#F5F5F5,stroke:#000000,color:#000
-    style D1 fill:#E8F0FE,stroke:#003B57,color:#000
-    style D2 fill:#E8F0FE,stroke:#003B57,color:#000
-    style D3 fill:#E8F0FE,stroke:#003B57,color:#000
-    style A1 fill:#E8F0FE,stroke:#4285F4,color:#000
-    style A2 fill:#E8F0FE,stroke:#4285F4,color:#000
-    style A3 fill:#E8F0FE,stroke:#4285F4,color:#000
-    style I1 fill:#FFE5E5,stroke:#FF6B6B,color:#000
-    style I2 fill:#FFE5E5,stroke:#FF6B6B,color:#000
-    style I3 fill:#FFE5E5,stroke:#FF6B6B,color:#000
-```
-
-</div>
-
-<div align="center">
-
-### Backend Technologies
-![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=for-the-badge&logo=python&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-
-### Frontend Technologies
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Bulma](https://img.shields.io/badge/Bulma-00D1B2?style=for-the-badge&logo=bulma&logoColor=white)
-
-### APIs & Services
-![Google Maps](https://img.shields.io/badge/Google_Maps-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)
-
-</div>
-
-### Detailed Stack
-
-| Category | Technology | Purpose |
-|----------|-----------|---------|
-| **Web Framework** | Flask 2.2.3 | Lightweight Python web framework for rapid development |
-| **ORM** | SQLAlchemy 2.0.7 | Database abstraction and object-relational mapping |
-| **Database** | SQLite | Embedded relational database for data persistence |
-| **Security** | Werkzeug 2.2.3 | Password hashing and security utilities |
-| **Template Engine** | Jinja2 3.1.2 | Dynamic HTML template rendering |
-| **CSS Framework** | Bulma CSS | Modern, responsive CSS framework |
-| **Mapping** | Google Maps API | Interactive maps and geolocation services |
-| **Validation** | email-validator 1.3.1 | Email address validation |
-| **Environment** | python-dotenv 1.0.0 | Environment variable management |
-
----
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-- **Python 3.7+** - [Download Python](https://www.python.org/downloads/)
-- **pip** - Python package installer (comes with Python)
-- **Git** - [Download Git](https://git-scm.com/downloads)
-- **Google Maps API Key** - [Get API Key](https://console.cloud.google.com/)
-- **Text Editor/IDE** - VS Code, PyCharm, or your preferred editor
-
-### System Requirements
-
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| **RAM** | 2 GB | 4 GB+ |
-| **Storage** | 100 MB | 500 MB+ |
-| **OS** | Windows 7+, macOS 10.12+, Linux | Latest stable version |
-| **Browser** | Chrome 90+, Firefox 88+, Safari 14+ | Latest version |
-
----
-
-## 🚀 Installation & Setup
-
-### Installation Flow
-
-<div align="center">
-
-```mermaid
-flowchart TD
-    Start([Start Installation]) --> Clone[Clone Repository]
-    Clone --> Venv[Create Virtual Environment]
-    Venv --> Activate[Activate Venv]
-    Activate --> Install[Install Dependencies]
-    Install --> Config[Configure Environment]
-    Config --> APIKey[Set Google Maps API Key]
-    APIKey --> InitDB[Initialize Database]
-    InitDB --> Run[Run Application]
-    Run --> Success([Application Running!])
-    
-    Config -->|Optional| EnvFile[Create .env file]
-    EnvFile --> APIKey
-    
-    style Start fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style Success fill:#4D96FF,stroke:#6C63FF,color:#fff
-    style APIKey fill:#4285F4,stroke:#4D96FF,color:#fff
-```
-
-</div>
-
-### Step 1: Clone the Repository
+## 🚀 Quick Start (Local)
 
 ```bash
-git clone https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System.git
-cd Smart-Regional-Alert-and-Navigation-System
-```
+# 1. Clone the repo
+git clone https://github.com/SairajJadhav08/SRANS--Smart-Regional-Alert-and-Navigation-System.git
+cd "SRANS--Smart-Regional-Alert-and-Navigation-System/Project Code"
 
-### Step 2: Create Virtual Environment
-
-**Windows:**
-```bash
+# 2. Create and activate virtual environment
 python -m venv venv
+# Windows:
 venv\Scripts\activate
-```
-
-**macOS/Linux:**
-```bash
-python3 -m venv venv
+# macOS/Linux:
 source venv/bin/activate
-```
 
-### Step 3: Install Dependencies
-
-```bash
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-**Dependencies installed:**
-- Flask==2.2.3
-- Flask-SQLAlchemy==3.0.3
-- Werkzeug==2.2.3
-- Jinja2==3.1.2
-- SQLAlchemy==2.0.7
-- email-validator==1.3.1
-- python-dotenv==1.0.0
-- itsdangerous==2.1.2
-- click==8.1.3
-- MarkupSafe==2.1.2
-
-### Step 4: Configure Google Maps API
-
-1. Visit [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Enable **Maps JavaScript API** and **Geocoding API**
-4. Create credentials (API Key)
-5. Add your API key to the map templates:
-   - `templates/map.html`
-   - `templates/index.html` (if applicable)
-
-**Replace:**
-```html
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
-```
-
-### Step 5: Environment Configuration (Optional)
-
-Create a `.env` file in the root directory:
-
-```env
-SECRET_KEY=your-secret-key-here-change-in-production
-GOOGLE_MAPS_API_KEY=your-google-maps-api-key
-DATABASE_URL=sqlite:///instance/database.db
-FLASK_ENV=development
-FLASK_DEBUG=True
-```
-
-### Step 6: Initialize Database
-
-```bash
-cd "Project Code"
+# 4. Run the app
 python app.py
 ```
 
-The database will be automatically created on first run with default admin accounts.
+Visit **http://localhost:5000** 🎉
 
-### Step 7: Run the Application
-
-```bash
-python app.py
-```
-
-You should see:
-```
- * Running on http://127.0.0.1:5000
- * Debug mode: on
-```
-
-### Step 8: Access the Application
-
-Open your browser and navigate to:
-```
-http://localhost:5000
-```
+> **Google Maps:** Replace `YOUR_API_KEY` in `templates/map.html` and `templates/index.html` with your key from [Google Cloud Console](https://console.cloud.google.com/).
 
 ---
 
-## 🎮 Usage Guide
-
-### User Journey Flow
-
-<div align="center">
+## 🚢 Deploy to Railway
 
 ```mermaid
-flowchart TD
-    Start([User Visits Site]) --> Home[Landing Page]
-    Home --> Choice{User Type?}
-    
-    Choice -->|New User| Register[Register Account]
-    Choice -->|Existing User| Login[Login]
-    Choice -->|Guest| Browse[Browse Alerts]
-    
-    Register --> Verify[Email Verification]
-    Verify --> Login
-    
-    Login --> CheckRole{Account Type?}
-    
-    CheckRole -->|Regular User| UserDash[User Dashboard]
-    CheckRole -->|Government| GovDash[Government Dashboard]
-    
-    UserDash --> ViewAlerts[View Alerts]
-    UserDash --> MapNav[Use Navigation]
-    UserDash --> SaveRoute[Save Routes]
-    UserDash --> Contact[Contact Authorities]
-    
-    GovDash --> CreateAlert[Create Alert]
-    GovDash --> ManageAlert[Manage Alerts]
-    GovDash --> ViewContact[View Contact Messages]
-    GovDash --> Analytics[View Analytics]
-    
-    Browse --> ViewAlerts
-    ViewAlerts --> Filter[Filter by Category]
-    Filter --> Details[View Alert Details]
-    
-    MapNav --> RoutePlan[Plan Route]
-    RoutePlan --> ShowAlerts[Show Alerts on Route]
-    ShowAlerts --> SaveRoute
-    
-    CreateAlert --> FillForm[Fill Alert Form]
-    FillForm --> SetLocation[Set Location]
-    SetLocation --> Publish[Publish Alert]
-    Publish --> Notify[Notify Users]
-    
-    style Start fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style UserDash fill:#00E5FF,stroke:#4D96FF,color:#000
-    style GovDash fill:#4285F4,stroke:#4D96FF,color:#fff
-    style Publish fill:#4D96FF,stroke:#6C63FF,color:#fff
+flowchart LR
+    A[Push to GitHub] --> B[Login to Railway]
+    B --> C[New Project → Deploy from GitHub]
+    C --> D[Select Repo]
+    D --> E[Set Root Dir: 'Project Code']
+    E --> F[Add SECRET_KEY env var]
+    F --> G[🚀 Deploy!]
 ```
 
-</div>
+### Step-by-Step
 
-### For Regular Users
+1. **Push your code to GitHub**
+2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo**
+3. Select your repository
+4. In **Settings → Source**, set **Root Directory** to `Project Code`
+5. Add environment variable: `SECRET_KEY` = any random string (e.g. `your-secret-key-here`)
+6. Click **Deploy** ✅
 
-1. **Registration**
-   - Navigate to `/register`
-   - Fill in username, email, and password
-   - Select "Regular User" as account type
-   - Submit to create account
-
-2. **Viewing Alerts**
-   - Visit `/alerts` to see all active alerts
-   - Filter by category (Traffic, Emergency, Weather, etc.)
-   - Click on alerts for detailed information
-
-3. **Using Navigation**
-   - Go to `/map`
-   - Enter start and destination locations
-   - View route with alert markers
-   - Save frequently used routes
-
-4. **Saving Routes**
-   - While on the map, click "Save Route"
-   - Give your route a name
-   - Access saved routes from `/my-routes`
-
-### For Government Officials
-
-1. **Government Account Setup**
-   - Register with "Government Official" account type
-   - Provide government email for verification
-   - Wait for admin approval (or use default admin account)
-
-2. **Creating Alerts**
-   - Login and access `/dashboard`
-   - Click "Create New Alert"
-   - Fill in alert details:
-     - Title
-     - Description
-     - Alert Type
-     - Severity Level
-     - Location coordinates
-   - Submit to publish
-
-3. **Managing Alerts**
-   - View all your alerts in dashboard
-   - Edit existing alerts
-   - Delete outdated alerts
-   - Bulk delete multiple alerts
-
-4. **Viewing Contact Messages**
-   - Access contact form submissions
-   - Respond to citizen inquiries
-   - Mark messages as read
-
-### Default Test Accounts
-
-<div align="center">
-
-```mermaid
-graph TB
-    subgraph "User Roles"
-        A[👤 Regular User] --> B[View Alerts]
-        A --> C[Save Routes]
-        A --> D[Contact Authorities]
-        
-        E[🏛️ Government Admin] --> F[Create Alerts]
-        E --> G[Edit Alerts]
-        E --> H[Delete Alerts]
-        E --> I[View Dashboard]
-        E --> J[Manage Contacts]
-    end
-    
-    style A fill:#00E5FF,stroke:#4D96FF,color:#000
-    style E fill:#4285F4,stroke:#4D96FF,color:#fff
-```
-
-</div>
-
-| Role | Username | Password | Capabilities |
-|------|----------|----------|--------------|
-| **Government Admin** | `admin` | `admin123` | Full access: Create/Edit/Delete alerts, Dashboard, Analytics |
-| **Regular User** | `user` | `user123` | View alerts, Save routes, Contact authorities |
-
-> ⚠️ **Security Note**: Change these default passwords in production!
-
----
-
-## 📁 Project Structure
-
-### Component Architecture
-
-<div align="center">
-
-```mermaid
-graph LR
-    subgraph "Frontend Components"
-        A[Base Template] --> B[Landing Page]
-        A --> C[Alerts Page]
-        A --> D[Map Page]
-        A --> E[Dashboard]
-        A --> F[Auth Pages]
-    end
-    
-    subgraph "Backend Components"
-        G[app.py] --> H[Models]
-        G --> I[Routes]
-        G --> J[Middleware]
-        H --> K[User Model]
-        H --> L[Alert Model]
-        H --> M[Route Model]
-        H --> N[Contact Model]
-    end
-    
-    subgraph "Services"
-        O[Database Service] --> P[SQLite]
-        Q[Auth Service] --> R[Werkzeug]
-        S[Maps Service] --> T[Google Maps API]
-    end
-    
-    I --> O
-    I --> Q
-    I --> S
-    
-    style A fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style G fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style O fill:#00E5FF,stroke:#4D96FF,color:#000
-    style S fill:#4285F4,stroke:#4D96FF,color:#fff
-```
-
-</div>
-
-### Directory Structure
-
-```
-Smart-Regional-Alert-and-Navigation-System/
-│
-├── 📁 Project Code/                    # Main application directory
-│   │
-│   ├── 📄 app.py                       # Flask application entry point (585 lines)
-│   │   ├── Database Models (User, Alert, SavedRoute, ContactMessage)
-│   │   ├── Authentication Middleware
-│   │   ├── Route Handlers (20+ routes)
-│   │   └── Error Handlers
-│   │
-│   ├── 📄 requirements.txt             # Python dependencies
-│   ├── 📄 README.md                    # Project-specific documentation
-│   │
-│   ├── 📁 templates/                   # Jinja2 HTML templates
-│   │   ├── 📄 base.html                # Base template with navbar & footer
-│   │   ├── 📄 index.html               # Landing page with hero section
-│   │   ├── 📄 alerts.html              # Alert listing with filters
-│   │   ├── 📄 map.html                 # Interactive Google Maps
-│   │   ├── 📄 dashboard.html           # Government admin dashboard
-│   │   ├── 📄 login.html               # User authentication form
-│   │   ├── 📄 register.html            # User registration form
-│   │   ├── 📄 new_alert.html           # Create new alert form
-│   │   ├── 📄 edit_alert.html          # Edit existing alert
-│   │   ├── 📄 my_routes.html           # User's saved routes
-│   │   ├── 📄 contact.html             # Contact form
-│   │   ├── 📄 about.html               # About page
-│   │   ├── 📄 features.html            # Features showcase
-│   │   ├── 📄 404.html                 # Not found error page
-│   │   └── 📄 500.html                 # Server error page
-│   │
-│   ├── 📁 instance/                    # Instance-specific files
-│   │   └── 📄 database.db              # SQLite database file
-│   │
-│   └── 📁 Docs/                        # Documentation
-│       ├── 📄 CONTEXT.md               # Project context & background
-│       ├── 📄 DEVELOPMENT.md           # Development guidelines
-│       └── 📄 context.txt              # Additional context
-│
-├── 📄 README.md                        # Main project documentation (this file)
-├── 📄 LICENSE                          # MIT License
-└── 📁 .git/                            # Git version control
-```
-
-### Key Files Explained
-
-| File | Lines | Purpose |
-|------|-------|---------|
-| `app.py` | 585 | Main application logic, routes, and database models |
-| `base.html` | - | Template inheritance base with navigation and footer |
-| `index.html` | - | Landing page with features and call-to-action |
-| `alerts.html` | - | Display all alerts with filtering capabilities |
-| `map.html` | - | Google Maps integration with route planning |
-| `dashboard.html` | - | Government official control panel |
-
----
-
-## 🔌 API Reference
-
-### API Flow Diagram
-
-<div align="center">
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Flask App
-    participant Auth Middleware
-    participant Database
-    participant Google Maps API
-    
-    Note over Client,Google Maps API: Authentication Flow
-    Client->>Flask App: POST /login
-    Flask App->>Database: Verify Credentials
-    Database-->>Flask App: User Data
-    Flask App->>Auth Middleware: Create Session
-    Auth Middleware-->>Client: Session Cookie
-    
-    Note over Client,Google Maps API: Alert Creation Flow
-    Client->>Flask App: POST /new-alert
-    Flask App->>Auth Middleware: Check Government Role
-    Auth Middleware-->>Flask App: Authorized
-    Flask App->>Database: Save Alert
-    Database-->>Flask App: Alert Created
-    Flask App-->>Client: Success Response
-    
-    Note over Client,Google Maps API: Route Planning Flow
-    Client->>Flask App: GET /map
-    Flask App->>Database: Fetch Alerts
-    Database-->>Flask App: Alert Data
-    Flask App->>Google Maps API: Geocode Locations
-    Google Maps API-->>Flask App: Coordinates
-    Flask App-->>Client: Map with Alerts
-```
-
-</div>
-
-### Authentication Endpoints
-
-#### POST `/login`
-Login to the system.
-
-**Request Body:**
-```json
-{
-  "username": "admin",
-  "password": "admin123"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "redirect": "/dashboard"
-}
-```
-
-#### POST `/register`
-Create a new user account.
-
-**Request Body:**
-```json
-{
-  "username": "newuser",
-  "email": "user@example.com",
-  "password": "securepass123",
-  "account_type": "regular"
-}
-```
-
-#### GET `/logout`
-Logout current user and clear session.
-
----
-
-### Alert Endpoints
-
-#### GET `/alerts`
-Retrieve all active alerts.
-
-**Query Parameters:**
-- `type` (optional): Filter by alert type (traffic, emergency, weather, etc.)
-
-**Response:**
-```json
-{
-  "alerts": [
-    {
-      "id": 1,
-      "title": "Heavy Traffic on Main Street",
-      "description": "Accident causing delays",
-      "alert_type": "traffic",
-      "severity": "high",
-      "latitude": 18.5204,
-      "longitude": 73.8567,
-      "created_at": "2025-11-22T04:00:00",
-      "author": "admin"
-    }
-  ]
-}
-```
-
-#### POST `/new-alert` 🔒 *Government Only*
-Create a new alert.
-
-**Request Body:**
-```json
-{
-  "title": "Road Closure",
-  "description": "Construction work in progress",
-  "alert_type": "construction",
-  "severity": "medium",
-  "latitude": 18.5204,
-  "longitude": 73.8567
-}
-```
-
-#### PUT `/edit-alert/<id>` 🔒 *Government Only*
-Update an existing alert.
-
-#### DELETE `/delete-alert/<id>` 🔒 *Government Only*
-Delete a specific alert.
-
----
-
-### Route Management Endpoints
-
-#### POST `/save-route` 🔒 *Login Required*
-Save a navigation route.
-
-**Request Body:**
-```json
-{
-  "name": "Home to Office",
-  "start_lat": 18.5204,
-  "start_lng": 73.8567,
-  "end_lat": 18.5314,
-  "end_lng": 73.8446
-}
-```
-
-#### GET `/my-routes` 🔒 *Login Required*
-Retrieve user's saved routes.
-
-#### DELETE `/delete-route/<id>` 🔒 *Login Required*
-Delete a saved route.
-
----
-
-### Contact Endpoints
-
-#### POST `/contact`
-Submit a contact message.
-
-**Request Body:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "subject": "Alert Inquiry",
-  "message": "I have a question about recent flood alerts..."
-}
-```
+> Railway auto-detects Python, uses `requirements.txt` to install deps, and `railway.toml` to start the server.
 
 ---
 
 ## 🗄️ Database Schema
 
-### Entity Relationship Diagram
-
-<div align="center">
-
 ```mermaid
 erDiagram
-    USERS ||--o{ ALERTS : creates
-    USERS ||--o{ SAVED_ROUTES : saves
-    USERS ||--o{ CONTACT_MESSAGES : sends
-    
-    USERS {
+    USER {
         int id PK
-        string username UK
-        string email UK
+        string username
+        string email
         string password_hash
-        boolean is_government
-        boolean is_verified
-        datetime created_at
+        bool is_government
+        string agency_name
+        bool is_verified
     }
-    
-    ALERTS {
+    ALERT {
         int id PK
         string title
-        text description
         string alert_type
-        string severity
-        float latitude
-        float longitude
+        float location_lat
+        float location_lng
         datetime created_at
-        datetime updated_at
         int author_id FK
     }
-    
-    SAVED_ROUTES {
+    SAVED_ROUTE {
         int id PK
         string name
         float start_lat
         float start_lng
         float end_lat
         float end_lng
-        datetime created_at
         int user_id FK
     }
-    
-    CONTACT_MESSAGES {
+    CONTACT_MESSAGE {
         int id PK
         string name
         string email
         string subject
-        text message
-        datetime created_at
-        boolean is_read
+        string message
+        bool is_read
     }
-```
 
-</div>
-
-### User Table
-```sql
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(80) UNIQUE NOT NULL,
-    email VARCHAR(120) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    is_government BOOLEAN DEFAULT FALSE,
-    is_verified BOOLEAN DEFAULT FALSE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Alert Table
-```sql
-CREATE TABLE alerts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title VARCHAR(100) NOT NULL,
-    description TEXT NOT NULL,
-    alert_type VARCHAR(50) NOT NULL,
-    severity VARCHAR(20) NOT NULL,
-    latitude FLOAT NOT NULL,
-    longitude FLOAT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    author_id INTEGER NOT NULL,
-    FOREIGN KEY (author_id) REFERENCES users(id)
-);
-```
-
-### SavedRoute Table
-```sql
-CREATE TABLE saved_routes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(100) NOT NULL,
-    start_lat FLOAT NOT NULL,
-    start_lng FLOAT NOT NULL,
-    end_lat FLOAT NOT NULL,
-    end_lng FLOAT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    user_id INTEGER NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-```
-
-### ContactMessage Table
-```sql
-CREATE TABLE contact_messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(120) NOT NULL,
-    subject VARCHAR(200) NOT NULL,
-    message TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_read BOOLEAN DEFAULT FALSE
-);
+    USER ||--o{ ALERT : "creates"
+    USER ||--o{ SAVED_ROUTE : "saves"
 ```
 
 ---
 
-## 🎨 Screenshots & Visuals
+## 👥 Default Test Accounts
 
-### Application Flow Visualization
+| Role | Username | Password |
+|---|---|---|
+| Government Admin | `admin` | `admin` |
+| Regular User | `user` | `user` |
 
-<div align="center">
-
-```mermaid
-graph TB
-    subgraph "User Interface"
-        A[Landing Page<br/>Hero Section] --> B[Alert Listing<br/>With Filters]
-        B --> C[Alert Details<br/>Modal View]
-        B --> D[Interactive Map<br/>Route Planning]
-        D --> E[Saved Routes<br/>Management]
-    end
-    
-    subgraph "Admin Interface"
-        F[Dashboard<br/>Overview] --> G[Create Alert<br/>Form]
-        F --> H[Manage Alerts<br/>Table View]
-        F --> I[Contact Messages<br/>Inbox]
-        F --> J[Analytics<br/>Charts]
-    end
-    
-    subgraph "Authentication"
-        K[Login Page] --> L[Register Page]
-        L --> M[Email Verification]
-        M --> N[User Dashboard]
-    end
-    
-    style A fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style D fill:#4285F4,stroke:#4D96FF,color:#fff
-    style F fill:#00E5FF,stroke:#4D96FF,color:#000
-    style K fill:#4D96FF,stroke:#6C63FF,color:#fff
-```
-
-</div>
-
-> 📸 *Screenshots will be added here showcasing:*
-> - Landing page with hero section
-> - Alert listing with filters
-> - Interactive map with route planning
-> - Government dashboard
-> - Mobile responsive views
+> ⚠️ Change these passwords before going to production!
 
 ---
 
-## 🔧 Configuration
+## 📁 Project Structure
 
-### Configuration Flow
-
-<div align="center">
-
-```mermaid
-flowchart LR
-    A[Environment Variables] --> B[Flask Config]
-    B --> C[Database Config]
-    B --> D[Security Config]
-    B --> E[API Config]
-    
-    C --> F[SQLite/PostgreSQL]
-    D --> G[SECRET_KEY]
-    E --> H[Google Maps API]
-    
-    style A fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style B fill:#00E5FF,stroke:#4D96FF,color:#000
-    style H fill:#4285F4,stroke:#4D96FF,color:#fff
 ```
-
-</div>
-
-### Flask Configuration
-
-Edit `app.py` to customize Flask settings:
-
-```python
-app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-```
-
-### Google Maps Configuration
-
-**Enable Required APIs:**
-1. Maps JavaScript API
-2. Geocoding API
-3. Directions API (optional, for advanced routing)
-
-**API Key Restrictions (Recommended):**
-- Application restrictions: HTTP referrers
-- API restrictions: Limit to Maps JavaScript API
-
-### Database Configuration
-
-**Using PostgreSQL (Production):**
-```python
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:password@localhost/dbname'
-```
-
-**Using MySQL:**
-```python
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://user:password@localhost/dbname'
+Project Code/
+├── app.py              # Main Flask app (models, routes, auth)
+├── requirements.txt    # Python dependencies
+├── railway.toml        # Railway deployment config
+├── Procfile            # Gunicorn start command
+├── runtime.txt         # Python version
+├── templates/          # Jinja2 HTML templates
+│   ├── base.html       # Base layout (navbar, footer)
+│   ├── index.html      # Landing page
+│   ├── alerts.html     # Alert listing
+│   ├── map.html        # Google Maps integration
+│   ├── dashboard.html  # Government admin panel
+│   └── ...
+└── static/             # Static assets (CSS, images)
 ```
 
 ---
 
-## 🚢 Deployment
+## 🔧 Making Changes
 
-### Deployment Architecture
-
-<div align="center">
-
-```mermaid
-graph TB
-    subgraph "Development"
-        A[Local Development] --> B[Git Repository]
-    end
-    
-    subgraph "CI/CD Pipeline"
-        B --> C[Code Push]
-        C --> D[Automated Tests]
-        D --> E{Tests Pass?}
-        E -->|Yes| F[Build Application]
-        E -->|No| G[Notify Developer]
-    end
-    
-    subgraph "Deployment Options"
-        F --> H[Heroku]
-        F --> I[PythonAnywhere]
-        F --> J[AWS EC2]
-        F --> K[Other Platforms]
-    end
-    
-    subgraph "Production"
-        H --> L[Production Server]
-        I --> L
-        J --> L
-        K --> L
-        L --> M[Live Application]
-    end
-    
-    style A fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style F fill:#00E5FF,stroke:#4D96FF,color:#000
-    style M fill:#4D96FF,stroke:#6C63FF,color:#fff
-```
-
-</div>
-
-### Deploy to Heroku
-
-1. **Install Heroku CLI**
-   ```bash
-   # Download from https://devcenter.heroku.com/articles/heroku-cli
-   ```
-
-2. **Create Heroku App**
-   ```bash
-   heroku create your-app-name
-   ```
-
-3. **Add Procfile**
-   ```
-   web: gunicorn app:app
-   ```
-
-4. **Add gunicorn to requirements.txt**
-   ```bash
-   echo "gunicorn==20.1.0" >> requirements.txt
-   ```
-
-5. **Deploy**
-   ```bash
-   git push heroku main
-   ```
-
-6. **Set Environment Variables**
-   ```bash
-   heroku config:set SECRET_KEY=your-secret-key
-   heroku config:set GOOGLE_MAPS_API_KEY=your-api-key
-   ```
-
-### Deploy to PythonAnywhere
-
-1. Upload code to PythonAnywhere
-2. Create a new web app (Flask)
-3. Configure WSGI file
-4. Install dependencies in virtual environment
-5. Reload web app
-
-### Deploy to AWS EC2
-
-1. Launch EC2 instance (Ubuntu)
-2. Install Python and dependencies
-3. Configure Nginx as reverse proxy
-4. Use Gunicorn as WSGI server
-5. Set up SSL with Let's Encrypt
+- **Add a new route:** Edit `app.py` → add a `@app.route(...)` function → create a template in `templates/`
+- **Add a DB field:** Add the column to the model in `app.py` → delete `instance/database.db` → restart the app to rebuild
+- **Change styles:** Edit `templates/base.html` (Tailwind classes) or `static/css/custom.css`
+- **Add alert type:** Update the `alert_type` choices in `templates/new_alert.html` and `dashboard.html`
 
 ---
 
-## 🧪 Testing
+## 🛠️ Tech Stack
 
-### Testing Workflow
-
-<div align="center">
-
-```mermaid
-flowchart LR
-    A[Test Planning] --> B[Unit Tests]
-    A --> C[Integration Tests]
-    A --> D[Manual Tests]
-    
-    B --> E[Model Tests]
-    B --> F[Route Tests]
-    B --> G[Auth Tests]
-    
-    C --> H[API Tests]
-    C --> I[Database Tests]
-    
-    D --> J[UI Tests]
-    D --> K[User Flow Tests]
-    D --> L[Mobile Tests]
-    
-    E --> M[Test Results]
-    F --> M
-    G --> M
-    H --> M
-    I --> M
-    J --> M
-    K --> M
-    L --> M
-    
-    M --> N{All Pass?}
-    N -->|Yes| O[Deploy]
-    N -->|No| P[Fix Issues]
-    P --> A
-    
-    style A fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style M fill:#00E5FF,stroke:#4D96FF,color:#000
-    style O fill:#4D96FF,stroke:#6C63FF,color:#fff
-```
-
-</div>
-
-### Manual Testing Checklist
-
-- [ ] User registration (regular and government)
-- [ ] User login and logout
-- [ ] Create alert (government user)
-- [ ] Edit alert (government user)
-- [ ] Delete alert (government user)
-- [ ] View alerts (all users)
-- [ ] Filter alerts by type
-- [ ] Save route (logged-in user)
-- [ ] Delete saved route
-- [ ] Submit contact form
-- [ ] Map functionality
-- [ ] Mobile responsiveness
-
-### Automated Testing (Future Enhancement)
-
-```bash
-# Install pytest
-pip install pytest pytest-flask
-
-# Run tests
-pytest tests/
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### Troubleshooting Decision Tree
-
-<div align="center">
-
-```mermaid
-flowchart TD
-    Start([Issue Encountered]) --> Q1{Database Error?}
-    Q1 -->|Yes| DBFix[Check Database Path<br/>Run db.create_all]
-    Q1 -->|No| Q2{Google Maps Not Loading?}
-    
-    Q2 -->|Yes| MapFix[Verify API Key<br/>Check Browser Console<br/>Enable Required APIs]
-    Q2 -->|No| Q3{Import Errors?}
-    
-    Q3 -->|Yes| ImportFix[Activate Virtual Environment<br/>pip install -r requirements.txt]
-    Q3 -->|No| Q4{Port Already in Use?}
-    
-    Q4 -->|Yes| PortFix[Kill Process on Port 5000<br/>Use Different Port]
-    Q4 -->|No| Q5{Session Issues?}
-    
-    Q5 -->|Yes| SessionFix[Check SECRET_KEY<br/>Clear Browser Cache]
-    Q5 -->|No| Other[Check Documentation<br/>Open GitHub Issue]
-    
-    DBFix --> Resolved([Issue Resolved])
-    MapFix --> Resolved
-    ImportFix --> Resolved
-    PortFix --> Resolved
-    SessionFix --> Resolved
-    Other --> Resolved
-    
-    style Start fill:#6C63FF,stroke:#4D96FF,color:#fff
-    style Resolved fill:#4D96FF,stroke:#6C63FF,color:#fff
-```
-
-</div>
-
-### Common Issues
-
-#### Issue: Database not found
-**Solution:**
-```bash
-cd "Project Code"
-python
->>> from app import db
->>> db.create_all()
->>> exit()
-```
-
-#### Issue: Google Maps not loading
-**Solution:**
-- Verify API key is correct
-- Check API key restrictions
-- Ensure Maps JavaScript API is enabled
-- Check browser console for errors
-
-#### Issue: Import errors
-**Solution:**
-```bash
-# Ensure virtual environment is activated
-pip install -r requirements.txt --upgrade
-```
-
-#### Issue: Port already in use
-**Solution:**
-```bash
-# Windows
-netstat -ano | findstr :5000
-taskkill /PID <PID> /F
-
-# macOS/Linux
-lsof -ti:5000 | xargs kill -9
-```
-
-#### Issue: Session not persisting
-**Solution:**
-- Check SECRET_KEY is set
-- Verify cookies are enabled in browser
-- Clear browser cache and cookies
-
----
-
-## 🤝 Contributing
-
-### Contribution Workflow Diagram
-
-<div align="center">
-
-```mermaid
-gitgraph
-    commit id: "Initial Commit"
-    branch develop
-    checkout develop
-    commit id: "Feature A"
-    commit id: "Feature B"
-    branch feature/new-feature
-    checkout feature/new-feature
-    commit id: "Work on Feature"
-    commit id: "More Work"
-    checkout develop
-    merge feature/new-feature
-    commit id: "Merge Feature"
-    checkout main
-    merge develop
-    commit id: "Release v1.0"
-```
-
-</div>
-
-We welcome contributions from the community! Here's how you can help:
-
-### Ways to Contribute
-
-- 🐛 **Report Bugs**: Open an issue describing the bug
-- ✨ **Suggest Features**: Share your ideas for new features
-- 📝 **Improve Documentation**: Help make our docs better
-- 💻 **Submit Code**: Fix bugs or implement features
-- 🎨 **Design**: Improve UI/UX
-- 🌍 **Translations**: Add support for more languages
-
-### Contribution Workflow
-
-1. **Fork the Repository**
-   ```bash
-   # Click 'Fork' on GitHub
-   ```
-
-2. **Clone Your Fork**
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/Smart-Regional-Alert-and-Navigation-System.git
-   cd Smart-Regional-Alert-and-Navigation-System
-   ```
-
-3. **Create a Feature Branch**
-   ```bash
-   git checkout -b feature/amazing-new-feature
-   ```
-
-4. **Make Your Changes**
-   - Follow PEP 8 style guidelines
-   - Add comments for complex logic
-   - Update documentation as needed
-
-5. **Test Your Changes**
-   ```bash
-   # Run the application
-   python app.py
-   # Test all affected functionality
-   ```
-
-6. **Commit Your Changes**
-   ```bash
-   git add .
-   git commit -m "feat: Add amazing new feature"
-   ```
-
-   **Commit Message Convention:**
-   - `feat:` New feature
-   - `fix:` Bug fix
-   - `docs:` Documentation changes
-   - `style:` Code style changes
-   - `refactor:` Code refactoring
-   - `test:` Test additions/changes
-   - `chore:` Maintenance tasks
-
-7. **Push to Your Fork**
-   ```bash
-   git push origin feature/amazing-new-feature
-   ```
-
-8. **Open a Pull Request**
-   - Go to the original repository
-   - Click "New Pull Request"
-   - Select your branch
-   - Describe your changes
-   - Submit for review
-
-### Development Guidelines
-
-- **Code Style**: Follow PEP 8 for Python code
-- **Comments**: Add docstrings to functions and classes
-- **Testing**: Test your changes thoroughly before submitting
-- **Documentation**: Update README and docs for new features
-- **Commits**: Write clear, descriptive commit messages
-- **Issues**: Reference related issues in your PR
-
-### Code Review Process
-
-1. Maintainers will review your PR
-2. Address any requested changes
-3. Once approved, your PR will be merged
-4. Your contribution will be credited!
+| Layer | Technology |
+|---|---|
+| Backend | Python 3.11, Flask 3.0 |
+| Database | SQLite + SQLAlchemy ORM |
+| Authentication | Werkzeug Security |
+| Frontend | Tailwind CSS v3, Jinja2 |
+| Maps | Google Maps JavaScript API |
+| Deployment | Railway / Gunicorn |
 
 ---
 
 ## 📝 License
 
-This project is licensed under the **MIT License**.
-
-```
-MIT License
-
-Copyright (c) 2025 Sairaj Jadhav
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-See the [LICENSE](LICENSE) file for full details.
-
----
-
-## 👨‍💻 Author
-
-<div align="center">
-
-### **Sairaj Jadhav**
-
-*Full Stack Developer | Open Source Enthusiast | Problem Solver*
-
-[![GitHub](https://img.shields.io/badge/GitHub-@SairajJadhav08-181717?style=for-the-badge&logo=github)](https://github.com/SairajJadhav08)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Sairaj_Jadhav-0077B5?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/sairaj-jadhav-8521b3226/)
-
-📧 **Contact**: [GitHub Profile](https://github.com/SairajJadhav08)
-
-</div>
-
----
-
-## 🙏 Acknowledgments
-
-This project wouldn't be possible without these amazing technologies and communities:
-
-- 🗺️ **[Google Maps Platform](https://developers.google.com/maps)** - For providing powerful mapping and geolocation APIs
-- 🐍 **[Flask Community](https://flask.palletsprojects.com/)** - For the excellent Python web framework
-- 🎨 **[Bulma CSS](https://bulma.io/)** - For the beautiful, modern CSS framework
-- 🗄️ **[SQLAlchemy](https://www.sqlalchemy.org/)** - For the robust ORM and database toolkit
-- 🔐 **[Werkzeug](https://werkzeug.palletsprojects.com/)** - For security utilities and password hashing
-- 📚 **[Stack Overflow Community](https://stackoverflow.com/)** - For countless solutions and guidance
-- 💡 **Open Source Community** - For inspiration and best practices
-- 🙌 **Contributors** - Everyone who has helped improve this project
-
-### Special Thanks
-
-- All beta testers who provided valuable feedback
-- Contributors who submitted bug reports and feature requests
-- The open-source community for continuous inspiration
-
----
-
-## 📞 Support & Contact
-
-<div align="center">
-
-### Need Help?
-
-If you encounter any issues or have questions, we're here to help!
-
-[![Report Bug](https://img.shields.io/badge/🐛_Report_Bug-red?style=for-the-badge)](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues/new?labels=bug&template=bug_report.md)
-[![Request Feature](https://img.shields.io/badge/✨_Request_Feature-blue?style=for-the-badge)](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues/new?labels=enhancement&template=feature_request.md)
-[![Ask Question](https://img.shields.io/badge/❓_Ask_Question-green?style=for-the-badge)](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/discussions)
-
-### Support Channels
-
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues)
-- 💡 **Feature Requests**: [GitHub Issues](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System/discussions)
-- 📧 **Direct Contact**: Via the application's contact form
-
-</div>
-
----
-
-<div align="center">
-
-## ⭐ Show Your Support
-
-If you find this project helpful, please consider giving it a star!
-
-[![Star on GitHub](https://img.shields.io/github/stars/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System?style=social)](https://github.com/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System)
-
-### Project Stats
-
-![GitHub issues](https://img.shields.io/github/issues/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System)
-![GitHub last commit](https://img.shields.io/github/last-commit/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System)
-![GitHub repo size](https://img.shields.io/github/repo-size/SairajJadhav08/Smart-Regional-Alert-and-Navigation-System)
-
----
-
-**Made with ❤️ by [Sairaj Jadhav](https://github.com/SairajJadhav08)**
-
-*Empowering communities through technology, one alert at a time.*
-
----
-
-<div align="center">
-
-### 📊 Project Statistics
-
-```mermaid
-pie title Technology Distribution
-    "Flask Backend" : 35
-    "Frontend (HTML/CSS/JS)" : 25
-    "Database (SQLite)" : 15
-    "Google Maps API" : 15
-    "Other Services" : 10
-```
-
-</div>
-
----
-
-</div>
+MIT © [Sairaj Jadhav](https://github.com/SairajJadhav08)
