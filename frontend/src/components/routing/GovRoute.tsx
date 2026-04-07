@@ -1,0 +1,16 @@
+import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+
+export default function GovRoute() {
+  const { isLoggedIn, isGovUser } = useAuth()
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!isGovUser) {
+    return <Navigate to="/" replace />
+  }
+
+  return <Outlet />
+}
