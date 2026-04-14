@@ -1,48 +1,45 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getAlerts, deleteAlert, bulkDeleteAlerts } from '../api'
+import type { Alert } from '../types'
 
 export default function DashboardPage() {
-  const { user, isGovUser } = useAuth()
+  const { user, isGovUser, isSuperuser } = useAuth()
 
-  // Mock Alerts
-  const [alerts, setAlerts] = useState([
-    {
-      id: 1,
-      alert_type: 'Traffic',
-      title: 'Heavy Traffic on Main St',
-      description: 'Accident reported on Main St causing significant delays.',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: 2,
-      alert_type: 'Emergency',
-      title: 'Power Outage',
-      description: 'Large power outage in the downtown area.',
-      created_at: new Date(Date.now() - 86400000).toISOString()
-    }
-  ])
-
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [selectedAlerts, setSelectedAlerts] = useState<number[]>([])
-  
   const [deleteModalActive, setDeleteModalActive] = useState(false)
   const [bulkModalActive, setBulkModalActive] = useState(false)
   const [alertToDelete, setAlertToDelete] = useState<number | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
-  // Filter and Sort Alerts
+  const fetchAlerts = () => {
+    setLoading(true)
+    // Superuser sees all alerts; gov user sees only their own
+    const params = isSuperuser ? undefined : { author_only: true }
+    getAlerts(params)
+      .then(res => setAlerts(res.data))
+      .catch(() => setAlerts([]))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchAlerts() }, [])
+
+  // Filter + sort
   let displayAlerts = alerts.filter(a => {
     if (filterType !== 'all' && a.alert_type !== filterType) return false
     if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      return a.title.toLowerCase().includes(term) || a.description.toLowerCase().includes(term)
+      const t = searchTerm.toLowerCase()
+      return a.title.toLowerCase().includes(t) || a.description.toLowerCase().includes(t)
     }
     return true
   })
-
-  displayAlerts.sort((a, b) => {
+  displayAlerts = [...displayAlerts].sort((a, b) => {
     if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     if (sortBy === 'type') return a.alert_type.localeCompare(b.alert_type)
@@ -50,349 +47,237 @@ export default function DashboardPage() {
   })
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedAlerts(displayAlerts.map(a => a.id))
-    } else {
-      setSelectedAlerts([])
-    }
+    setSelectedAlerts(e.target.checked ? displayAlerts.map(a => a.id) : [])
   }
 
-  const handleSelectAlert = (id: number) => {
-    setSelectedAlerts(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
-  }
-
-  const handleDelete = () => {
-    if (alertToDelete !== null) {
-      setAlerts(alerts.filter(a => a.id !== alertToDelete))
+  const handleDelete = async () => {
+    if (alertToDelete === null) return
+    setActionLoading(true)
+    try {
+      await deleteAlert(alertToDelete)
+      setAlerts(prev => prev.filter(a => a.id !== alertToDelete))
+    } catch { alert('Failed to delete alert.') }
+    finally {
+      setActionLoading(false)
       setDeleteModalActive(false)
       setAlertToDelete(null)
     }
   }
 
-  const handleBulkDelete = () => {
-    setAlerts(alerts.filter(a => !selectedAlerts.includes(a.id)))
-    setSelectedAlerts([])
-    setBulkModalActive(false)
+  const handleBulkDelete = async () => {
+    setActionLoading(true)
+    try {
+      await bulkDeleteAlerts(selectedAlerts)
+      setAlerts(prev => prev.filter(a => !selectedAlerts.includes(a.id)))
+      setSelectedAlerts([])
+    } catch { alert('Bulk delete failed.') }
+    finally {
+      setActionLoading(false)
+      setBulkModalActive(false)
+    }
   }
+
+  const canCreate = isSuperuser || (user?.is_government && user?.is_verified)
 
   return (
     <>
-      {/* Hero Section */}
       <section className="hero is-primary">
         <div className="hero-body">
           <div className="container">
             <div className="columns is-vcentered">
               <div className="column">
-                <h1 className="title is-1">Government Dashboard</h1>
-                <h2 className="subtitle is-4">Manage alerts and notifications for your region</h2>
+                <h1 className="title is-1">
+                  {isSuperuser ? 'Superuser Dashboard' : 'Government Dashboard'}
+                </h1>
+                <h2 className="subtitle is-4">
+                  {isSuperuser ? 'Overview of all alerts across all agencies' : 'Manage alerts for your region'}
+                </h2>
               </div>
               <div className="column is-narrow">
-                {user?.is_verified ? (
-                  <Link to="/new_alert" className="button is-white is-medium">
-                    <span className="icon">
-                      <i className="fas fa-plus"></i>
-                    </span>
-                    <span>Create New Alert</span>
-                  </Link>
-                ) : (
-                  <button className="button is-white is-medium" disabled title="Account verification required to create alerts">
-                    <span className="icon">
-                      <i className="fas fa-plus"></i>
-                    </span>
-                    <span>Create New Alert</span>
-                  </button>
-                )}
+                <Link
+                  to="/dashboard/alerts/new"
+                  className={`button is-white is-medium${!canCreate ? ' is-static' : ''}`}
+                  title={!canCreate ? 'Verification required' : ''}
+                >
+                  <span className="icon"><i className="fas fa-plus"></i></span>
+                  <span>Create New Alert</span>
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {!user?.is_verified && isGovUser && (
+      {/* Pending verification banner */}
+      {user?.is_government && !user?.is_verified && (
         <section className="section pt-4 pb-0">
           <div className="container">
             <div className="notification is-warning">
-              <div className="columns is-vcentered">
-                <div className="column">
-                  <span className="icon-text">
-                    <span className="icon">
-                      <i className="fas fa-exclamation-triangle"></i>
-                    </span>
-                    <span><strong>Account Verification Pending</strong></span>
-                  </span>
-                  <p className="mt-2">Your government account is currently under review. Some features may be limited until verification is complete.</p>
-                </div>
-                <div className="column is-narrow">
-                  <Link to="/contact" className="button is-warning is-light">
-                    <span className="icon">
-                      <i className="fas fa-question-circle"></i>
-                    </span>
-                    <span>Need Help?</span>
-                  </Link>
-                </div>
-              </div>
+              <span className="icon-text">
+                <span className="icon"><i className="fas fa-exclamation-triangle"></i></span>
+                <strong>Account Verification Pending</strong>
+              </span>
+              <p className="mt-2">Your government account is under review. You cannot create alerts until verified.</p>
             </div>
           </div>
         </section>
       )}
 
-      {/* Dashboard Overview */}
       <section className="section">
         <div className="container">
-          {!user?.is_verified && (
-            <div className="card mb-6">
-              <div className="card-content">
-                <div className="content">
-                  <div className="columns is-vcentered">
-                    <div className="column is-2 has-text-centered">
-                      <span className="icon is-large">
-                        <i className="fas fa-user-shield fa-3x has-text-warning"></i>
-                      </span>
-                    </div>
-                    <div className="column">
-                      <h3 className="title is-4">Government Account Verification</h3>
-                      <p>Your account is awaiting verification by an administrator. Once verified, you'll be able to:</p>
-                      <ul className="mt-3">
-                        <li><i className="fas fa-check-circle has-text-success mr-2"></i> Create and publish alerts</li>
-                        <li><i className="fas fa-check-circle has-text-success mr-2"></i> Manage emergency notifications</li>
-                        <li><i className="fas fa-check-circle has-text-success mr-2"></i> Access analytics and reporting</li>
-                      </ul>
-                      <p className="is-italic mt-3">This process typically takes 1-2 business days. Please contact us if you have any questions.</p>
+
+          {/* Stats */}
+          {loading ? (
+            <div className="has-text-centered py-6">
+              <span className="icon is-large"><i className="fas fa-spinner fa-spin fa-2x has-text-primary"></i></span>
+              <p className="mt-3">Loading alerts...</p>
+            </div>
+          ) : (
+            <>
+              <div className="columns is-multiline mb-5">
+                {[
+                  { label: 'Total Alerts', count: alerts.length, bg: 'has-background-primary', icon: 'fa-bell' },
+                  { label: 'Traffic', count: alerts.filter(a => a.alert_type === 'Traffic').length, bg: 'has-background-danger', icon: 'fa-car-crash' },
+                  { label: 'Emergency', count: alerts.filter(a => a.alert_type === 'Emergency').length, bg: 'has-background-warning', icon: 'fa-exclamation-triangle', dark: true },
+                  { label: 'Weather', count: alerts.filter(a => a.alert_type === 'Weather').length, bg: 'has-background-info', icon: 'fa-cloud-rain' },
+                ].map(stat => (
+                  <div className="column is-3" key={stat.label}>
+                    <div className={`box dashboard-tile ${stat.bg} has-text-${stat.dark ? 'dark' : 'white'}`}>
+                      <article className="media">
+                        <div className="media-left">
+                          <span className="icon is-large"><i className={`fas ${stat.icon} fa-2x`}></i></span>
+                        </div>
+                        <div className="media-content">
+                          <p className={`title is-4 has-text-${stat.dark ? 'dark' : 'white'}`}>{stat.count}</p>
+                          <p className={`subtitle is-6 has-text-${stat.dark ? 'dark' : 'white'}`}>{stat.label}</p>
+                        </div>
+                      </article>
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
-            </div>
-          )}
 
-          {/* Quick Stats */}
-          <div className="columns is-multiline">
-            <div className="column is-3">
-              <div className="box dashboard-tile has-background-primary has-text-white">
-                <article className="media">
-                  <div className="media-left">
-                    <span className="icon is-large">
-                      <i className="fas fa-bell fa-2x"></i>
+              {/* Alert Management Table */}
+              <div className="card">
+                <header className="card-header">
+                  <p className="card-header-title">
+                    <span className="icon-text">
+                      <span className="icon"><i className="fas fa-bell"></i></span>
+                      <span>Alert Management</span>
                     </span>
-                  </div>
-                  <div className="media-content">
-                    <div className="content">
-                      <p className="title has-text-white is-4">{alerts.length}</p>
-                      <p className="subtitle has-text-white is-6">Active Alerts</p>
+                  </p>
+                  <div className="card-header-icon">
+                    <div className="field has-addons">
+                      <div className="control">
+                        <input className="input" type="text" placeholder="Search alerts..."
+                          value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                      </div>
                     </div>
                   </div>
-                </article>
-              </div>
-            </div>
+                </header>
 
-            <div className="column is-3">
-              <div className="box dashboard-tile has-background-danger has-text-white">
-                <article className="media">
-                  <div className="media-left">
-                    <span className="icon is-large">
-                      <i className="fas fa-car-crash fa-2x"></i>
-                    </span>
-                  </div>
-                  <div className="media-content">
-                    <div className="content">
-                      <p className="title has-text-white is-4">{alerts.filter(a => a.alert_type === 'Traffic').length}</p>
-                      <p className="subtitle has-text-white is-6">Traffic Alerts</p>
+                <div className="card-content">
+                  <div className="field is-grouped mb-4">
+                    <div className="control">
+                      <div className="select">
+                        <select value={filterType} onChange={e => setFilterType(e.target.value)}>
+                          <option value="all">All Types</option>
+                          <option value="Traffic">Traffic</option>
+                          <option value="Emergency">Emergency</option>
+                          <option value="Construction">Construction</option>
+                          <option value="Weather">Weather</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </div>
-            </div>
-
-            <div className="column is-3">
-              <div className="box dashboard-tile has-background-warning has-text-dark">
-                <article className="media">
-                  <div className="media-left">
-                    <span className="icon is-large">
-                      <i className="fas fa-exclamation-triangle fa-2x"></i>
-                    </span>
-                  </div>
-                  <div className="media-content">
-                    <div className="content">
-                      <p className="title has-text-dark is-4">{alerts.filter(a => a.alert_type === 'Emergency').length}</p>
-                      <p className="subtitle has-text-dark is-6">Emergency Alerts</p>
+                    <div className="control">
+                      <div className="select">
+                        <select value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                          <option value="newest">Newest First</option>
+                          <option value="oldest">Oldest First</option>
+                          <option value="type">By Type</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                </article>
-              </div>
-            </div>
-
-            <div className="column is-3">
-              <div className="box dashboard-tile has-background-info has-text-white">
-                <article className="media">
-                  <div className="media-left">
-                    <span className="icon is-large">
-                      <i className="fas fa-cloud-rain fa-2x"></i>
-                    </span>
-                  </div>
-                  <div className="media-content">
-                    <div className="content">
-                      <p className="title has-text-white is-4">{alerts.filter(a => a.alert_type === 'Weather').length}</p>
-                      <p className="subtitle has-text-white is-6">Weather Alerts</p>
-                    </div>
-                  </div>
-                </article>
-              </div>
-            </div>
-          </div>
-
-          {/* Alert Management */}
-          <div className="card mt-6">
-            <header className="card-header">
-              <p className="card-header-title">
-                <span className="icon-text">
-                  <span className="icon">
-                    <i className="fas fa-bell"></i>
-                  </span>
-                  <span>Alert Management</span>
-                </span>
-              </p>
-              <div className="card-header-icon">
-                <div className="field has-addons">
-                  <div className="control">
-                    <input className="input" type="text" placeholder="Search alerts..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                  </div>
-                  <div className="control">
-                    <button className="button is-primary">
-                      <span className="icon">
-                        <i className="fas fa-search"></i>
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </header>
-
-            <div className="card-content">
-              <div className="content">
-                <div className="field is-grouped mb-5">
-                  <div className="control">
-                    <div className="select">
-                      <select value={filterType} onChange={e => setFilterType(e.target.value)}>
-                        <option value="all">All Types</option>
-                        <option value="Traffic">Traffic</option>
-                        <option value="Emergency">Emergency</option>
-                        <option value="Construction">Construction</option>
-                        <option value="Weather">Weather</option>
-                      </select>
+                    <div className="control is-expanded"></div>
+                    <div className="control">
+                      <button className="button is-danger is-light"
+                        disabled={selectedAlerts.length === 0}
+                        onClick={() => setBulkModalActive(true)}>
+                        <span className="icon"><i className="fas fa-trash"></i></span>
+                        <span>Delete Selected ({selectedAlerts.length})</span>
+                      </button>
                     </div>
                   </div>
 
-                  <div className="control">
-                    <div className="select">
-                      <select value={sortBy} onChange={e => setSortBy(e.target.value)}>
-                        <option value="newest">Newest First</option>
-                        <option value="oldest">Oldest First</option>
-                        <option value="type">By Type</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="control is-expanded"></div>
-
-                  <div className="control">
-                    <button 
-                      className="button is-primary" 
-                      disabled={selectedAlerts.length === 0}
-                      onClick={() => setBulkModalActive(true)}
-                    >
-                      <span className="icon">
-                        <i className="fas fa-tasks"></i>
-                      </span>
-                      <span>Bulk Actions</span>
-                    </button>
-                  </div>
-                </div>
-
-                {displayAlerts.length > 0 ? (
-                  <div className="table-container">
-                    <table className="table is-fullwidth is-hoverable">
-                      <thead>
-                        <tr>
-                          <th>
-                            <label className="checkbox">
-                              <input 
-                                type="checkbox" 
-                                checked={selectedAlerts.length === displayAlerts.length && displayAlerts.length > 0} 
-                                onChange={handleSelectAll} 
-                              />
-                            </label>
-                          </th>
-                          <th>Title</th>
-                          <th>Type</th>
-                          <th>Description</th>
-                          <th>Created</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {displayAlerts.map(alert => (
-                          <tr key={alert.id}>
-                            <td>
-                              <label className="checkbox">
-                                <input 
-                                  type="checkbox" 
-                                  checked={selectedAlerts.includes(alert.id)}
-                                  onChange={() => handleSelectAlert(alert.id)}
-                                />
-                              </label>
-                            </td>
-                            <td>{alert.title}</td>
-                            <td>
-                              <span className={`tag ${
-                                alert.alert_type === 'Traffic' ? 'is-danger' :
-                                alert.alert_type === 'Emergency' ? 'is-warning' :
-                                alert.alert_type === 'Construction' ? 'is-warning' : 'is-info'
-                              }`}>
-                                {alert.alert_type}
-                              </span>
-                            </td>
-                            <td>{alert.description.substring(0, 50)}...</td>
-                            <td>{new Date(alert.created_at).toLocaleDateString()}</td>
-                            <td>
-                              <div className="buttons are-small">
-                                <Link to={`/edit_alert/${alert.id}`} className="button is-primary">
-                                  <span className="icon">
-                                    <i className="fas fa-edit"></i>
-                                  </span>
-                                </Link>
-                                <button className="button is-danger" onClick={() => {
-                                  setAlertToDelete(alert.id)
-                                  setDeleteModalActive(true)
-                                }}>
-                                  <span className="icon">
-                                    <i className="fas fa-trash-alt"></i>
-                                  </span>
-                                </button>
-                              </div>
-                            </td>
+                  {displayAlerts.length > 0 ? (
+                    <div className="table-container">
+                      <table className="table is-fullwidth is-hoverable">
+                        <thead>
+                          <tr>
+                            <th><input type="checkbox"
+                              checked={selectedAlerts.length === displayAlerts.length && displayAlerts.length > 0}
+                              onChange={handleSelectAll} /></th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Created</th>
+                            <th>Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="has-text-centered my-6">
-                    <span className="icon is-large">
-                      <i className="fas fa-info-circle fa-3x has-text-grey-light"></i>
-                    </span>
-                    <h3 className="title is-4 mt-4 has-text-grey">No Alerts Available</h3>
-                    <p className="subtitle is-6 has-text-grey">No alerts match your current view.</p>
-                    <Link to="/new_alert" className="button is-primary mt-3">
-                      <span className="icon">
-                        <i className="fas fa-plus"></i>
-                      </span>
-                      <span>Create Alert</span>
-                    </Link>
-                  </div>
-                )}
+                        </thead>
+                        <tbody>
+                          {displayAlerts.map(alert => (
+                            <tr key={alert.id}>
+                              <td>
+                                <input type="checkbox"
+                                  checked={selectedAlerts.includes(alert.id)}
+                                  onChange={() => setSelectedAlerts(prev =>
+                                    prev.includes(alert.id) ? prev.filter(x => x !== alert.id) : [...prev, alert.id]
+                                  )} />
+                              </td>
+                              <td><strong>{alert.title}</strong></td>
+                              <td>
+                                <span className={`tag ${
+                                  alert.alert_type === 'Traffic' ? 'is-danger' :
+                                  alert.alert_type === 'Emergency' ? 'is-warning' :
+                                  alert.alert_type === 'Construction' ? 'is-warning' : 'is-info'
+                                }`}>{alert.alert_type}</span>
+                              </td>
+                              <td>{alert.description.substring(0, 60)}...</td>
+                              <td>{new Date(alert.created_at).toLocaleDateString()}</td>
+                              <td>
+                                <div className="buttons are-small">
+                                  <Link to={`/dashboard/alerts/${alert.id}/edit`} className="button is-primary">
+                                    <span className="icon"><i className="fas fa-edit"></i></span>
+                                  </Link>
+                                  <button className="button is-danger" onClick={() => {
+                                    setAlertToDelete(alert.id)
+                                    setDeleteModalActive(true)
+                                  }}>
+                                    <span className="icon"><i className="fas fa-trash-alt"></i></span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="has-text-centered py-6">
+                      <span className="icon is-large"><i className="fas fa-info-circle fa-3x has-text-grey-light"></i></span>
+                      <h3 className="title is-5 mt-4 has-text-grey">No alerts found</h3>
+                      {canCreate && (
+                        <Link to="/dashboard/alerts/new" className="button is-primary mt-3">
+                          <span className="icon"><i className="fas fa-plus"></i></span>
+                          <span>Create First Alert</span>
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -402,43 +287,33 @@ export default function DashboardPage() {
         <div className="modal-card">
           <header className="modal-card-head">
             <p className="modal-card-title">Confirm Deletion</p>
-            <button className="delete" aria-label="close" onClick={() => setDeleteModalActive(false)}></button>
+            <button className="delete" onClick={() => setDeleteModalActive(false)}></button>
           </header>
           <section className="modal-card-body">
-            <p>Are you sure you want to delete this alert? This action cannot be undone.</p>
+            <p>Are you sure you want to delete this alert? This cannot be undone.</p>
           </section>
           <footer className="modal-card-foot">
-            <button className="button is-danger" onClick={handleDelete}>Delete Alert</button>
+            <button className={`button is-danger${actionLoading ? ' is-loading' : ''}`} onClick={handleDelete}>Delete</button>
             <button className="button" onClick={() => setDeleteModalActive(false)}>Cancel</button>
           </footer>
         </div>
       </div>
 
-      {/* Bulk Modal */}
+      {/* Bulk Delete Modal */}
       <div className={`modal ${bulkModalActive ? 'is-active' : ''}`}>
         <div className="modal-background" onClick={() => setBulkModalActive(false)}></div>
         <div className="modal-card">
           <header className="modal-card-head">
-            <p className="modal-card-title">Bulk Actions</p>
-            <button className="delete" aria-label="close" onClick={() => setBulkModalActive(false)}></button>
+            <p className="modal-card-title">Bulk Delete</p>
+            <button className="delete" onClick={() => setBulkModalActive(false)}></button>
           </header>
           <section className="modal-card-body">
-            <div className="field">
-              <label className="label">Select Action</label>
-              <div className="control">
-                <div className="select is-fullwidth">
-                  <select>
-                    <option value="delete">Delete Selected Alerts</option>
-                  </select>
-                </div>
-              </div>
-            </div>
             <div className="notification is-warning">
-              <p><strong>Warning:</strong> Bulk actions will affect all selected alerts. This action cannot be undone.</p>
+              <strong>Warning:</strong> You are about to delete {selectedAlerts.length} alert(s). This cannot be undone.
             </div>
           </section>
           <footer className="modal-card-foot">
-            <button className="button is-primary" onClick={handleBulkDelete}>Apply</button>
+            <button className={`button is-danger${actionLoading ? ' is-loading' : ''}`} onClick={handleBulkDelete}>Delete All</button>
             <button className="button" onClick={() => setBulkModalActive(false)}>Cancel</button>
           </footer>
         </div>

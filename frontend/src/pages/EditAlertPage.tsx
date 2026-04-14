@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+
+declare const L: any
 
 export default function EditAlertPage() {
   const { id } = useParams()
@@ -13,11 +15,28 @@ export default function EditAlertPage() {
 
   const [updateModalActive, setUpdateModalActive] = useState(false)
   const navigate = useNavigate()
+  const mapRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
 
   useEffect(() => {
-    // Here we would normally fetch the alert by ID
-    // For demo using hardcoded if id matches or something similar
-  }, [id])
+    if (mapRef.current) return
+    const initLat = parseFloat(lat) || 18.5204
+    const initLng = parseFloat(lng) || 73.8567
+    mapRef.current = L.map('editAlertMap').setView([initLat, initLng], 13)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapRef.current)
+    // Place existing marker
+    markerRef.current = L.marker([initLat, initLng]).addTo(mapRef.current).bindPopup('Alert location').openPopup()
+    mapRef.current.on('click', (e: any) => {
+      const { lat: newLat, lng: newLng } = e.latlng
+      setLat(newLat.toFixed(6))
+      setLng(newLng.toFixed(6))
+      if (markerRef.current) markerRef.current.remove()
+      markerRef.current = L.marker([newLat, newLng]).addTo(mapRef.current)
+        .bindPopup('Alert location').openPopup()
+    })
+  }, [])
 
   const handleUpdateClick = (e: React.FormEvent) => {
     e.preventDefault()
@@ -160,9 +179,7 @@ export default function EditAlertPage() {
 
                     <div className="field">
                       <label className="label">Select Location on Map</label>
-                      <div id="map" style={{ height: '400px', width: '100%', borderRadius: '6px', marginBottom: '20px', backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        Mocked Map Area
-                      </div>
+                      <div id="editAlertMap" style={{ height: '400px', width: '100%', borderRadius: '6px', marginBottom: '20px' }}></div>
                       <p className="help">Click on the map to update the alert location</p>
                     </div>
 

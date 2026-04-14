@@ -7,6 +7,7 @@ interface AuthState {
   isLoggedIn: boolean
   isGovUser: boolean
   isAnyGovUser: boolean
+  isSuperuser: boolean
 }
 
 interface AuthContextValue extends AuthState {
@@ -53,9 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isLoggedIn = token !== null
   const isGovUser = user?.is_government === true && user?.is_verified === true
   const isAnyGovUser = user?.is_government === true
+  const isSuperuser = user?.is_superuser === true
 
   return (
-    <AuthContext.Provider value={{ token, user, isLoggedIn, isGovUser, isAnyGovUser, login, logout }}>
+    <AuthContext.Provider value={{ token, user, isLoggedIn, isGovUser, isAnyGovUser, isSuperuser, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

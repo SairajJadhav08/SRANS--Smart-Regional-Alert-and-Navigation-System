@@ -6,6 +6,7 @@ import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import ProtectedRoute from './components/routing/ProtectedRoute'
 import GovRoute from './components/routing/GovRoute'
+import SuperuserRoute from './components/routing/SuperuserRoute'
 
 const HomePage = React.lazy(() => import('./pages/HomePage'))
 const FeaturesPage = React.lazy(() => import('./pages/FeaturesPage'))
@@ -19,6 +20,7 @@ const MyRoutesPage = React.lazy(() => import('./pages/MyRoutesPage'))
 const DashboardPage = React.lazy(() => import('./pages/DashboardPage'))
 const NewAlertPage = React.lazy(() => import('./pages/NewAlertPage'))
 const EditAlertPage = React.lazy(() => import('./pages/EditAlertPage'))
+const SuperuserPage = React.lazy(() => import('./pages/SuperuserPage'))
 
 export default function App() {
   return (
@@ -46,6 +48,10 @@ export default function App() {
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/dashboard/alerts/new" element={<NewAlertPage />} />
                   <Route path="/dashboard/alerts/:id/edit" element={<EditAlertPage />} />
+                </Route>
+
+                <Route element={<SuperuserRoute />}>
+                  <Route path="/admin" element={<SuperuserPage />} />
                 </Route>
               </Routes>
             </Suspense>

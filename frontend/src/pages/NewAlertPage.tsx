@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+
+declare const L: any
 
 export default function NewAlertPage() {
   const [alertType, setAlertType] = useState('')
@@ -10,6 +12,24 @@ export default function NewAlertPage() {
 
   const [publishModalActive, setPublishModalActive] = useState(false)
   const navigate = useNavigate()
+  const mapRef = useRef<any>(null)
+  const markerRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (mapRef.current) return
+    mapRef.current = L.map('newAlertMap').setView([18.5204, 73.8567], 13)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapRef.current)
+    mapRef.current.on('click', (e: any) => {
+      const { lat, lng } = e.latlng
+      setLat(lat.toFixed(6))
+      setLng(lng.toFixed(6))
+      if (markerRef.current) markerRef.current.remove()
+      markerRef.current = L.marker([lat, lng]).addTo(mapRef.current)
+        .bindPopup('Alert location').openPopup()
+    })
+  }, [])
 
   const handlePublishClick = (e: React.FormEvent) => {
     e.preventDefault()
@@ -154,9 +174,7 @@ export default function NewAlertPage() {
 
                     <div className="field">
                       <label className="label">Select Location on Map</label>
-                      <div id="map" style={{ height: '400px', width: '100%', borderRadius: '6px', marginBottom: '20px', backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        Mocked Map Area
-                      </div>
+                      <div id="newAlertMap" style={{ height: '400px', width: '100%', borderRadius: '6px', marginBottom: '20px' }}></div>
                       <p className="help">Click on the map to set the alert location</p>
                     </div>
 

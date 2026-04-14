@@ -3,6 +3,7 @@ export interface User {
   username: string
   email: string
   is_government: boolean
+  is_superuser: boolean
   agency_name: string | null
   department: string | null
   is_verified: boolean

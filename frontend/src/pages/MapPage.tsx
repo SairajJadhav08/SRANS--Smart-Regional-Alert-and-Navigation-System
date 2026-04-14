@@ -1,130 +1,180 @@
 import { useState, useEffect, useRef } from 'react'
+import { getAlerts } from '../api'
+import type { Alert } from '../types'
+
+declare const L: any
+
+const ICON_COLORS: Record<string, string> = {
+  Traffic: '#e53e3e',
+  Emergency: '#805ad5',
+  Construction: '#d69e2e',
+  Weather: '#3182ce',
+}
+
+const ICON_FA: Record<string, string> = {
+  Traffic: 'fa-car-crash',
+  Emergency: 'fa-exclamation-triangle',
+  Construction: 'fa-hard-hat',
+  Weather: 'fa-cloud-rain',
+}
+
+function makeIcon(type: string) {
+  const color = ICON_COLORS[type] || '#718096'
+  const icon = ICON_FA[type] || 'fa-bell'
+  return L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        width: 36px; height: 36px; border-radius: 50%;
+        background: ${color};
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+        border: 2px solid white;
+      ">
+        <i class="fas ${icon}" style="color:white;font-size:14px;"></i>
+      </div>
+      <div style="
+        width: 0; height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid ${color};
+        margin: 0 auto;
+      "></div>
+    `,
+    iconSize: [36, 44],
+    iconAnchor: [18, 44],
+    popupAnchor: [0, -46],
+  })
+}
 
 export default function MapPage() {
   const [filter, setFilter] = useState('all')
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [loading, setLoading] = useState(true)
   const [directionsVisible, setDirectionsVisible] = useState(false)
-  const [activeLayers, setActiveLayers] = useState<string[]>(['traffic'])
   const [startLocation, setStartLocation] = useState('')
   const [endLocation, setEndLocation] = useState('')
+  const [locating, setLocating] = useState(false)
+  const [locError, setLocError] = useState<string | null>(null)
 
-  // Mock list of alerts for frontend demonstration
-  const [alerts] = useState([
-    {
-      id: 1,
-      alert_type: 'Traffic',
-      title: 'Heavy Traffic on Main St',
-      description: 'Accident reported on Main St causing significant delays.',
-      location_lat: 37.7749,
-      location_lng: -122.4194
-    },
-    {
-      id: 2,
-      alert_type: 'Construction',
-      title: 'Roadwork on Highway 101',
-      description: 'Lanes closed due to ongoing construction.',
-      location_lat: 37.7849,
-      location_lng: -122.4094
-    }
-  ])
+  const mapRef = useRef<any>(null)
+  const markersRef = useRef<any[]>([])
+  const userMarkerRef = useRef<any>(null)
+
+  // Fetch all alerts from API on mount
+  useEffect(() => {
+    getAlerts()
+      .then(res => setAlerts(res.data))
+      .catch(() => setAlerts([]))
+      .finally(() => setLoading(false))
+  }, [])
 
   const filteredAlerts = filter === 'all' ? alerts : alerts.filter(a => a.alert_type === filter)
 
-  const toggleLayer = (layer: string) => {
-    setActiveLayers(prev => {
-      if (prev.includes(layer)) return prev.filter(l => l !== layer)
-      return [...prev, layer]
-    })
-  }
-
-  const showDirections = (lat: number, lng: number) => {
-    setEndLocation(`${lat}, ${lng}`)
-    setDirectionsVisible(true)
-
-    // Pan map and open info window for the selected alert
-    if (mapRef.current) {
-      mapRef.current.panTo({ lat, lng })
-      mapRef.current.setZoom(15)
-
-      // Find the matching marker and open its info window
-      const found = markersRef.current.find(m => {
-        const pos = m.marker.getPosition()
-        return Math.abs(pos.lat() - lat) < 0.0001 && Math.abs(pos.lng() - lng) < 0.0001
-      })
-      if (found) {
-        found.infoWindow.open(mapRef.current, found.marker)
-        // Bounce animation
-        found.marker.setAnimation((window as any).google.maps.Animation.BOUNCE)
-        setTimeout(() => found.marker.setAnimation(null), 2100)
-      }
-    }
-  }
-
-  const mapRef = useRef<any>(null)
-  const markersRef = useRef<{ marker: any; infoWindow: any }[]>([])
-
+  // Init map once
   useEffect(() => {
-    // Initialize map
-    const mapElement = document.getElementById('map')
-    if (mapElement && (window as any).google && !mapRef.current) {
-      mapRef.current = new (window as any).google.maps.Map(mapElement, {
-        center: { lat: 37.7749, lng: -122.4194 },
-        zoom: 12,
-        mapTypeId: "roadmap",
-      })
-    }
+    if (mapRef.current) return
+    mapRef.current = L.map('map').setView([18.5204, 73.8567], 13)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(mapRef.current)
   }, [])
 
-  useEffect(() => {
-    if (!mapRef.current || !(window as any).google) return;
+  const handleMyLocation = () => {
+    if (!navigator.geolocation) {
+      setLocError('Geolocation is not supported by your browser.')
+      return
+    }
+    setLocating(true)
+    setLocError(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+        setLocating(false)
+        if (!mapRef.current) return
+        mapRef.current.setView([latitude, longitude], 15)
+        // Remove old user marker
+        if (userMarkerRef.current) userMarkerRef.current.remove()
+        // Blue pulsing dot for user location
+        const userIcon = L.divIcon({
+          className: '',
+          html: `
+            <div style="
+              width:36px;height:36px;border-radius:50%;
+              background:#3273dc;
+              display:flex;align-items:center;justify-content:center;
+              box-shadow:0 2px 8px rgba(0,0,0,0.35);
+              border:2px solid white;
+            ">
+              <i class="fas fa-user" style="color:white;font-size:14px;"></i>
+            </div>
+            <div style="
+              width:0;height:0;
+              border-left:6px solid transparent;
+              border-right:6px solid transparent;
+              border-top:8px solid #3273dc;
+              margin:0 auto;
+            "></div>
+          `,
+          iconSize: [36, 44],
+          iconAnchor: [18, 44],
+          popupAnchor: [0, -46],
+        })
+        userMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon })
+          .addTo(mapRef.current)
+          .bindPopup('<strong>You are here</strong>')
+          .openPopup()
+      },
+      (err) => {
+        setLocating(false)
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setLocError('Location access denied. Please allow location in your browser settings.')
+            break
+          case err.POSITION_UNAVAILABLE:
+            setLocError('Location unavailable. Try again.')
+            break
+          case err.TIMEOUT:
+            setLocError('Location request timed out. Try again.')
+            break
+          default:
+            setLocError('Could not get your location.')
+        }
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    )
+  }
 
-    // Clear old markers
-    markersRef.current.forEach(m => m.marker.setMap(null))
+  // Update markers whenever filtered alerts change
+  useEffect(() => {
+    if (!mapRef.current) return
+    markersRef.current.forEach(m => m.remove())
     markersRef.current = []
 
     filteredAlerts.forEach(alert => {
-      let iconUrl = "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
-      if (alert.alert_type === "Traffic") {
-          iconUrl = "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
-      } else if (alert.alert_type === "Emergency") {
-          iconUrl = "https://maps.google.com/mapfiles/ms/icons/purple-dot.png";
-      } else if (alert.alert_type === "Construction") {
-          iconUrl = "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png";
-      } else if (alert.alert_type === "Weather") {
-          iconUrl = "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
-      }
-
-      const marker = new (window as any).google.maps.Marker({
-        position: { lat: alert.location_lat, lng: alert.location_lng },
-        map: mapRef.current,
-        title: alert.title,
-        icon: {
-           url: iconUrl,
-           scaledSize: new (window as any).google.maps.Size(32, 32)
-        },
-        animation: (window as any).google.maps.Animation.DROP
-      })
-
-      const infoWindow = new (window as any).google.maps.InfoWindow({
-        content: `
-            <div style="max-width: 300px; color: black;">
-                <h3 style="font-weight: bold; margin-bottom: 5px;">${alert.title}</h3>
-                <span style="display: inline-block; padding: 2px 8px; background-color: #f5f5f5; border-radius: 4px; margin-bottom: 8px;">${alert.alert_type}</span>
-                <p>${alert.description}</p>
-            </div>
-        `
-      })
-
-      marker.addListener("click", () => {
-        infoWindow.open(mapRef.current, marker)
-      })
-
-      markersRef.current.push({ marker, infoWindow })
+      const color = ICON_COLORS[alert.alert_type] || '#718096'
+      const marker = L.marker([alert.location_lat, alert.location_lng], { icon: makeIcon(alert.alert_type) })
+        .addTo(mapRef.current)
+        .bindPopup(`<strong>${alert.title}</strong><br/><em>${alert.alert_type}</em><br/>${alert.description}`)
+      markersRef.current.push(marker)
     })
   }, [filteredAlerts])
 
+  const focusAlert = (lat: number, lng: number, title: string) => {
+    setEndLocation(`${lat}, ${lng}`)
+    setDirectionsVisible(true)
+    if (mapRef.current) {
+      mapRef.current.setView([lat, lng], 15)
+      const found = markersRef.current.find(m => {
+        const pos = m.getLatLng()
+        return Math.abs(pos.lat - lat) < 0.0001 && Math.abs(pos.lng - lng) < 0.0001
+      })
+      if (found) found.openPopup()
+    }
+  }
+
   return (
     <>
-      {/* Hero Section */}
       <section className="hero is-primary">
         <div className="hero-body">
           <div className="container has-text-centered">
@@ -134,60 +184,37 @@ export default function MapPage() {
         </div>
       </section>
 
-      {/* Map Controls */}
+      {/* Controls */}
       <section className="section pt-5 pb-3">
         <div className="container">
           <div className="columns is-mobile is-multiline">
             <div className="column is-8">
-              <div className="field is-grouped is-grouped-multiline">
+              <div className="field is-grouped">
                 <div className="control">
-                  <div className="buttons has-addons">
-                    <button 
-                      className={`button ${activeLayers.includes('traffic') ? 'is-info' : ''}`}
-                      onClick={() => toggleLayer('traffic')}
-                    >
-                      <span className="icon">
-                        <i className="fas fa-traffic-light"></i>
-                      </span>
-                      <span>Traffic</span>
-                    </button>
-                    <button 
-                      className={`button ${activeLayers.includes('terrain') ? 'is-info' : ''}`}
-                      onClick={() => toggleLayer('terrain')}
-                    >
-                      <span className="icon">
-                        <i className="fas fa-mountain"></i>
-                      </span>
-                      <span>Terrain</span>
-                    </button>
-                    <button 
-                      className={`button ${activeLayers.includes('satellite') ? 'is-info' : ''}`}
-                      onClick={() => toggleLayer('satellite')}
-                    >
-                      <span className="icon">
-                        <i className="fas fa-satellite"></i>
-                      </span>
-                      <span>Satellite</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="control">
-                  <button className="button is-primary">
-                    <span className="icon">
-                      <i className="fas fa-location-arrow"></i>
-                    </span>
+                  <button
+                    className={`button is-primary${locating ? ' is-loading' : ''}`}
+                    onClick={handleMyLocation}
+                    disabled={locating}
+                  >
+                    <span className="icon"><i className="fas fa-location-arrow"></i></span>
                     <span>My Location</span>
                   </button>
                 </div>
               </div>
+              {locError && (
+                <p className="help is-danger mt-2">
+                  <span className="icon-text">
+                    <span className="icon"><i className="fas fa-exclamation-circle"></i></span>
+                    <span>{locError}</span>
+                  </span>
+                </p>
+              )}
             </div>
-
             <div className="column is-4">
               <div className="field">
                 <div className="control has-icons-left">
                   <div className="select is-fullwidth">
-                    <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+                    <select value={filter} onChange={e => setFilter(e.target.value)}>
                       <option value="all">All Alerts</option>
                       <option value="Traffic">Traffic Alerts</option>
                       <option value="Emergency">Emergency Alerts</option>
@@ -195,9 +222,7 @@ export default function MapPage() {
                       <option value="Weather">Weather Alerts</option>
                     </select>
                   </div>
-                  <div className="icon is-small is-left">
-                    <i className="fas fa-filter"></i>
-                  </div>
+                  <div className="icon is-small is-left"><i className="fas fa-filter"></i></div>
                 </div>
               </div>
             </div>
@@ -205,11 +230,10 @@ export default function MapPage() {
         </div>
       </section>
 
-      {/* Map Section */}
+      {/* Map + Sidebar */}
       <section className="section pt-3">
         <div className="container">
           <div className="columns">
-            {/* Main Map */}
             <div className="column is-9">
               <div className="card">
                 <div className="card-content p-0">
@@ -218,59 +242,55 @@ export default function MapPage() {
               </div>
             </div>
 
-            {/* Sidebar with Alerts */}
             <div className="column is-3">
               <div className="card">
                 <header className="card-header">
                   <p className="card-header-title">
                     <span className="icon-text">
-                      <span className="icon">
-                        <i className="fas fa-bell"></i>
-                      </span>
-                      <span>Nearby Alerts</span>
+                      <span className="icon"><i className="fas fa-bell"></i></span>
+                      <span>Nearby Alerts {!loading && `(${filteredAlerts.length})`}</span>
                     </span>
                   </p>
                 </header>
                 <div className="card-content" style={{ maxHeight: '530px', overflowY: 'auto' }}>
-                  <div id="alerts-list">
-                    {filteredAlerts.length > 0 ? (
-                      filteredAlerts.map(alert => (
-                        <div key={alert.id} className="box mb-3 alert-item" style={{ cursor: 'pointer', borderLeftWidth: '4px', borderLeftStyle: 'solid', borderLeftColor: '#3273dc' }}>
-                          <article className="media">
-                            <div className="media-left">
-                              <span className="icon is-medium">
-                                {alert.alert_type === 'Traffic' && <i className="fas fa-car-crash has-text-danger"></i>}
-                                {alert.alert_type === 'Emergency' && <i className="fas fa-exclamation-triangle has-text-danger"></i>}
-                                {alert.alert_type === 'Construction' && <i className="fas fa-hard-hat has-text-warning"></i>}
-                                {alert.alert_type === 'Weather' && <i className="fas fa-cloud-rain has-text-info"></i>}
-                              </span>
-                            </div>
-                            <div className="media-content">
-                              <p className="is-6"><strong>{alert.title}</strong></p>
-                              <p className="is-7">{alert.description}</p>
-                              <div className="is-flex is-justify-content-space-between is-align-items-center mt-1">
-                                <span className={`tag is-small ${
-                                  alert.alert_type === 'Traffic' ? 'is-danger' : 
-                                  alert.alert_type === 'Emergency' ? 'is-warning' : 
-                                  alert.alert_type === 'Construction' ? 'is-warning' : 'is-info'
-                                }`}>
-                                  {alert.alert_type}
-                                </span>
-                                <a className="is-size-7 view-on-map" onClick={(e) => { e.preventDefault(); showDirections(alert.location_lat, alert.location_lng) }}>View on map</a>
-                              </div>
-                            </div>
-                          </article>
+                  {loading ? (
+                    <div className="has-text-centered py-5">
+                      <span className="icon"><i className="fas fa-spinner fa-spin has-text-primary"></i></span>
+                      <p className="mt-2 is-size-7">Loading alerts...</p>
+                    </div>
+                  ) : filteredAlerts.length > 0 ? filteredAlerts.map(alert => (
+                    <div key={alert.id} className="box mb-3" style={{ cursor: 'pointer', borderLeft: `4px solid ${ICON_COLORS[alert.alert_type] || 'gray'}` }}>
+                      <article className="media">
+                        <div className="media-left">
+                          <span className="icon is-medium">
+                            {alert.alert_type === 'Traffic' && <i className="fas fa-car-crash has-text-danger"></i>}
+                            {alert.alert_type === 'Emergency' && <i className="fas fa-exclamation-triangle has-text-danger"></i>}
+                            {alert.alert_type === 'Construction' && <i className="fas fa-hard-hat has-text-warning"></i>}
+                            {alert.alert_type === 'Weather' && <i className="fas fa-cloud-rain has-text-info"></i>}
+                          </span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="has-text-centered my-6">
-                        <span className="icon is-large">
-                          <i className="fas fa-info-circle has-text-grey-light"></i>
-                        </span>
-                        <p className="mt-3 has-text-grey">No alerts available</p>
-                      </div>
-                    )}
-                  </div>
+                        <div className="media-content">
+                          <p className="is-6"><strong>{alert.title}</strong></p>
+                          <p className="is-7">{alert.description}</p>
+                          <div className="is-flex is-justify-content-space-between is-align-items-center mt-1">
+                            <span className={`tag is-small ${
+                              alert.alert_type === 'Traffic' ? 'is-danger' :
+                              alert.alert_type === 'Emergency' ? 'is-warning' :
+                              alert.alert_type === 'Construction' ? 'is-warning' : 'is-info'
+                            }`}>{alert.alert_type}</span>
+                            <a className="is-size-7" onClick={e => { e.preventDefault(); focusAlert(alert.location_lat, alert.location_lng, alert.title) }}>
+                              View on map
+                            </a>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  )) : (
+                    <div className="has-text-centered my-6">
+                      <span className="icon is-large"><i className="fas fa-info-circle has-text-grey-light"></i></span>
+                      <p className="mt-3 has-text-grey">No alerts available</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -278,24 +298,20 @@ export default function MapPage() {
         </div>
       </section>
 
-      {/* Directions Section */}
+      {/* Directions */}
       {directionsVisible && (
-        <section className="section pt-3" id="directions-section">
+        <section className="section pt-3">
           <div className="container">
             <div className="card">
               <header className="card-header">
                 <p className="card-header-title">
                   <span className="icon-text">
-                    <span className="icon">
-                      <i className="fas fa-directions"></i>
-                    </span>
+                    <span className="icon"><i className="fas fa-directions"></i></span>
                     <span>Directions</span>
                   </span>
                 </p>
-                <button className="card-header-icon" aria-label="close" onClick={() => setDirectionsVisible(false)}>
-                  <span className="icon">
-                    <i className="fas fa-times"></i>
-                  </span>
+                <button className="card-header-icon" onClick={() => setDirectionsVisible(false)}>
+                  <span className="icon"><i className="fas fa-times"></i></span>
                 </button>
               </header>
               <div className="card-content">
@@ -304,65 +320,30 @@ export default function MapPage() {
                     <div className="field">
                       <label className="label">Starting Point</label>
                       <div className="control has-icons-left">
-                        <input 
-                          className="input" 
-                          type="text" 
-                          placeholder="Enter starting point" 
-                          value={startLocation}
-                          onChange={e => setStartLocation(e.target.value)}
-                        />
-                        <span className="icon is-small is-left">
-                          <i className="fas fa-map-marker-alt"></i>
-                        </span>
+                        <input className="input" type="text" placeholder="Enter starting point"
+                          value={startLocation} onChange={e => setStartLocation(e.target.value)} />
+                        <span className="icon is-small is-left"><i className="fas fa-map-marker-alt"></i></span>
                       </div>
                     </div>
-                    
                     <div className="field">
                       <label className="label">Destination</label>
                       <div className="control has-icons-left">
-                        <input className="input" type="text" placeholder="Enter destination" value={endLocation} readOnly />
-                        <span className="icon is-small is-left">
-                          <i className="fas fa-flag-checkered"></i>
-                        </span>
+                        <input className="input" type="text" value={endLocation} readOnly />
+                        <span className="icon is-small is-left"><i className="fas fa-flag-checkered"></i></span>
                       </div>
                     </div>
-                    
-                    <div className="field">
-                      <label className="label">Travel Mode</label>
-                      <div className="control has-icons-left">
-                        <div className="select is-fullwidth">
-                          <select>
-                            <option value="DRIVING">Driving</option>
-                            <option value="WALKING">Walking</option>
-                            <option value="BICYCLING">Bicycling</option>
-                            <option value="TRANSIT">Transit</option>
-                          </select>
-                        </div>
-                        <span className="icon is-small is-left">
-                          <i className="fas fa-car"></i>
-                        </span>
-                      </div>
-                    </div>
-                    
                     <div className="field">
                       <div className="control">
-                        <button className="button is-primary is-fullwidth" onClick={() => alert("Mock: Calculating Route...")}>
-                          <span className="icon">
-                            <i className="fas fa-route"></i>
-                          </span>
+                        <button className="button is-primary is-fullwidth">
+                          <span className="icon"><i className="fas fa-route"></i></span>
                           <span>Get Directions</span>
                         </button>
                       </div>
                     </div>
                   </div>
-                  
                   <div className="column is-8">
-                    <div id="directions-panel" style={{ height: '350px', overflowY: 'auto' }}>
-                      <div id="directions-results">
-                        <div className="notification is-info is-light">
-                          <p><strong>Tip:</strong> Enter a starting location to calculate routes.</p>
-                        </div>
-                      </div>
+                    <div className="notification is-info is-light">
+                      <p><strong>Tip:</strong> Enter a starting location to calculate routes.</p>
                     </div>
                   </div>
                 </div>

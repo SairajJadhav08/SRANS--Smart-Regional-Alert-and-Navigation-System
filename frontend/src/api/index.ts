@@ -74,3 +74,8 @@ export const deleteRoute = (id: number) => client.delete(`/routes/${id}`)
 // Contact
 export const sendContact = (data: ContactPayload) =>
   client.post('/contact', { data })
+
+// Superuser admin
+export const getGovUsers = () => client.get<User[]>('/auth/admin/gov-users')
+export const approveGovUser = (id: number) => client.post(`/auth/admin/gov-users/${id}/approve`)
+export const revokeGovUser = (id: number) => client.post(`/auth/admin/gov-users/${id}/revoke`)

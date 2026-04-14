@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { register as apiRegister } from '../api'
 
 export default function RegisterPage() {
   const [userType, setUserType] = useState<'user' | 'government'>('user')
@@ -9,43 +9,40 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState(false)
-  
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   // Government fields
   const [agencyName, setAgencyName] = useState('')
   const [department, setDepartment] = useState('')
   const [officialEmail, setOfficialEmail] = useState('')
 
-  const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password !== confirmPassword) {
       setPasswordError(true)
       return
     }
     setPasswordError(false)
-    
-    // Mock register logic
-    const mockToken = 'mock-token-abc'
-    const mockUser = {
-      id: 2,
-      username,
-      email,
-      is_government: userType === 'government',
-      is_verified: userType !== 'government', // government is unverified by default perhaps
-      created_at: new Date().toISOString(),
-      agency_name: userType === 'government' ? agencyName : null,
-      department: userType === 'government' ? department : null
-    }
-    
-    login(mockToken, mockUser)
-    
-    if (userType === 'government') {
-      // Mock navigation
-      navigate('/dashboard')
-    } else {
-      navigate('/')
+    setError(null)
+    setLoading(true)
+    try {
+      await apiRegister({
+        username,
+        email: userType === 'government' ? officialEmail || email : email,
+        password,
+        user_type: userType,
+        ...(userType === 'government' && { agency_name: agencyName, department }),
+      })
+      // After registration redirect to login with a success hint
+      navigate('/login')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Registration failed. Please try again.'
+      setError(msg)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -67,6 +64,13 @@ export default function RegisterPage() {
               <div className="card">
                 <div className="card-content">
                   <h3 className="title is-4 has-text-centered mb-5">Join Smart Regional Alert &amp; Navigation</h3>
+                  
+                  {error && (
+                    <div className="notification is-danger is-light mb-4">
+                      <button className="delete" onClick={() => setError(null)}></button>
+                      {error}
+                    </div>
+                  )}
                   
                   {/* Registration Tabs */}
                   <div className="tabs is-centered is-boxed mb-5">
@@ -264,7 +268,7 @@ export default function RegisterPage() {
                     
                     <div className="field">
                       <div className="control">
-                        <button type="submit" className="button is-primary is-fullwidth">
+                        <button type="submit" className={`button is-primary is-fullwidth${loading ? ' is-loading' : ''}`} disabled={loading}>
                           <span className="icon">
                             <i className={userType === 'user' ? 'fas fa-user-plus' : 'fas fa-building'}></i>
                           </span>
