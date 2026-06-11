@@ -1,64 +1,135 @@
-import React, { Suspense } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useState, useEffect, Suspense, lazy } from 'react'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
-import { ToastProvider } from './components/layout/Toast'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
+import Toast from './components/layout/Toast'
 import ProtectedRoute from './components/routing/ProtectedRoute'
 import GovRoute from './components/routing/GovRoute'
 import SuperuserRoute from './components/routing/SuperuserRoute'
+import './App.css'
 
-const HomePage = React.lazy(() => import('./pages/HomePage'))
-const FeaturesPage = React.lazy(() => import('./pages/FeaturesPage'))
-const AlertsPage = React.lazy(() => import('./pages/AlertsPage'))
-const MapPage = React.lazy(() => import('./pages/MapPage'))
-const AboutPage = React.lazy(() => import('./pages/AboutPage'))
-const ContactPage = React.lazy(() => import('./pages/ContactPage'))
-const LoginPage = React.lazy(() => import('./pages/LoginPage'))
-const RegisterPage = React.lazy(() => import('./pages/RegisterPage'))
-const MyRoutesPage = React.lazy(() => import('./pages/MyRoutesPage'))
-const DashboardPage = React.lazy(() => import('./pages/DashboardPage'))
-const NewAlertPage = React.lazy(() => import('./pages/NewAlertPage'))
-const EditAlertPage = React.lazy(() => import('./pages/EditAlertPage'))
-const SuperuserPage = React.lazy(() => import('./pages/SuperuserPage'))
+// Lazy load pages for better performance
+const HomePage = lazy(() => import('./pages/HomePage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const MapPage = lazy(() => import('./pages/MapPage'))
+const AlertsPage = lazy(() => import('./pages/AlertsPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const NewAlertPage = lazy(() => import('./pages/NewAlertPage'))
+const EditAlertPage = lazy(() => import('./pages/EditAlertPage'))
+const SuperuserPage = lazy(() => import('./pages/SuperuserPage'))
+const AboutPage = lazy(() => import('./pages/AboutPage'))
+const ContactPage = lazy(() => import('./pages/ContactPage'))
+const FeaturesPage = lazy(() => import('./pages/FeaturesPage'))
+const MyRoutesPage = lazy(() => import('./pages/MyRoutesPage'))
+
+// Scroll to top component
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
+// Global skeleton loader
+function AppSkeleton() {
+  return (
+    <div className="skeleton-app">
+      <div className="skeleton-nav">
+        <div className="skeleton-logo"></div>
+      </div>
+      <div className="skeleton-main">
+        <div className="skeleton-title"></div>
+        <div className="skeleton-content" style={{ height: '200px', marginBottom: '20px' }}></div>
+        <div className="skeleton-content" style={{ height: '100px' }}></div>
+      </div>
+    </div>
+  )
+}
+
+function AppContent() {
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'danger' | 'info' | 'warning' } | null>(null)
+
+  useEffect(() => {
+    const handleLoginSuccess = () => setToast({ message: 'Successfully logged in', type: 'success' })
+    const handleLogout = () => setToast({ message: 'Logged out', type: 'info' })
+    const handleAlertCreated = () => setToast({ message: 'Alert created successfully', type: 'success' })
+    const handleToastShow = (e: Event) => {
+      const customEvent = e as CustomEvent<{ message: string; type: 'success' | 'danger' | 'info' | 'warning' }>
+      if (customEvent.detail) {
+        setToast({ message: customEvent.detail.message, type: customEvent.detail.type })
+      }
+    }
+    
+    window.addEventListener('auth:login_success', handleLoginSuccess)
+    window.addEventListener('auth:logout', handleLogout)
+    window.addEventListener('alert:created', handleAlertCreated)
+    window.addEventListener('toast:show', handleToastShow)
+    
+    return () => {
+      window.removeEventListener('auth:login_success', handleLoginSuccess)
+      window.removeEventListener('auth:logout', handleLogout)
+      window.removeEventListener('alert:created', handleAlertCreated)
+      window.removeEventListener('toast:show', handleToastShow)
+    }
+  }, [])
+
+  const location = useLocation()
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
+  const isMapPage = location.pathname === '/map'
+
+  return (
+    <>
+      {!isAuthPage && <Navbar />}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+      <main>
+        <Suspense fallback={<AppSkeleton />}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/map" element={<MapPage />} />
+            <Route path="/alerts" element={<AlertsPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            
+            <Route element={<ProtectedRoute />}>
+              <Route path="/my-routes" element={<MyRoutesPage />} />
+            </Route>
+
+            <Route element={<GovRoute />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/alerts/new" element={<NewAlertPage />} />
+              <Route path="/alerts/edit/:id" element={<EditAlertPage />} />
+            </Route>
+            
+            <Route element={<SuperuserRoute />}>
+              <Route path="/superuser" element={<SuperuserPage />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </main>
+      {!isAuthPage && !isMapPage && <Footer />}
+    </>
+  )
+}
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <Navbar />
-          <main>
-            <Suspense fallback={<div>Loading...</div>}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/features" element={<FeaturesPage />} />
-                <Route path="/alerts" element={<AlertsPage />} />
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/my-routes" element={<MyRoutesPage />} />
-                </Route>
-
-                <Route element={<GovRoute />}>
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/dashboard/alerts/new" element={<NewAlertPage />} />
-                  <Route path="/dashboard/alerts/:id/edit" element={<EditAlertPage />} />
-                </Route>
-
-                <Route element={<SuperuserRoute />}>
-                  <Route path="/admin" element={<SuperuserPage />} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </main>
-          <Footer />
-        </BrowserRouter>
-      </ToastProvider>
-    </AuthProvider>
+    <Router>
+      <ScrollToTop />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   )
 }

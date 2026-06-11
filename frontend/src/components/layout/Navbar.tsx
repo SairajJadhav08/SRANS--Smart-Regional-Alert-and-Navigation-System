@@ -1,121 +1,173 @@
-import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-
-const NAV_LINKS = [
-  { to: '/',        label: 'Home',     icon: 'fa-house' },
-  { to: '/features',label: 'Features', icon: 'fa-star' },
-  { to: '/alerts',  label: 'Alerts',   icon: 'fa-bell' },
-  { to: '/map',     label: 'Map',      icon: 'fa-map' },
-  { to: '/about',   label: 'About',    icon: 'fa-circle-info' },
-  { to: '/contact', label: 'Contact',  icon: 'fa-envelope' },
-]
+import './Navbar.css'
 
 export default function Navbar() {
-  const { isLoggedIn, isGovUser, isAnyGovUser, isSuperuser, logout } = useAuth()
-  const navigate = useNavigate()
+  const { isLoggedIn, user, isAnyGovUser, isSuperuser, logout } = useAuth()
   const location = useLocation()
-  const [burgerOpen, setBurgerOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  // Handle scroll for sticky glassmorphism effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const handleLogout = () => {
     logout()
-    navigate('/')
   }
 
-  const isActive = (path: string) =>
-    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
+  const isActive = (path: string) => {
+    return location.pathname === path ? 'active' : ''
+  }
 
   return (
-    <nav className="navbar" role="navigation" aria-label="main navigation">
-      <div className="container">
-        <div className="navbar-brand">
-          <Link className="navbar-item" to="/" onClick={() => setBurgerOpen(false)}>
-            <span className="nav-logo-icon mr-2">
-              <i className="fas fa-map-marked-alt"></i>
-            </span>
-            <span>Smart<strong style={{ color: '#2c4c7c' }}>Alert</strong></span>
-          </Link>
-
-          <a
-            role="button"
-            className={`navbar-burger${burgerOpen ? ' is-active' : ''}`}
-            aria-label="menu"
-            aria-expanded={burgerOpen}
-            onClick={() => setBurgerOpen(!burgerOpen)}
-          >
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </a>
-        </div>
-
-        <div className={`navbar-menu${burgerOpen ? ' is-active' : ''}`}>
-          <div className="navbar-start">
-            {NAV_LINKS.map(link => (
-              <Link
-                key={link.to}
-                className={`navbar-item${isActive(link.to) ? ' is-active-link' : ''}`}
-                to={link.to}
-                onClick={() => setBurgerOpen(false)}
-              >
-                <span className="icon is-small mr-1">
-                  <i className={`fas ${link.icon}`}></i>
-                </span>
-                {link.label}
-              </Link>
-            ))}
+    <header className={`navbar-modern ${scrolled ? 'scrolled' : ''}`}>
+      <div className="container navbar-container">
+        <Link to="/" className="navbar-brand">
+          <div className="navbar-logo-icon">
+            <i className="fas fa-location-arrow"></i>
           </div>
+          <span className="navbar-brand-text">SRANS</span>
+        </Link>
 
-          <div className="navbar-end">
-            <div className="navbar-item">
-              <div className="buttons">
-                {isLoggedIn ? (
-                  <>
-                    {isSuperuser && (
-                      <Link className="button is-danger is-small" to="/admin" onClick={() => setBurgerOpen(false)}>
-                        <span className="icon"><i className="fas fa-shield-halved"></i></span>
-                        <span>Admin Panel</span>
-                      </Link>
-                    )}
-                    {(isAnyGovUser || isSuperuser) && (
-                      <Link className="button is-primary is-small" to="/dashboard" onClick={() => setBurgerOpen(false)}>
-                        <span className="icon">
-                          <i className="fas fa-tachometer-alt"></i>
-                        </span>
-                        <span>Dashboard</span>
-                        {isAnyGovUser && !isGovUser && (
-                          <span className="tag is-warning is-light ml-2">Pending</span>
-                        )}
-                      </Link>
-                    )}
-                    <button className="button is-light is-small" onClick={handleLogout}>
-                      <span className="icon">
-                        <i className="fas fa-sign-out-alt"></i>
-                      </span>
-                      <span>Logout</span>
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link className="button is-primary is-small" to="/register" onClick={() => setBurgerOpen(false)}>
-                      <span className="icon">
-                        <i className="fas fa-user-plus"></i>
-                      </span>
-                      <span>Sign Up</span>
-                    </Link>
-                    <Link className="button is-light is-small" to="/login" onClick={() => setBurgerOpen(false)}>
-                      <span className="icon">
-                        <i className="fas fa-sign-in-alt"></i>
-                      </span>
-                      <span>Log in</span>
-                    </Link>
-                  </>
+        {/* Desktop Menu */}
+        <nav className="navbar-menu hide-mobile">
+          <Link to="/" className={`nav-link ${isActive('/')}`}>Home</Link>
+          <Link to="/map" className={`nav-link ${isActive('/map')}`}>Live Map</Link>
+          <Link to="/alerts" className={`nav-link ${isActive('/alerts')}`}>Alerts</Link>
+          {!isLoggedIn && (
+            <>
+              <Link to="/features" className={`nav-link ${isActive('/features')}`}>Features</Link>
+              <Link to="/about" className={`nav-link ${isActive('/about')}`}>About</Link>
+              <Link to="/contact" className={`nav-link ${isActive('/contact')}`}>Contact</Link>
+            </>
+          )}
+
+          {isLoggedIn && (
+            <Link to="/my-routes" className={`nav-link ${isActive('/my-routes')}`}>My Routes</Link>
+          )}
+        </nav>
+
+        {/* Desktop Auth */}
+        <div className="navbar-auth hide-mobile">
+          {isLoggedIn ? (
+            <div className="navbar-user-dropdown">
+              <button className="navbar-user-btn">
+                <div className="avatar">
+                  {user?.username?.charAt(0).toUpperCase()}
+                </div>
+                <span>{user?.username}</span>
+                <i className="fas fa-chevron-down text-xs"></i>
+              </button>
+              <div className="dropdown-menu">
+                <div className="dropdown-header">
+                  <p className="font-semibold">{user?.username}</p>
+                  <p className="text-muted text-xs">{user?.email}</p>
+                  {isAnyGovUser && <span className="badge badge-primary mt-2">Gov Official</span>}
+                </div>
+                <div className="dropdown-divider"></div>
+                {(isAnyGovUser || isSuperuser) && (
+                  <Link to="/dashboard" className="dropdown-item">
+                    <i className="fas fa-tachometer-alt"></i> Dashboard
+                  </Link>
                 )}
+                {isSuperuser && (
+                  <Link to="/superuser" className="dropdown-item">
+                    <i className="fas fa-shield-alt"></i> Admin Panel
+                  </Link>
+                )}
+                <button onClick={handleLogout} className="dropdown-item text-danger">
+                  <i className="fas fa-sign-out-alt"></i> Log Out
+                </button>
               </div>
             </div>
+          ) : (
+            <div className="auth-buttons">
+              <Link to="/login" className="btn btn-ghost">Log In</Link>
+              <Link to="/register" className="btn btn-primary">Sign Up</Link>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Toggle */}
+        <button
+          className={`mobile-toggle hide-desktop ${mobileMenuOpen ? 'is-active' : ''}`}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      {/* Mobile Menu Drawer */}
+      <div className={`mobile-drawer ${mobileMenuOpen ? 'is-open' : ''}`}>
+        <div className="mobile-drawer-inner">
+          <nav className="mobile-nav">
+            <Link to="/" className={`mobile-nav-link ${isActive('/')}`} onClick={() => setMobileMenuOpen(false)}>Home</Link>
+            <Link to="/map" className={`mobile-nav-link ${isActive('/map')}`} onClick={() => setMobileMenuOpen(false)}>Live Map</Link>
+            <Link to="/alerts" className={`mobile-nav-link ${isActive('/alerts')}`} onClick={() => setMobileMenuOpen(false)}>Alerts</Link>
+            {!isLoggedIn && (
+              <>
+                <Link to="/features" className={`mobile-nav-link ${isActive('/features')}`} onClick={() => setMobileMenuOpen(false)}>Features</Link>
+                <Link to="/about" className={`mobile-nav-link ${isActive('/about')}`} onClick={() => setMobileMenuOpen(false)}>About</Link>
+                <Link to="/contact" className={`mobile-nav-link ${isActive('/contact')}`} onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+              </>
+            )}
+
+            {isLoggedIn && (
+              <Link to="/my-routes" className={`mobile-nav-link ${isActive('/my-routes')}`} onClick={() => setMobileMenuOpen(false)}>My Routes</Link>
+            )}
+          </nav>
+
+          <div className="mobile-auth">
+            {isLoggedIn ? (
+              <>
+                <div className="mobile-user-info">
+                  <div className="avatar avatar-lg">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold">{user?.username}</p>
+                    <p className="text-muted text-sm">{user?.email}</p>
+                  </div>
+                </div>
+
+                <div className="mobile-auth-links">
+                  {(isAnyGovUser || isSuperuser) && (
+                    <Link to="/dashboard" className="btn btn-secondary btn-full mb-3" onClick={() => setMobileMenuOpen(false)}>
+                      <i className="fas fa-tachometer-alt"></i> Dashboard
+                    </Link>
+                  )}
+                  {isSuperuser && (
+                    <Link to="/superuser" className="btn btn-warning btn-full mb-3" onClick={() => setMobileMenuOpen(false)}>
+                      <i className="fas fa-shield-alt"></i> Admin Panel
+                    </Link>
+                  )}
+                  <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="btn btn-danger-light btn-full">
+                    <i className="fas fa-sign-out-alt"></i> Log Out
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="mobile-auth-buttons">
+                <Link to="/login" className="btn btn-secondary btn-full mb-3">Log In</Link>
+                <Link to="/register" className="btn btn-primary btn-full">Sign Up</Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </nav>
+      {mobileMenuOpen && (
+        <div className="mobile-drawer-overlay" onClick={() => setMobileMenuOpen(false)}></div>
+      )}
+    </header>
   )
 }

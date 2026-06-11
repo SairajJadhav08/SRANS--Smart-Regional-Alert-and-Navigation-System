@@ -1,0 +1,85 @@
+/* Toast.css */
+.toast-modern {
+  position: fixed;
+  top: 80px; /* Below navbar */
+  right: var(--space-6);
+  z-index: var(--z-toast);
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  min-width: 300px;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-left: 4px solid var(--color-info);
+}
+
+.toast-success { border-left-color: var(--color-primary); }
+.toast-danger { border-left-color: var(--color-danger); }
+.toast-warning { border-left-color: var(--color-warning); }
+
+.toast-icon {
+  padding: var(--space-4) 0 var(--space-4) var(--space-4);
+  font-size: var(--text-lg);
+}
+
+.toast-success .toast-icon { color: var(--color-primary); }
+.toast-danger .toast-icon { color: var(--color-danger); }
+.toast-warning .toast-icon { color: var(--color-warning); }
+.toast-info .toast-icon { color: var(--color-info); }
+
+.toast-content {
+  padding: var(--space-4);
+  flex: 1;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  padding: var(--space-4);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.toast-close:hover {
+  color: var(--text-primary);
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.2;
+  animation-name: progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.toast-success .toast-progress { color: var(--color-primary); }
+.toast-danger .toast-progress { color: var(--color-danger); }
+.toast-warning .toast-progress { color: var(--color-warning); }
+.toast-info .toast-progress { color: var(--color-info); }
+
+@keyframes progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@media (max-width: 640px) {
+  .toast-modern {
+    top: auto;
+    bottom: var(--space-6);
+    left: var(--space-4);
+    right: var(--space-4);
+    min-width: 0;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}

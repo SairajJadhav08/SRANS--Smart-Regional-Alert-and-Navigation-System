@@ -3,34 +3,37 @@ import { Link } from 'react-router-dom'
 export default function AboutPage() {
   return (
     <>
-      {/* Hero Section */}
-      <section className="hero is-primary">
-        <div className="hero-body">
-          <div className="container has-text-centered">
-            <h1 className="title is-1">About Our System</h1>
-            <h2 className="subtitle is-4">Learn about our mission to keep communities connected and safe</h2>
-          </div>
+      {/* Hero */}
+      <div className="page-header bg-white" style={{ paddingTop: 'var(--space-16)', paddingBottom: 'var(--space-16)' }}>
+        <div className="container text-center" style={{ maxWidth: '720px', margin: '0 auto' }}>
+          <span className="badge badge-primary mb-4"><i className="fas fa-landmark mr-1"></i> Our Story</span>
+          <h1 className="font-display" style={{ fontSize: 'var(--text-5xl)', fontWeight: 'var(--weight-extrabold)', lineHeight: 1.1, marginBottom: 'var(--space-6)' }}>
+            Building Safer Communities Through Technology
+          </h1>
+          <p className="text-secondary text-lg" style={{ lineHeight: 1.7 }}>
+            Learn about our mission to keep communities connected, informed, and safe through real-time intelligence.
+          </p>
         </div>
-      </section>
+      </div>
 
-      {/* Mission Section */}
+      {/* Mission */}
       <section className="section">
-        <div className="container">
-          <div className="columns is-centered">
-            <div className="column is-10">
-              <div className="box p-6">
-                <h3 className="title is-3 has-text-centered mb-6">Our Mission</h3>
-                
-                <div className="content is-medium">
-                  <p>
+        <div className="container" style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div className="card" style={{ border: 'none', boxShadow: 'none', background: 'transparent' }}>
+            <div className="card-body" style={{ padding: 0 }}>
+              <div className="flex gap-6 mb-8" style={{ alignItems: 'flex-start' }}>
+                <div className="icon-box primary" style={{ flexShrink: 0, width: '56px', height: '56px', fontSize: '24px' }}>
+                  <i className="fas fa-crosshairs"></i>
+                </div>
+                <div>
+                  <h2 className="font-display font-bold text-2xl mb-4">Our Mission</h2>
+                  <p className="text-secondary" style={{ lineHeight: 1.8, marginBottom: 'var(--space-4)' }}>
                     We strive to provide timely and accurate information to help you navigate your region safely and efficiently. We are dedicated to empowering communities by keeping them informed about critical events and updates that affect their daily lives.
                   </p>
-                  
-                  <p>
+                  <p className="text-secondary" style={{ lineHeight: 1.8, marginBottom: 'var(--space-4)' }}>
                     The Smart Regional Alert &amp; Navigation System was created with a singular vision: to bridge the information gap between local governments and citizens. By providing real-time alerts about traffic conditions, emergencies, construction activities, and weather events, we help people make informed decisions about their travel and daily activities.
                   </p>
-                  
-                  <p>
+                  <p className="text-secondary" style={{ lineHeight: 1.8 }}>
                     Our platform enables government agencies to quickly disseminate critical information to the public, ensuring that important alerts reach citizens when they matter most. By combining these alerts with interactive mapping technology, we offer not just information, but actionable guidance to navigate around disruptions safely.
                   </p>
                 </div>
@@ -40,93 +43,49 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Values Section */}
-      <section className="section has-background-light">
+      {/* Core Values */}
+      <section className="section bg-subtle">
         <div className="container">
-          <h3 className="title is-3 has-text-centered mb-6">Our Core Values</h3>
-          
-          <div className="columns is-multiline">
-            {/* Value 1 */}
-            <div className="column is-3">
-              <div className="card h-100">
-                <div className="card-content has-text-centered">
-                  <span className="icon is-large mb-4">
-                    <i className="fas fa-shield-alt fa-3x has-text-primary"></i>
-                  </span>
-                  <h4 className="title is-4">Safety First</h4>
-                  <div className="content">
-                    <p>We prioritize the safety and well-being of communities in everything we do. Our alerts are designed to help citizens avoid dangerous situations and navigate their region safely.</p>
+          <div className="text-center mb-12" style={{ marginBottom: 'var(--space-12)' }}>
+            <h2 className="font-display font-bold text-3xl mb-4">Our Core Values</h2>
+            <p className="text-secondary" style={{ maxWidth: '500px', margin: '0 auto' }}>
+              The principles that guide every decision we make.
+            </p>
+          </div>
+
+          <div className="grid grid-4">
+            {[
+              { icon: 'fa-shield-alt', title: 'Safety First', color: 'primary',
+                text: 'We prioritize the safety and well-being of communities in everything we do. Our alerts are designed to help citizens avoid dangerous situations and navigate their region safely.' },
+              { icon: 'fa-check-circle', title: 'Accuracy', color: 'accent',
+                text: 'We are committed to providing verified and accurate information. All alerts on our platform are validated by official government sources before being published.' },
+              { icon: 'fa-bolt', title: 'Timeliness', color: 'warning',
+                text: 'We understand that in critical situations, every second counts. Our platform is designed to deliver alerts rapidly, ensuring users receive information when they need it most.' },
+              { icon: 'fa-users', title: 'Community', color: 'info',
+                text: 'We believe in the power of connected communities. By improving communication between government agencies and citizens, we help build stronger, more resilient communities.' },
+            ].map((v, i) => (
+              <div key={i} className="card card-hover h-full">
+                <div className="card-body text-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-4)' }}>
+                  <div className={`icon-box ${v.color}`} style={{ width: '56px', height: '56px', fontSize: '24px' }}>
+                    <i className={`fas ${v.icon}`}></i>
                   </div>
+                  <h3 className="font-semibold text-lg">{v.title}</h3>
+                  <p className="text-secondary text-sm" style={{ lineHeight: 1.6 }}>{v.text}</p>
                 </div>
               </div>
-            </div>
-            
-            {/* Value 2 */}
-            <div className="column is-3">
-              <div className="card h-100">
-                <div className="card-content has-text-centered">
-                  <span className="icon is-large mb-4">
-                    <i className="fas fa-check-circle fa-3x has-text-success"></i>
-                  </span>
-                  <h4 className="title is-4">Accuracy</h4>
-                  <div className="content">
-                    <p>We are committed to providing verified and accurate information. All alerts on our platform are validated by official government sources before being published.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Value 3 */}
-            <div className="column is-3">
-              <div className="card h-100">
-                <div className="card-content has-text-centered">
-                  <span className="icon is-large mb-4">
-                    <i className="fas fa-bolt fa-3x has-text-warning"></i>
-                  </span>
-                  <h4 className="title is-4">Timeliness</h4>
-                  <div className="content">
-                    <p>We understand that in critical situations, every second counts. Our platform is designed to deliver alerts rapidly, ensuring that users receive information when they need it most.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Value 4 */}
-            <div className="column is-3">
-              <div className="card h-100">
-                <div className="card-content has-text-centered">
-                  <span className="icon is-large mb-4">
-                    <i className="fas fa-users fa-3x has-text-info"></i>
-                  </span>
-                  <h4 className="title is-4">Community</h4>
-                  <div className="content">
-                    <p>We believe in the power of connected communities. By improving communication between government agencies and citizens, we help build stronger, more resilient communities.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="section">
-        <div className="container">
-          <div className="columns is-centered">
-            <div className="column is-8">
-              <div className="box has-background-primary has-text-white p-6">
-                <div className="columns is-vcentered">
-                  <div className="column is-8">
-                    <h3 className="title is-3 has-text-white">Join Our Mission</h3>
-                    <p className="subtitle is-5 has-text-white">Be part of our effort to create safer, more connected communities.</p>
-                  </div>
-                  <div className="column is-4 has-text-centered">
-                    <Link to="/register" className="button is-white is-large">Sign Up Today</Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* CTA */}
+      <section className="section text-center" style={{ background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)', color: 'white' }}>
+        <div className="container" style={{ maxWidth: '700px', margin: '0 auto' }}>
+          <h2 className="font-display font-bold text-3xl mb-4 text-white">Join Our Mission</h2>
+          <p className="text-lg mb-8" style={{ opacity: 0.9 }}>
+            Be part of our effort to create safer, more connected communities across the region.
+          </p>
+          <Link to="/register" className="btn btn-white btn-lg">Sign Up Today</Link>
         </div>
       </section>
     </>

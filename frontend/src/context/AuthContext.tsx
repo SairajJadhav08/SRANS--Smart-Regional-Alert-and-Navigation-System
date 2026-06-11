@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { User } from '../types'
+import { getMe } from '../api'
 
 interface AuthState {
   token: string | null
@@ -28,6 +29,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   })
 
+  const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setToken(null)
+    setUser(null)
+  }
+
+  useEffect(() => {
+    if (token) {
+      getMe()
+        .then(res => {
+          const freshUser = res.data
+          localStorage.setItem('user', JSON.stringify(freshUser))
+          setUser(freshUser)
+        })
+        .catch(() => {
+          logout()
+        })
+    }
+  }, [token])
+
   useEffect(() => {
     const handleLogout = () => {
       setToken(null)
@@ -44,17 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser)
   }
 
-  const logout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    setToken(null)
-    setUser(null)
-  }
-
   const isLoggedIn = token !== null
-  const isGovUser = user?.is_government === true && user?.is_verified === true
-  const isAnyGovUser = user?.is_government === true
-  const isSuperuser = user?.is_superuser === true
+  const isGovUser = !!user?.is_government && !!user?.is_verified
+  const isAnyGovUser = !!user?.is_government
+  const isSuperuser = !!user?.is_superuser
 
   return (
     <AuthContext.Provider value={{ token, user, isLoggedIn, isGovUser, isAnyGovUser, isSuperuser, login, logout }}>

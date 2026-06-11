@@ -21,9 +21,16 @@ export default function LoginPage() {
       login(token, user)
 
       if (user.is_superuser) {
-        navigate('/admin')
+        navigate('/superuser')
       } else if (user.is_government) {
-        navigate('/dashboard')
+        if (!user.is_verified) {
+          window.dispatchEvent(new CustomEvent('toast:show', {
+            detail: { message: 'Your government account is pending system verification.', type: 'warning' }
+          }))
+          navigate('/')
+        } else {
+          navigate('/dashboard')
+        }
       } else {
         navigate('/')
       }
@@ -36,124 +43,118 @@ export default function LoginPage() {
   }
 
   return (
-    <>
-      <section className="hero is-primary">
-        <div className="hero-body">
-          <div className="container has-text-centered">
-            <h1 className="title is-1">Login</h1>
-            <h2 className="subtitle is-4">Access your account</h2>
+    <div className="auth-layout">
+      {/* Brand Panel */}
+      <div className="auth-panel-brand">
+        <div className="auth-brand-content">
+          <div className="auth-brand-logo">
+            <i className="fas fa-location-arrow"></i> SRANS
           </div>
+          <h2 className="auth-brand-title">Navigate your city with confidence.</h2>
+          <p className="auth-brand-subtitle">
+            Real-time alerts, traffic intelligence, and emergency notifications — all in one place. Stay informed, stay safe.
+          </p>
         </div>
-      </section>
-
-      <section className="section">
-        <div className="container">
-          <div className="columns is-centered">
-            <div className="column is-5">
-              <div className="card">
-                <div className="card-content">
-                  <h3 className="title is-4 has-text-centered mb-5">Welcome Back</h3>
-
-                  {error && (
-                    <div className="notification is-danger is-light mb-4">
-                      <button className="delete" onClick={() => setError(null)}></button>
-                      <span className="icon-text">
-                        <span className="icon"><i className="fas fa-exclamation-circle"></i></span>
-                        <span>{error}</span>
-                      </span>
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSubmit}>
-                    <div className="field">
-                      <label className="label">Username</label>
-                      <div className="control has-icons-left">
-                        <input
-                          className="input"
-                          type="text"
-                          placeholder="Enter your username"
-                          value={username}
-                          onChange={e => setUsername(e.target.value)}
-                          required
-                          autoFocus
-                        />
-                        <span className="icon is-small is-left">
-                          <i className="fas fa-user"></i>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="field">
-                      <label className="label">Password</label>
-                      <div className="control has-icons-left">
-                        <input
-                          className="input"
-                          type="password"
-                          placeholder="Enter your password"
-                          value={password}
-                          onChange={e => setPassword(e.target.value)}
-                          required
-                        />
-                        <span className="icon is-small is-left">
-                          <i className="fas fa-lock"></i>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="field mt-4">
-                      <div className="control">
-                        <button
-                          type="submit"
-                          className={`button is-primary is-fullwidth${loading ? ' is-loading' : ''}`}
-                          disabled={loading}
-                        >
-                          <span className="icon"><i className="fas fa-sign-in-alt"></i></span>
-                          <span>Login</span>
-                        </button>
-                      </div>
-                    </div>
-                  </form>
-
-                  <div className="has-text-centered mt-5">
-                    <p>Don't have an account? <Link to="/register">Sign up now</Link></p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="box mt-4">
-                <p className="is-size-7 has-text-grey has-text-centered">
-                  <strong>Government accounts</strong> require admin verification before accessing the dashboard.
-                  <br />
-                  <Link to="/contact">Contact us</Link> for more information.
-                </p>
-              </div>
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <div className="flex gap-8" style={{ opacity: 0.8 }}>
+            <div>
+              <p className="font-bold text-2xl">12K+</p>
+              <p className="text-sm" style={{ opacity: 0.7 }}>Active Users</p>
+            </div>
+            <div>
+              <p className="font-bold text-2xl">24/7</p>
+              <p className="text-sm" style={{ opacity: 0.7 }}>Monitoring</p>
+            </div>
+            <div>
+              <p className="font-bold text-2xl">99%</p>
+              <p className="text-sm" style={{ opacity: 0.7 }}>Uptime</p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="section has-background-light">
-        <div className="container">
-          <h3 className="title is-3 has-text-centered mb-6">Benefits of Creating an Account</h3>
-          <div className="columns is-multiline">
-            {[
-              { icon: 'fa-bell', title: 'Personalized Alerts', text: 'Receive alerts based on your location and preferences.' },
-              { icon: 'fa-route', title: 'Save Routes', text: 'Save frequent routes and get notified of disruptions.' },
-              { icon: 'fa-history', title: 'Alert History', text: 'Access past notifications you may have missed.' },
-            ].map(item => (
-              <div className="column is-4" key={item.title}>
-                <div className="box has-text-centered">
-                  <span className="icon is-large mb-4">
-                    <i className={`fas ${item.icon} fa-3x has-text-primary`}></i>
-                  </span>
-                  <h4 className="title is-4">{item.title}</h4>
-                  <p>{item.text}</p>
-                </div>
+      {/* Form Panel */}
+      <div className="auth-panel-form">
+        <div className="auth-form-container">
+          <div className="auth-header">
+            {/* Mobile-only logo */}
+            <Link to="/" className="flex items-center gap-2 mb-6 hide-desktop" style={{ textDecoration: 'none' }}>
+              <div className="navbar-logo-icon">
+                <i className="fas fa-location-arrow"></i>
               </div>
-            ))}
+              <span className="navbar-brand-text">SRANS</span>
+            </Link>
+
+            <h1>Welcome back</h1>
+            <p>Sign in to your account to continue</p>
+          </div>
+
+          {error && (
+            <div className="alert-banner is-danger mb-6">
+              <i className="fas fa-exclamation-circle"></i>
+              <span>{error}</span>
+              <button className="btn-icon btn-sm btn-ghost ml-auto" onClick={() => setError(null)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="field">
+              <label className="label">Username</label>
+              <div className="input-icon">
+                <i className="fas fa-user icon-left"></i>
+                <input
+                  className="input"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label className="label">Password</label>
+              <div className="input-icon">
+                <i className="fas fa-lock icon-left"></i>
+                <input
+                  className="input"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary btn-full btn-lg mt-6"
+              disabled={loading}
+            >
+              {loading ? <span className="spinner"></span> : <><i className="fas fa-sign-in-alt"></i> Sign In</>}
+            </button>
+          </form>
+
+          <p className="text-center mt-6 text-secondary text-sm">
+            Don't have an account? <Link to="/register" className="font-semibold" style={{ color: 'var(--color-primary)' }}>Create one</Link>
+          </p>
+
+          <div className="card mt-8" style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-light)' }}>
+            <div className="card-body text-center" style={{ padding: 'var(--space-4)' }}>
+              <p className="text-xs text-muted">
+                <i className="fas fa-shield-alt mr-1"></i>
+                <strong>Government accounts</strong> require admin verification before accessing the dashboard.
+                <Link to="/contact" className="ml-1" style={{ color: 'var(--color-primary)' }}>Contact us</Link>
+              </p>
+            </div>
           </div>
         </div>
-      </section>
-    </>
+      </div>
+    </div>
   )
 }

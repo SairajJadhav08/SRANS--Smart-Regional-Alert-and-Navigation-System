@@ -1,53 +1,43 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import { useEffect } from 'react'
+import './Toast.css'
 
-type ToastType = 'success' | 'danger' | 'warning' | 'info'
-
-interface Toast {
-  id: number
+interface ToastProps {
   message: string
-  type: ToastType
+  type?: 'success' | 'danger' | 'info' | 'warning'
+  onClose: () => void
+  duration?: number
 }
 
-interface ToastContextValue {
-  showToast: (message: string, type: ToastType) => void
-}
+export default function Toast({ message, type = 'info', onClose, duration = 3000 }: ToastProps) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose()
+    }, duration)
+    return () => clearTimeout(timer)
+  }, [onClose, duration])
 
-const ToastContext = createContext<ToastContextValue | null>(null)
-
-let nextId = 0
-
-export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([])
-
-  const showToast = useCallback((message: string, type: ToastType) => {
-    const id = ++nextId
-    setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
-    }, 4000)
-  }, [])
-
-  const dismiss = (id: number) => {
-    setToasts(prev => prev.filter(t => t.id !== id))
-  }
+  const iconClass = {
+    success: 'fa-check-circle',
+    danger: 'fa-exclamation-circle',
+    warning: 'fa-exclamation-triangle',
+    info: 'fa-info-circle'
+  }[type]
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
-      {children}
-      <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999, minWidth: '280px' }}>
-        {toasts.map(toast => (
-          <div key={toast.id} className={`notification is-${toast.type} is-light mb-2`}>
-            <button className="delete" onClick={() => dismiss(toast.id)}></button>
-            {toast.message}
-          </div>
-        ))}
+    <div className={`toast-modern toast-${type}`}>
+      <div className="toast-icon">
+        <i className={`fas ${iconClass}`}></i>
       </div>
-    </ToastContext.Provider>
+      <div className="toast-content">
+        {message}
+      </div>
+      <button className="toast-close" onClick={onClose} aria-label="Close">
+        <i className="fas fa-times"></i>
+      </button>
+      <div 
+        className="toast-progress" 
+        style={{ animationDuration: `${duration}ms` }}
+      ></div>
+    </div>
   )
-}
-
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used within a ToastProvider')
-  return ctx
 }
