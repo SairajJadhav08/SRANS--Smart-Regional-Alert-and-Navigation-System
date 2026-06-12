@@ -626,6 +626,25 @@ export default function MapPage() {
           </button>
         </div>
         <div className="map-panel-content" style={{ padding: 'var(--space-3)' }}>
+          {/* Live Feed Filters */}
+          <div className="pill-filters mb-4" style={{ flexWrap: 'wrap', display: 'flex', gap: '8px' }}>
+            <button className={`pill ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
+              All
+            </button>
+            <button className={`pill ${filter === 'Traffic' ? 'active' : ''}`} onClick={() => setFilter('Traffic')}>
+              <i className="fas fa-car-crash"></i> Traffic
+            </button>
+            <button className={`pill ${filter === 'Emergency' ? 'active' : ''}`} onClick={() => setFilter('Emergency')}>
+              <i className="fas fa-exclamation-triangle"></i> Emergency
+            </button>
+            <button className={`pill ${filter === 'Construction' ? 'active' : ''}`} onClick={() => setFilter('Construction')}>
+              <i className="fas fa-hard-hat"></i> Construction
+            </button>
+            <button className={`pill ${filter === 'Weather' ? 'active' : ''}`} onClick={() => setFilter('Weather')}>
+              <i className="fas fa-cloud-rain"></i> Weather
+            </button>
+          </div>
+
           {loading ? (
             <div className="flex-center flex-col gap-3 py-10 text-muted">
               <span className="spinner" style={{ width: '24px', height: '24px', borderWidth: '3px' }}></span>

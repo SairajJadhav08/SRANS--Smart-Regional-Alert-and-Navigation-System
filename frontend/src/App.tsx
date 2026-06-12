@@ -158,7 +158,7 @@ function AppContent() {
           </Routes>
         </Suspense>
       </main>
-      {!isAuthPage && !isMapPage && <Footer />}
+      {!isAuthPage && <Footer />}
     </>
   )
 }
