@@ -58,11 +58,21 @@ main:has(.auth-layout) {
   }
 }
 
+.contact-grid {
+  grid-template-columns: 1.4fr 1fr;
+}
+
 @media (max-width: 992px) {
   .map-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
+    display: block;
+    height: calc(100vh - 64px);
+    position: relative;
   }
+  
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
   
   .map-panel-left, .map-panel-right {
     position: fixed;

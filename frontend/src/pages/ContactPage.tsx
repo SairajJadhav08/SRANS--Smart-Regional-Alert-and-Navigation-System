@@ -25,7 +25,7 @@ export default function ContactPage() {
       {/* Contact Section */}
       <section className="section pt-0">
         <div className="container" style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="grid" style={{ gridTemplateColumns: '1.4fr 1fr', gap: 'var(--space-8)', alignItems: 'start' }}>
+          <div className="grid contact-grid" style={{ gap: 'var(--space-8)', alignItems: 'start' }}>
 
             {/* Form */}
             <div className="card">
