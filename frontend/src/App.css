@@ -72,15 +72,33 @@ main:has(.auth-layout) {
     left: 0;
     right: 0;
     transform: translateY(100%);
-    transition: transform var(--transition-base);
-    max-height: 50vh;
-    border-top-left-radius: var(--radius-xl);
-    border-top-right-radius: var(--radius-xl);
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    transition: transform var(--transition-base) cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 75vh;
+    border-top-left-radius: var(--radius-2xl);
+    border-top-right-radius: var(--radius-2xl);
+    box-shadow: 0 -10px 25px rgba(0,0,0,0.15);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .map-panel-left::before, .map-panel-right::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 5px;
+    border-radius: 5px;
+    background: var(--border-color);
+    z-index: 2;
   }
 
   .map-panel-left.is-open, .map-panel-right.is-open {
     transform: translateY(0);
+  }
+  
+  .map-panel-header {
+    padding-top: var(--space-6);
   }
 }
 
