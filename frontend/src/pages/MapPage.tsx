@@ -241,7 +241,14 @@ export default function MapPage() {
   // Fetch all alerts from API on mount
   useEffect(() => {
     getAlerts()
-      .then(res => setAlerts(res.data))
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setAlerts(res.data)
+        } else {
+          console.error('API did not return an array of alerts')
+          setAlerts([])
+        }
+      })
       .catch(() => setAlerts([]))
       .finally(() => setLoading(false))
   }, [])
@@ -467,52 +474,6 @@ export default function MapPage() {
             </div>
           </div>
 
-          <h3 className="font-semibold text-sm mb-3 text-secondary">FILTER ALERTS</h3>
-          <div className="flex flex-wrap gap-2 mb-6">
-            <button
-              className={`btn btn-sm flex-center gap-2 ${filter === 'all' ? 'btn-secondary' : 'btn-white'}`}
-              onClick={() => setFilter('all')}
-              style={{ borderRadius: 'var(--radius-full)', padding: 'var(--space-2) var(--space-3)', fontSize: '12px', flex: '1 1 auto', justifyContent: 'center' }}
-            >
-              <i className="fas fa-globe"></i>
-              <span>All</span>
-            </button>
-            <button
-              className={`btn btn-sm flex-center gap-2 ${filter === 'Traffic' ? 'btn-secondary' : 'btn-white'}`}
-              onClick={() => setFilter('Traffic')}
-              style={{ borderRadius: 'var(--radius-full)', padding: 'var(--space-2) var(--space-3)', fontSize: '12px', flex: '1 1 auto', justifyContent: 'center' }}
-            >
-              <i className="fas fa-car-crash text-danger"></i>
-              <span>Traffic</span>
-            </button>
-            <button
-              className={`btn btn-sm flex-center gap-2 ${filter === 'Emergency' ? 'btn-secondary' : 'btn-white'}`}
-              onClick={() => setFilter('Emergency')}
-              style={{ borderRadius: 'var(--radius-full)', padding: 'var(--space-2) var(--space-3)', fontSize: '12px', flex: '1 1 auto', justifyContent: 'center' }}
-            >
-              <i className="fas fa-exclamation-triangle text-purple"></i>
-              <span>Emergency</span>
-            </button>
-            <button
-              className={`btn btn-sm flex-center gap-2 ${filter === 'Construction' ? 'btn-secondary' : 'btn-white'}`}
-              onClick={() => setFilter('Construction')}
-              style={{ borderRadius: 'var(--radius-full)', padding: 'var(--space-2) var(--space-3)', fontSize: '12px', flex: '1 1 auto', justifyContent: 'center' }}
-            >
-              <i className="fas fa-hard-hat text-warning"></i>
-              <span>Construction</span>
-            </button>
-            <button
-              className={`btn btn-sm flex-center gap-2 ${filter === 'Weather' ? 'btn-secondary' : 'btn-white'}`}
-              onClick={() => setFilter('Weather')}
-              style={{ borderRadius: 'var(--radius-full)', padding: 'var(--space-2) var(--space-3)', fontSize: '12px', flex: '1 1 auto', justifyContent: 'center' }}
-            >
-              <i className="fas fa-cloud-rain text-info"></i>
-              <span>Weather</span>
-            </button>
-          </div>
-
-          <hr className="separator" />
-
           <button
             className="btn btn-primary btn-full mb-2"
             onClick={handleMyLocation}
@@ -581,6 +542,57 @@ export default function MapPage() {
               </div>
             </div>
           )}
+
+          <hr className="separator" />
+
+          <h3 className="font-semibold text-sm mb-3 text-secondary">FILTER ALERTS</h3>
+          <div className="flex-col gap-2">
+            <button
+              className={`btn btn-full flex-between ${filter === 'all' ? 'btn-secondary' : 'btn-ghost'}`}
+              onClick={() => setFilter('all')}
+              style={{ justifyContent: 'flex-start' }}
+            >
+              <div className="icon-box-sm bg-muted"><i className="fas fa-globe"></i></div>
+              <span className="flex-1 text-left ml-2">All Alerts</span>
+              {filter === 'all' && <i className="fas fa-check text-primary"></i>}
+            </button>
+            <button
+              className={`btn btn-full flex-between ${filter === 'Traffic' ? 'btn-secondary' : 'btn-ghost'}`}
+              onClick={() => setFilter('Traffic')}
+              style={{ justifyContent: 'flex-start' }}
+            >
+              <div className="icon-box-sm danger"><i className="fas fa-car-crash"></i></div>
+              <span className="flex-1 text-left ml-2">Traffic</span>
+              {filter === 'Traffic' && <i className="fas fa-check text-primary"></i>}
+            </button>
+            <button
+              className={`btn btn-full flex-between ${filter === 'Emergency' ? 'btn-secondary' : 'btn-ghost'}`}
+              onClick={() => setFilter('Emergency')}
+              style={{ justifyContent: 'flex-start' }}
+            >
+              <div className="icon-box-sm purple"><i className="fas fa-exclamation-triangle"></i></div>
+              <span className="flex-1 text-left ml-2">Emergency</span>
+              {filter === 'Emergency' && <i className="fas fa-check text-primary"></i>}
+            </button>
+            <button
+              className={`btn btn-full flex-between ${filter === 'Construction' ? 'btn-secondary' : 'btn-ghost'}`}
+              onClick={() => setFilter('Construction')}
+              style={{ justifyContent: 'flex-start' }}
+            >
+              <div className="icon-box-sm warning"><i className="fas fa-hard-hat"></i></div>
+              <span className="flex-1 text-left ml-2">Construction</span>
+              {filter === 'Construction' && <i className="fas fa-check text-primary"></i>}
+            </button>
+            <button
+              className={`btn btn-full flex-between ${filter === 'Weather' ? 'btn-secondary' : 'btn-ghost'}`}
+              onClick={() => setFilter('Weather')}
+              style={{ justifyContent: 'flex-start' }}
+            >
+              <div className="icon-box-sm info"><i className="fas fa-cloud-rain"></i></div>
+              <span className="flex-1 text-left ml-2">Weather</span>
+              {filter === 'Weather' && <i className="fas fa-check text-primary"></i>}
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -627,8 +639,8 @@ export default function MapPage() {
                 onClick={() => focusAlert(alert.location_lat, alert.location_lng)}
                 style={{
                   borderLeft: `3px solid ${alert.alert_type === 'Traffic' ? 'var(--color-danger)' :
-                      alert.alert_type === 'Emergency' ? 'var(--color-purple)' :
-                        alert.alert_type === 'Construction' ? 'var(--color-warning)' : 'var(--color-info)'
+                    alert.alert_type === 'Emergency' ? 'var(--color-purple)' :
+                      alert.alert_type === 'Construction' ? 'var(--color-warning)' : 'var(--color-info)'
                     }`
                 }}
               >

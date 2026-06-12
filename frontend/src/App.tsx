@@ -76,6 +76,46 @@ function AppContent() {
     }
   }, [])
 
+  // Background Notification Poller
+  useEffect(() => {
+    if (!('Notification' in window)) return;
+    
+    let lastAlertId = parseInt(localStorage.getItem('srans_last_alert_id') || '0', 10);
+    
+    const checkForAlerts = async () => {
+      if (Notification.permission !== 'granted') return;
+      try {
+        // We import getAlerts dynamically or we could import it at the top
+        // But App.tsx doesn't import getAlerts yet. Let's do it safely.
+        const { getAlerts } = await import('./api');
+        const res = await getAlerts();
+        
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          const latest = res.data[0];
+          if (lastAlertId === 0) {
+            lastAlertId = latest.id;
+            localStorage.setItem('srans_last_alert_id', lastAlertId.toString());
+          } else if (latest.id > lastAlertId) {
+            lastAlertId = latest.id;
+            localStorage.setItem('srans_last_alert_id', lastAlertId.toString());
+            
+            new Notification(`New ${latest.alert_type} Alert: ${latest.title}`, {
+              body: latest.description,
+              icon: '/Logo.png'
+            });
+          }
+        }
+      } catch (err) {
+        // silently fail on background polling
+      }
+    };
+
+    const interval = setInterval(checkForAlerts, 30000);
+    checkForAlerts();
+
+    return () => clearInterval(interval);
+  }, []);
+
   const location = useLocation()
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
   const isMapPage = location.pathname === '/map'

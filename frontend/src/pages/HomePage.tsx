@@ -101,6 +101,26 @@ export default function HomePage() {
                 <p className="text-secondary flex-1">
                   Get instant notifications about traffic incidents, emergencies, construction, and severe weather in your immediate vicinity.
                 </p>
+                <button 
+                  className="btn btn-primary btn-sm mt-2" 
+                  style={{ alignSelf: 'flex-start' }}
+                  onClick={() => {
+                    if (!('Notification' in window)) {
+                      alert('This browser does not support notifications.');
+                      return;
+                    }
+                    Notification.requestPermission().then(p => {
+                      if (p === 'granted') {
+                        new Notification('SRANS Notifications Enabled', {
+                          body: 'You will now receive alerts directly in your browser.',
+                          icon: '/Logo.png'
+                        });
+                      }
+                    });
+                  }}
+                >
+                  <i className="fas fa-bell mr-1"></i> Enable Notifications
+                </button>
               </div>
             </div>
 

@@ -7,7 +7,11 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_key_for_testing')
     app.config['JWT_SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_key_for_testing')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+    # Use DATABASE_URL for Render PostgreSQL, fallback to SQLite for local development
+    db_url = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Init extensions

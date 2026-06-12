@@ -24,7 +24,14 @@ export default function AlertsPage() {
 
   useEffect(() => {
     getAlerts()
-      .then(res => setAlerts(res.data))
+      .then(res => {
+        if (Array.isArray(res.data)) {
+          setAlerts(res.data)
+        } else {
+          console.error('API did not return an array of alerts')
+          setAlerts([])
+        }
+      })
       .catch(() => setAlerts([]))
       .finally(() => setLoading(false))
   }, [])
@@ -62,9 +69,30 @@ export default function AlertsPage() {
               </button>
             </div>
             
-            <Link to="/map" className="btn btn-secondary">
-              <i className="fas fa-map-marked-alt"></i> View on Map
-            </Link>
+            <div className="flex gap-2">
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  if (!('Notification' in window)) {
+                    alert('This browser does not support notifications.');
+                    return;
+                  }
+                  Notification.requestPermission().then(p => {
+                    if (p === 'granted') {
+                      new Notification('SRANS Notifications Enabled', {
+                        body: 'You will now receive alerts directly in your browser.',
+                        icon: '/Logo.png'
+                      });
+                    }
+                  });
+                }}
+              >
+                <i className="fas fa-bell mr-1"></i> Enable Notifications
+              </button>
+              <Link to="/map" className="btn btn-secondary">
+                <i className="fas fa-map-marked-alt"></i> View on Map
+              </Link>
+            </div>
           </div>
 
           {/* Alert Feed */}

@@ -12,7 +12,12 @@ export default function SuperuserPage() {
     try {
       setLoading(true)
       const res = await getGovUsers()
-      setUsers(res.data)
+      if (Array.isArray(res.data)) {
+        setUsers(res.data)
+      } else {
+        console.error('API did not return an array of users')
+        setUsers([])
+      }
     } catch {
       // error
     } finally {
