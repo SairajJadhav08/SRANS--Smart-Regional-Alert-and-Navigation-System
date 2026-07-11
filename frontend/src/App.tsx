@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext'
 import Navbar from './components/layout/Navbar'
 import Footer from './components/layout/Footer'
 import Toast from './components/layout/Toast'
+import BroadcastBanner from './components/layout/BroadcastBanner'
 import ProtectedRoute from './components/routing/ProtectedRoute'
 import GovRoute from './components/routing/GovRoute'
 import SuperuserRoute from './components/routing/SuperuserRoute'
@@ -23,6 +24,10 @@ const AboutPage = lazy(() => import('./pages/AboutPage'))
 const ContactPage = lazy(() => import('./pages/ContactPage'))
 const FeaturesPage = lazy(() => import('./pages/FeaturesPage'))
 const MyRoutesPage = lazy(() => import('./pages/MyRoutesPage'))
+const AiAssistantPage = lazy(() => import('./pages/AiAssistantPage'))
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
+const ReportPage = lazy(() => import('./pages/ReportPage'))
+const ReportReviewPage = lazy(() => import('./pages/ReportReviewPage'))
 
 // Scroll to top component
 function ScrollToTop() {
@@ -123,6 +128,7 @@ function AppContent() {
   return (
     <>
       {!isAuthPage && <Navbar />}
+      {!isAuthPage && <BroadcastBanner />}
       {toast && (
         <Toast 
           message={toast.message} 
@@ -144,12 +150,16 @@ function AppContent() {
             
             <Route element={<ProtectedRoute />}>
               <Route path="/my-routes" element={<MyRoutesPage />} />
+              <Route path="/ai-assistant" element={<AiAssistantPage />} />
+              <Route path="/report" element={<ReportPage />} />
             </Route>
 
             <Route element={<GovRoute />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/alerts/new" element={<NewAlertPage />} />
               <Route path="/alerts/edit/:id" element={<EditAlertPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/reports/review" element={<ReportReviewPage />} />
             </Route>
             
             <Route element={<SuperuserRoute />}>

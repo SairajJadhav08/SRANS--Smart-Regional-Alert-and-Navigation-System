@@ -18,7 +18,7 @@ export default function Footer() {
               <span>SRANS</span>
             </Link>
             <p className="footer-desc">
-              Smart Regional Alert & Navigation System. Empowering communities with real-time intelligence for safer, smarter travel.
+              AI-powered smart navigation for daily commuters. Avoid road construction, utility diversions, flooding, and infrastructure disruptions with real-time alerts and AI route recommendations.
             </p>
             <div className="footer-social">
               <a href="https://x.com/BuildsbySairaj" target="_blank" rel="noreferrer" className="social-icon" aria-label="Twitter">

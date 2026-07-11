@@ -43,7 +43,7 @@ export default function AlertsPage() {
       <div className="page-header bg-white">
         <div className="container">
           <h1>Regional Alerts</h1>
-          <p>Stay informed about current events affecting your area</p>
+          <p>Live road disruptions, construction, flooding, and infrastructure incidents affecting your commute</p>
         </div>
       </div>
 
@@ -160,13 +160,18 @@ export default function AlertsPage() {
       {/* Map CTA */}
       <section className="section bg-primary text-white text-center" style={{ background: 'var(--color-primary)', color: 'white' }}>
         <div className="container">
-          <h2 className="font-display font-bold text-3xl mb-4">See the bigger picture</h2>
+          <h2 className="font-display font-bold text-3xl mb-4">Plan your safest route</h2>
           <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto" style={{ maxWidth: '600px', margin: '0 auto 2rem' }}>
-            Visualize all active alerts, traffic conditions, and weather patterns on our interactive regional map.
+            See all active disruptions on the live map, then let our AI recommend the fastest route around them.
           </p>
-          <Link to="/map" className="btn btn-white btn-lg">
-            <i className="fas fa-map"></i> Open Interactive Map
-          </Link>
+          <div className="flex gap-4 flex-center">
+            <Link to="/map" className="btn btn-white btn-lg">
+              <i className="fas fa-map"></i> Open Interactive Map
+            </Link>
+            <Link to="/my-routes" className="btn btn-outline-white btn-lg">
+              <i className="fas fa-magic"></i> AI Route Planner
+            </Link>
+          </div>
         </div>
       </section>
     </>

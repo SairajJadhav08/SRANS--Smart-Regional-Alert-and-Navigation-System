@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  isGovernment Boolean  @default(false)
+  isVerified   Boolean  @default(false)
+  isSuperuser  Boolean  @default(false)
+  agencyName   String?
+  department   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  alerts      Alert[]
+  savedRoutes SavedRoute[]
+  reports     Report[]
+}
+
+model Alert {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  alertType   String
+  locationLat Float
+  locationLng Float
+  isBroadcast Boolean  @default(false)
+  authorId    Int
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SavedRoute {
+  id        Int      @id @default(autoincrement())
+  name      String
+  startLat  Float
+  startLng  Float
+  endLat    Float
+  endLng    Float
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  reportType  String   // Traffic | Emergency | Construction | Weather | Other
+  locationLat Float
+  locationLng Float
+  status      String   @default("pending")  // pending | approved | rejected
+  submittedBy Int
+  user        User     @relation(fields: [submittedBy], references: [id], onDelete: Cascade)
+  promotedTo  Int?     // Alert id if promoted to official alert
+  reviewNote  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

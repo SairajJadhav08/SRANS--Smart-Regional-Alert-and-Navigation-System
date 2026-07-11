@@ -11,7 +11,7 @@ export default function AboutPage() {
             Building Safer Communities Through Technology
           </h1>
           <p className="text-secondary text-lg" style={{ lineHeight: 1.7 }}>
-            Learn about our mission to keep communities connected, informed, and safe through real-time intelligence.
+            We built SRANS to solve a real problem — commuters losing time every day to road disruptions they never saw coming. Here's why we built it.
           </p>
         </div>
       </div>
@@ -28,13 +28,13 @@ export default function AboutPage() {
                 <div>
                   <h2 className="font-display font-bold text-2xl mb-4">Our Mission</h2>
                   <p className="text-secondary" style={{ lineHeight: 1.8, marginBottom: 'var(--space-4)' }}>
-                    We strive to provide timely and accurate information to help you navigate your region safely and efficiently. We are dedicated to empowering communities by keeping them informed about critical events and updates that affect their daily lives.
+                    SRANS was built for daily commuters who lose time every day to unexpected road disruptions — construction zones, utility work, traffic diversions, and flooding. Our mission is to put that time back in their hands by giving them accurate, real-time information and AI-powered route guidance before they step out the door.
                   </p>
                   <p className="text-secondary" style={{ lineHeight: 1.8, marginBottom: 'var(--space-4)' }}>
-                    The Smart Regional Alert &amp; Navigation System was created with a singular vision: to bridge the information gap between local governments and citizens. By providing real-time alerts about traffic conditions, emergencies, construction activities, and weather events, we help people make informed decisions about their travel and daily activities.
+                    The Smart Regional Alert &amp; Navigation System bridges the gap between government agencies and citizens. When a road is closed for infrastructure maintenance, a utility project disrupts traffic, or a natural disaster like flooding blocks key routes, SRANS aggregates those alerts instantly and surfaces them to commuters in a clear, actionable format — on a live map and in plain language through our AI Travel Assistant.
                   </p>
                   <p className="text-secondary" style={{ lineHeight: 1.8 }}>
-                    Our platform enables government agencies to quickly disseminate critical information to the public, ensuring that important alerts reach citizens when they matter most. By combining these alerts with interactive mapping technology, we offer not just information, but actionable guidance to navigate around disruptions safely.
+                    Beyond alerts, SRANS uses an AI engine to analyze disruptions along your saved routes and recommend the safest, fastest alternative path. Whether you commute by road every day or need to react to a sudden regional incident, SRANS turns fragmented government data into the guidance you actually need — in seconds.
                   </p>
                 </div>
               </div>
@@ -56,13 +56,13 @@ export default function AboutPage() {
           <div className="grid grid-4">
             {[
               { icon: 'fa-shield-alt', title: 'Safety First', color: 'primary',
-                text: 'We prioritize the safety and well-being of communities in everything we do. Our alerts are designed to help citizens avoid dangerous situations and navigate their region safely.' },
+                text: 'Every feature we build is designed to keep commuters away from dangerous situations — flooded roads, active construction zones, and blocked routes — before they become a problem.' },
               { icon: 'fa-check-circle', title: 'Accuracy', color: 'accent',
-                text: 'We are committed to providing verified and accurate information. All alerts on our platform are validated by official government sources before being published.' },
+                text: 'We only surface alerts that are verified by government agencies. Commuters make real decisions based on our data, so accuracy is non-negotiable.' },
               { icon: 'fa-bolt', title: 'Timeliness', color: 'warning',
-                text: 'We understand that in critical situations, every second counts. Our platform is designed to deliver alerts rapidly, ensuring users receive information when they need it most.' },
-              { icon: 'fa-users', title: 'Community', color: 'info',
-                text: 'We believe in the power of connected communities. By improving communication between government agencies and citizens, we help build stronger, more resilient communities.' },
+                text: 'A road closure alert that arrives after you\'re already stuck in traffic is useless. SRANS delivers disruption intelligence before you leave, so you can plan smarter.' },
+              { icon: 'fa-brain', title: 'AI-Driven', color: 'info',
+                text: 'We go beyond raw alerts. Our Groq-powered AI engine reasons over live disruption data to generate personalized route recommendations and answer your commuting questions in natural language.' },
             ].map((v, i) => (
               <div key={i} className="card card-hover h-full">
                 <div className="card-body text-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-4)' }}>
@@ -81,9 +81,9 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="section text-center" style={{ background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)', color: 'white' }}>
         <div className="container" style={{ maxWidth: '700px', margin: '0 auto' }}>
-          <h2 className="font-display font-bold text-3xl mb-4 text-white">Join Our Mission</h2>
+          <h2 className="font-display font-bold text-3xl mb-4 text-white">Start commuting smarter today</h2>
           <p className="text-lg mb-8" style={{ opacity: 0.9 }}>
-            Be part of our effort to create safer, more connected communities across the region.
+            Join thousands of commuters who use SRANS to avoid disruptions, save time, and navigate their region safely every day.
           </p>
           <Link to="/register" className="btn btn-white btn-lg">Sign Up Today</Link>
         </div>

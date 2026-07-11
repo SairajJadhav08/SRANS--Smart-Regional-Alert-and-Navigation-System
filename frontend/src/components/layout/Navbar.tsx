@@ -48,9 +48,16 @@ export default function Navbar() {
               <Link to="/contact" className={`nav-link ${isActive('/contact')}`}>Contact</Link>
             </>
           )}
-
           {isLoggedIn && (
-            <Link to="/my-routes" className={`nav-link ${isActive('/my-routes')}`}>My Routes</Link>
+            <>
+              <Link to="/my-routes" className={`nav-link ${isActive('/my-routes')}`}>My Routes</Link>
+              <Link to="/ai-assistant" className={`nav-link ${isActive('/ai-assistant')}`}>
+                <i className="fas fa-robot" style={{ marginRight: '4px', fontSize: '12px' }}></i>AI Assistant
+              </Link>
+              <Link to="/report" className={`nav-link ${isActive('/report')}`}>
+                <i className="fas fa-flag" style={{ marginRight: '4px', fontSize: '12px' }}></i>Report
+              </Link>
+            </>
           )}
         </nav>
 
@@ -72,9 +79,25 @@ export default function Navbar() {
                   {isAnyGovUser && <span className="badge badge-primary mt-2">Gov Official</span>}
                 </div>
                 <div className="dropdown-divider"></div>
+                <Link to="/ai-assistant" className="dropdown-item">
+                  <i className="fas fa-robot"></i> AI Assistant
+                </Link>
+                <Link to="/report" className="dropdown-item">
+                  <i className="fas fa-flag"></i> Report Incident
+                </Link>
                 {(isAnyGovUser || isSuperuser) && (
                   <Link to="/dashboard" className="dropdown-item">
                     <i className="fas fa-tachometer-alt"></i> Dashboard
+                  </Link>
+                )}
+                {(isAnyGovUser || isSuperuser) && (
+                  <Link to="/analytics" className="dropdown-item">
+                    <i className="fas fa-chart-bar"></i> Analytics
+                  </Link>
+                )}
+                {(isAnyGovUser || isSuperuser) && (
+                  <Link to="/reports/review" className="dropdown-item">
+                    <i className="fas fa-clipboard-check"></i> Review Reports
                   </Link>
                 )}
                 {isSuperuser && (
@@ -121,9 +144,13 @@ export default function Navbar() {
                 <Link to="/contact" className={`mobile-nav-link ${isActive('/contact')}`} onClick={() => setMobileMenuOpen(false)}>Contact</Link>
               </>
             )}
-
             {isLoggedIn && (
-              <Link to="/my-routes" className={`mobile-nav-link ${isActive('/my-routes')}`} onClick={() => setMobileMenuOpen(false)}>My Routes</Link>
+              <>
+                <Link to="/my-routes" className={`mobile-nav-link ${isActive('/my-routes')}`} onClick={() => setMobileMenuOpen(false)}>My Routes</Link>
+                <Link to="/ai-assistant" className={`mobile-nav-link ${isActive('/ai-assistant')}`} onClick={() => setMobileMenuOpen(false)}>
+                  <i className="fas fa-robot" style={{ marginRight: '6px', fontSize: '14px' }}></i>AI Assistant
+                </Link>
+              </>
             )}
           </nav>
 

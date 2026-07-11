@@ -53,20 +53,20 @@ export default function RegisterPage() {
           <div className="auth-brand-logo">
             <i className="fas fa-location-arrow"></i> SRANS
           </div>
-          <h2 className="auth-brand-title">Join your smart city network.</h2>
+          <h2 className="auth-brand-title">Commute smarter, starting today.</h2>
           <p className="auth-brand-subtitle">
-            Create an account to save routes, customize alerts, and receive personalized traffic intelligence for your region.
+            Save your daily routes, get AI-powered disruption alerts, and receive safe route recommendations before you leave home.
           </p>
         </div>
         <div style={{ position: 'relative', zIndex: 2 }}>
           <div className="flex-col gap-4" style={{ opacity: 0.85 }}>
             <div className="flex gap-3 items-center">
               <i className="fas fa-check-circle" style={{ opacity: 0.7 }}></i>
-              <span>Personalized Alerts & Route Monitoring</span>
+              <span>AI-Powered Safe Route Recommendations</span>
             </div>
             <div className="flex gap-3 items-center">
               <i className="fas fa-check-circle" style={{ opacity: 0.7 }}></i>
-              <span>Save Frequent Routes & Locations</span>
+              <span>Save Frequent Routes & Get Daily Alerts</span>
             </div>
             <div className="flex gap-3 items-center">
               <i className="fas fa-check-circle" style={{ opacity: 0.7 }}></i>

@@ -32,7 +32,7 @@ export default function LoginPage() {
           navigate('/dashboard')
         }
       } else {
-        navigate('/')
+        navigate('/map')
       }
     } catch (err: any) {
       const msg = err?.response?.data?.message || 'Invalid username or password'
@@ -50,9 +50,9 @@ export default function LoginPage() {
           <div className="auth-brand-logo">
             <i className="fas fa-location-arrow"></i> SRANS
           </div>
-          <h2 className="auth-brand-title">Navigate your city with confidence.</h2>
+          <h2 className="auth-brand-title">Commute smarter, every day.</h2>
           <p className="auth-brand-subtitle">
-            Real-time alerts, traffic intelligence, and emergency notifications — all in one place. Stay informed, stay safe.
+            AI-powered route optimization that helps you avoid road construction, infrastructure work, traffic diversions, and flooding — before you leave home.
           </p>
         </div>
         <div style={{ position: 'relative', zIndex: 2 }}>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { getRoutes, deleteRoute } from '../api'
+import { getRoutes, deleteRoute, getAiRoutinePlan } from '../api'
 import type { SavedRoute } from '../types'
 
 export default function MyRoutesPage() {
@@ -10,6 +10,10 @@ export default function MyRoutesPage() {
   const [routes, setRoutes] = useState<SavedRoute[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const [aiPlans, setAiPlans] = useState<Record<number, string>>({})
+  const [loadingAi, setLoadingAi] = useState<Record<number, boolean>>({})
+  const [arrivalTimes, setArrivalTimes] = useState<Record<number, string>>({})
 
   useEffect(() => {
     getRoutes()
@@ -35,6 +39,19 @@ export default function MyRoutesPage() {
       } catch {
         alert('Failed to delete route')
       }
+    }
+  }
+
+  const handleAskAi = async (routeId: number) => {
+    const time = arrivalTimes[routeId] || '09:00'
+    setLoadingAi(prev => ({ ...prev, [routeId]: true }))
+    try {
+      const res = await getAiRoutinePlan(routeId, time)
+      setAiPlans(prev => ({ ...prev, [routeId]: res.data.recommendation }))
+    } catch (err) {
+      setAiPlans(prev => ({ ...prev, [routeId]: 'Sorry, failed to get AI recommendation. Please try again.' }))
+    } finally {
+      setLoadingAi(prev => ({ ...prev, [routeId]: false }))
     }
   }
 
@@ -137,6 +154,34 @@ export default function MyRoutesPage() {
                       >
                         <i className="fas fa-trash-alt"></i>
                       </button>
+                    </div>
+
+                    <div className="flex-col mt-4 pt-4" style={{ borderTop: '1px solid var(--border-light)' }}>
+                      <div className="flex gap-2 items-center mb-3">
+                        <span className="text-xs text-muted font-medium">Target Arrival:</span>
+                        <input
+                          type="time"
+                          className="input flex-1"
+                          style={{ padding: '0.25rem 0.5rem', minHeight: '32px' }}
+                          value={arrivalTimes[route.id] || '09:00'}
+                          onChange={(e) => setArrivalTimes(prev => ({ ...prev, [route.id]: e.target.value }))}
+                        />
+                        <button
+                          className="btn btn-sm text-white"
+                          style={{ background: 'var(--color-primary)' }}
+                          onClick={() => handleAskAi(route.id)}
+                          disabled={loadingAi[route.id]}
+                        >
+                          {loadingAi[route.id] ? <span className="spinner text-xs"></span> : <><i className="fas fa-magic mr-1"></i> Ask AI</>}
+                        </button>
+                      </div>
+                      
+                      {aiPlans[route.id] && (
+                        <div className="alert-banner is-info text-sm p-3 rounded" style={{ whiteSpace: 'pre-line', background: 'var(--bg-subtle)' }}>
+                          <i className="fas fa-robot text-primary mb-1"></i><br/>
+                          {aiPlans[route.id]}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
