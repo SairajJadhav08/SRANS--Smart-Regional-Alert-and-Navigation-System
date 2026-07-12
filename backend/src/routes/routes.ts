@@ -81,7 +81,7 @@ router.post(
 // ── DELETE /api/routes/:id ────────────────────────────────────────────────────
 router.delete('/:id', authenticate, async (req: AuthRequest, res: any) => {
   try {
-    const id = parseInt(req.params.id!)
+    const id = parseInt(req.params.id as string)
     if (isNaN(id)) return res.status(400).json({ message: 'Invalid route ID' })
 
     const route = await prisma.savedRoute.findUnique({ where: { id } })

@@ -87,7 +87,7 @@ router.get('/', async (req: AuthRequest, res: any) => {
 // ── GET /api/alerts/:id ───────────────────────────────────────────────────────
 router.get('/:id', async (req: AuthRequest, res: any) => {
   try {
-    const id = parseInt(req.params.id!)
+    const id = parseInt(req.params.id as string)
     if (isNaN(id)) return res.status(400).json({ message: 'Invalid alert ID' })
 
     const alert = await prisma.alert.findUnique({ where: { id } })
@@ -216,7 +216,7 @@ router.put(
     }
 
     try {
-      const id = parseInt(req.params.id!)
+      const id = parseInt(req.params.id as string)
       if (isNaN(id)) return res.status(400).json({ message: 'Invalid alert ID' })
 
       const existing = await prisma.alert.findUnique({ where: { id } })
@@ -248,7 +248,7 @@ router.put(
 // ── DELETE /api/alerts/:id ────────────────────────────────────────────────────
 router.delete('/:id', authenticate, requireGov, async (req: AuthRequest, res: any) => {
   try {
-    const id = parseInt(req.params.id!)
+    const id = parseInt(req.params.id as string)
     if (isNaN(id)) return res.status(400).json({ message: 'Invalid alert ID' })
 
     const existing = await prisma.alert.findUnique({ where: { id } })

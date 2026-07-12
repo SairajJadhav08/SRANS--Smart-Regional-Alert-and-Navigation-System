@@ -159,7 +159,7 @@ router.post(
   requireSuperuser,
   async (req: AuthRequest, res: any) => {
     try {
-      const id = parseInt(req.params.id!)
+      const id = parseInt(req.params.id as string)
       if (isNaN(id)) return res.status(400).json({ message: 'Invalid user ID' })
       await prisma.user.update({ where: { id }, data: { isVerified: true } })
       return res.json({ message: 'Government user approved' })
@@ -177,7 +177,7 @@ router.post(
   requireSuperuser,
   async (req: AuthRequest, res: any) => {
     try {
-      const id = parseInt(req.params.id!)
+      const id = parseInt(req.params.id as string)
       if (isNaN(id)) return res.status(400).json({ message: 'Invalid user ID' })
       await prisma.user.update({ where: { id }, data: { isVerified: false } })
       return res.json({ message: 'Government user revoked' })
