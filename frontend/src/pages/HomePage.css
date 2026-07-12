@@ -5,7 +5,7 @@
   position: absolute;
   inset: -10%;
   background-color: var(--bg-subtle);
-  background-image: 
+  background-image:
     linear-gradient(var(--bg-muted) 1px, transparent 1px),
     linear-gradient(90deg, var(--bg-muted) 1px, transparent 1px);
   background-size: 40px 40px;
@@ -40,9 +40,23 @@
   box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
 }
 
-.node-1 { top: 30%; left: 40%; transform: translate(-50%, -50%); }
-.node-2 { top: 60%; left: 70%; transform: translate(-50%, -50%); }
-.node-3 { top: 60%; left: 40%; transform: translate(-50%, -50%); }
+.node-1 {
+  top: 30%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+}
+
+.node-2 {
+  top: 60%;
+  left: 70%;
+  transform: translate(-50%, -50%);
+}
+
+.node-3 {
+  top: 60%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+}
 
 .floating-card {
   position: absolute;
@@ -58,9 +72,23 @@
   min-width: 200px;
 }
 
-.float-1 { top: 20%; left: 45%; animation: float 6s ease-in-out infinite; }
-.float-2 { top: 50%; left: 20%; animation: float 7s ease-in-out infinite 1s; }
-.float-3 { top: 70%; left: 60%; animation: float 5s ease-in-out infinite 2s; }
+.float-1 {
+  top: 20%;
+  left: 45%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.float-2 {
+  top: 50%;
+  left: 20%;
+  animation: float 7s ease-in-out infinite 1s;
+}
+
+.float-3 {
+  top: 70%;
+  left: 60%;
+  animation: float 5s ease-in-out infinite 2s;
+}
 
 .fc-content {
   flex: 1;
@@ -91,11 +119,11 @@
     flex-direction: column;
     align-items: center;
   }
-  
+
   .workflow-line {
     display: none;
   }
-  
+
   .workflow-step {
     width: 100%;
     max-width: 300px;

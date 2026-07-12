@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SRANS API Interactive Documentation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Swagger UI default styles -->
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  
+  <!-- Swagger Dark Theme overrides -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-themes@1.4.3/themes/dark.min.css" />
+
+  <style>
+    /* Premium Dark Mode Styles */
+    :root {
+      color-scheme: dark;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0b0f19 !important;
+      font-family: 'Inter', -apple-system, sans-serif !important;
+    }
+
+    /* Glassmorphic Header */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2rem;
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      font-size: 1.1rem;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #f3f4f6;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #34d399;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Swagger Custom CSS Overrides */
+    .swagger-ui {
+      background-color: #0b0f19 !important;
+    }
+
+    .swagger-ui .info {
+      margin: 30px 0 !important;
+      padding: 24px !important;
+      background: rgba(30, 41, 59, 0.4) !important;
+      border: 1px solid rgba(255, 255, 255, 0.05) !important;
+      border-radius: 12px !important;
+    }
+
+    .swagger-ui .info .title {
+      font-family: 'Inter', sans-serif !important;
+      color: #f3f4f6 !important;
+      font-weight: 700 !important;
+    }
+
+    .swagger-ui .info p, .swagger-ui .info li, .swagger-ui .info td, .swagger-ui .info a {
+      font-family: 'Inter', sans-serif !important;
+      color: #9ca3af !important;
+      font-size: 0.95rem !important;
+      line-height: 1.6 !important;
+    }
+
+    .swagger-ui .info a {
+      color: #60a5fa !important;
+      text-decoration: none !important;
+    }
+
+    .swagger-ui .info a:hover {
+      text-decoration: underline !important;
+    }
+
+    .swagger-ui .scheme-container {
+      background: rgba(30, 41, 59, 0.3) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+      padding: 15px 0 !important;
+      box-shadow: none !important;
+    }
+
+    .swagger-ui select {
+      background: #1e293b !important;
+      color: #f3f4f6 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 6px !important;
+    }
+
+    .swagger-ui .btn.authorize {
+      background-color: transparent !important;
+      color: #10b981 !important;
+      border-color: #10b981 !important;
+      border-radius: 8px !important;
+      transition: all 0.2s;
+    }
+
+    .swagger-ui .btn.authorize:hover {
+      background-color: #10b981 !important;
+      color: #fff !important;
+    }
+
+    .swagger-ui .btn.authorize svg {
+      fill: currentColor !important;
+    }
+
+    /* Tag/Heading Header Custom Styling */
+    .swagger-ui .opblock-tag-section {
+      background: rgba(15, 23, 42, 0.3) !important;
+      border: 1px solid rgba(255, 255, 255, 0.03) !important;
+      border-radius: 12px !important;
+      margin-bottom: 20px !important;
+      overflow: hidden;
+    }
+
+    .swagger-ui .opblock-tag {
+      font-family: 'Inter', sans-serif !important;
+      color: #f3f4f6 !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+      padding: 16px 20px !important;
+      background: rgba(30, 41, 59, 0.2) !important;
+    }
+
+    .swagger-ui .opblock-tag small {
+      color: #9ca3af !important;
+      font-size: 0.85rem !important;
+    }
+
+    .swagger-ui .opblock {
+      border-radius: 8px !important;
+      margin-bottom: 12px !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header Navbar Dashboard -->
+  <div class="header-bar">
+    <div class="brand-section">
+      <div class="brand-logo">S</div>
+      <h1 class="brand-title">SRANS API Developer Portal</h1>
+    </div>
+    <div class="system-status">
+      <div class="status-dot"></div>
+      <span>API Spec: Live</span>
+    </div>
+  </div>
+
+  <!-- Swagger UI mount node -->
+  <div id="swagger-ui"></div>
+
+  <!-- Swagger Core Scripts -->
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js" charset="UTF-8"> </script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+  
+  <script>
+    window.onload = function() {
+      // Begin SwaggerUI Config
+      const ui = SwaggerUIBundle({
+        url: "./openapi.yaml",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "BaseLayout",
+        // Force tags sorting to remain logically grouped
+        apisSorter: "alpha",
+        operationsSorter: "alpha",
+        defaultModelsExpandDepth: 1,
+        defaultModelExpandDepth: 1
+      });
+      window.ui = ui;
+    };
+  </script>
+</body>
+</html>

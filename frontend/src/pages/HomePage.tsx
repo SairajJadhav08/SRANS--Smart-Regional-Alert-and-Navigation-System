@@ -140,7 +140,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        
+
         <div className="hero-visual">
           {/* Abstract map illustration using CSS */}
           <div className="abstract-map">
@@ -148,11 +148,11 @@ export default function HomePage() {
             <div className="map-line horizontal" style={{ top: '60%' }}></div>
             <div className="map-line vertical" style={{ left: '40%' }}></div>
             <div className="map-line vertical" style={{ left: '70%' }}></div>
-            
+
             <div className="map-node node-1 animate-pulse"></div>
             <div className="map-node node-2 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
             <div className="map-node node-3 animate-pulse" style={{ animationDelay: '1s' }}></div>
-            
+
             <div className="floating-card float-1 animate-fadeIn" style={{ animationDelay: '1s' }}>
               <div className="icon-box-sm warning"><i className="fas fa-hard-hat"></i></div>
               <div className="fc-content">
@@ -199,8 +199,8 @@ export default function HomePage() {
                 <p className="text-secondary flex-1">
                   Stay ahead of road construction, utility work, traffic diversions, flooding, and other city-wide incidents that affect your daily commute.
                 </p>
-                <button 
-                  className="btn btn-primary btn-sm mt-2" 
+                <button
+                  className="btn btn-primary btn-sm mt-2"
                   style={{ alignSelf: 'flex-start' }}
                   onClick={() => {
                     if (!('Notification' in window)) {
@@ -259,7 +259,7 @@ export default function HomePage() {
 
           <div className="workflow-container" style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 'var(--space-8)' }}>
             <div className="workflow-line" style={{ position: 'absolute', top: '40px', left: '10%', right: '10%', height: '2px', background: 'var(--border-color)', zIndex: 0 }}></div>
-            
+
             <div className="workflow-step" style={{ flex: 1, textAlign: 'center', position: 'relative', zIndex: 1 }}>
               <div className="workflow-icon" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-white)', border: '2px solid var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: 'var(--color-primary)', margin: '0 auto var(--space-4)', boxShadow: 'var(--shadow-sm)' }}>
                 <i className="fas fa-broadcast-tower"></i>

@@ -1,0 +1,985 @@
+openapi: 3.0.0
+info:
+  title: SRANS API Documentation
+  description: |
+    REST API specification for the Smart Regional Alert & Navigation System (SRANS).
+    This API allows Citizens, Government Officers, and Superusers to communicate road disruptions, hazards, and custom routes.
+    
+    The AI Endpoints (Groq Llama 3.3 Engine) are highlighted at the top of the paths below.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000/api
+    description: Local Development Server
+tags:
+  - name: "AI Features (Commuter Intelligence)"
+    description: "Groq LLM-powered cognitive assistance endpoints"
+  - name: "Authentication & User Profiles"
+    description: "User registrations, login, logout, and superuser verification controls"
+  - name: "Official Incident Alerts"
+    description: "Publish, update, delete, and broadcast regional road notifications"
+  - name: "Citizen Crowdsourced Reports"
+    description: "Citizen submission, review, approval, and promotion of incidents"
+  - name: "Commuter Saved Routes"
+    description: "Bookmark and delete routine coordinate pathways"
+  - name: "System Analytics"
+    description: "Activity, weekly statistics, and rounded location congestion hotspots"
+  - name: "Guest Support Inquiry"
+    description: "Contact form details submission"
+
+paths:
+
+  # ── AI ENDPOINTS ─────────────────────────────────────────────────────────────
+  /ai/routine-planner:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Suggests safe travel departures (AI Feature)
+      description: |
+        **Purpose**: Suggests safe travel departures by matching route coordinates against nearby alerts.
+        **LLM/AI Used**: Groq `llama-3.3-70b-versatile` (Llama-3 Serverless).
+        **Business Value**: Increases driver safety and reduces commute time through proactive warning advisories.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - route_id
+              properties:
+                route_id:
+                  type: integer
+                  description: ID of the user's saved route
+                arrival_time:
+                  type: string
+                  description: Optional target arrival time (e.g., "09:30 AM")
+      responses:
+        '200':
+          description: AI recommendation successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendation:
+                    type: string
+        '400':
+          description: Missing or invalid route_id
+        '404':
+          description: Saved route not found or not owned by user
+
+  /ai/chat:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: General travel chatbot (AI Feature)
+      description: |
+        **Purpose**: Answers general commuter questions on regional travel hazards using live database alerts.
+        **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+        **Business Value**: Provides a low-friction conversational portal for accessing complex safety and weather advisories.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: The query message from the commuter
+      responses:
+        '200':
+          description: Chat reply generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+        '400':
+          description: Empty or missing message
+
+  /ai/detect-alerts:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Automated hazard prediction based on GPS coordinates (AI Feature)
+      description: |
+        **Purpose**: Autogenerates alerts near a user's location based on local coordinates, time, and seasonal trends.
+        **LLM/AI Used**: Groq `llama-3.3-70b-versatile` (with system-enforced JSON schema parsing).
+        **Business Value**: Pre-seeds regional hazard maps with high probability risks, lowering bootstrap data requirements.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - lat
+                - lng
+              properties:
+                lat:
+                  type: number
+                  format: float
+                  description: Latitude coordinate of current location
+                lng:
+                  type: number
+                  format: float
+                  description: Longitude coordinate of current location
+      responses:
+        '200':
+          description: Plausible regional alerts generated and seeded into the DB
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created:
+                    type: integer
+                  alerts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Alert'
+        '400':
+          description: Missing or invalid lat/lng coordinates
+
+  /ai/navigation-chat:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Real-time driving assistant (AI Feature)
+      description: |
+        **Purpose**: Acts as an in-route co-pilot by digesting driving metrics (steps, coordinates, distance) and answering questions.
+        **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+        **Business Value**: Maximizes app session duration and creates a highly interactive, sticky navigator experience.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                start_lat:
+                  type: number
+                start_lng:
+                  type: number
+                end_lat:
+                  type: number
+                end_lng:
+                  type: number
+                current_step:
+                  type: string
+                total_distance:
+                  type: string
+                total_time:
+                  type: string
+      responses:
+        '200':
+          description: Navigation assistance response successfully compiled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply:
+                    type: string
+        '400':
+          description: Missing message parameter
+
+  /ai/daily-briefing:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Personalised morning commute briefing (AI Feature)
+      description: |
+        **Purpose**: Produces a structured morning travel report for a specific city or geographical bounds.
+        **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+        **Business Value**: Drives daily recurring traffic to the application by sending actionable, simple briefings.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                city:
+                  type: string
+                lat:
+                  type: number
+                lng:
+                  type: number
+      responses:
+        '200':
+          description: Daily briefing completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  briefing:
+                    type: string
+                  alertCount:
+                    type: integer
+        '400':
+          description: Missing both city and coordinates
+
+  # ── AUTHENTICATION ENDPOINTS ──────────────────────────────────────────────────
+  /auth/register:
+    post:
+      tags:
+        - "Authentication & User Profiles"
+      summary: Register citizen or government account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+                - user_type
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                user_type:
+                  type: string
+                  enum: [user, government]
+                agency_name:
+                  type: string
+                department:
+                  type: string
+      responses:
+        '201':
+          description: Account created successfully
+        '400':
+          description: Validation checks failed
+        '409':
+          description: Username or Email taken
+
+  /auth/login:
+    post:
+      tags:
+        - "Authentication & User Profiles"
+      summary: Authenticate credentials and get JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid username or password
+
+  /auth/logout:
+    post:
+      tags:
+        - "Authentication & User Profiles"
+      summary: Stateless logout acknowledgment
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+
+  /auth/me:
+    get:
+      tags:
+        - "Authentication & User Profiles"
+      summary: Retrieve current authenticated user profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /auth/admin/gov-users:
+    get:
+      tags:
+        - "Authentication & User Profiles"
+      summary: List all government users (Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of government accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /auth/admin/gov-users/{id}/approve:
+    post:
+      tags:
+        - "Authentication & User Profiles"
+      summary: Verify/Approve government officer account (Superuser)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User approved successfully
+
+  /auth/admin/gov-users/{id}/revoke:
+    post:
+      tags:
+        - "Authentication & User Profiles"
+      summary: Revoke government officer account verification (Superuser)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User revoked successfully
+
+  # ── ALERTS ENDPOINTS ─────────────────────────────────────────────────────────
+  /alerts:
+    get:
+      tags:
+        - "Official Incident Alerts"
+      summary: Get active regional alerts (Public)
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [Traffic, Emergency, Construction, Weather]
+        - name: author_only
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of active alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alert'
+    post:
+      tags:
+        - "Official Incident Alerts"
+      summary: Create official regional alert (Government/Superuser)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - alert_type
+                - location_lat
+                - location_lng
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                alert_type:
+                  type: string
+                  enum: [Traffic, Emergency, Construction, Weather]
+                location_lat:
+                  type: number
+                location_lng:
+                  type: number
+      responses:
+        '201':
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+
+  /alerts/{id}:
+    get:
+      tags:
+        - "Official Incident Alerts"
+      summary: Get individual alert details (Public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Alert data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '404':
+          description: Alert not found
+    put:
+      tags:
+        - "Official Incident Alerts"
+      summary: Modify existing regional alert (Author/Superuser)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - alert_type
+                - location_lat
+                - location_lng
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                alert_type:
+                  type: string
+                location_lat:
+                  type: number
+                location_lng:
+                  type: number
+      responses:
+        '200':
+          description: Alert updated
+    delete:
+      tags:
+        - "Official Incident Alerts"
+      summary: Delete alert (Author/Superuser)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Alert deleted
+
+  /alerts/broadcast:
+    post:
+      tags:
+        - "Official Incident Alerts"
+      summary: Send emergency system-wide broadcast (Superuser)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                alert_type:
+                  type: string
+                location_lat:
+                  type: number
+                location_lng:
+                  type: number
+      responses:
+        '201':
+          description: System broadcast created
+
+  /alerts/broadcast/active:
+    get:
+      tags:
+        - "Official Incident Alerts"
+      summary: Retrieve the current active broadcast alert (Public)
+      responses:
+        '200':
+          description: Active broadcast payload (or null if none)
+
+  /alerts/bulk-delete:
+    post:
+      tags:
+        - "Official Incident Alerts"
+      summary: Delete multiple alerts simultaneously (Government/Superuser)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - ids
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '200':
+          description: Deletion confirmation
+
+  # ── CROWDSOURCED REPORTS ENDPOINTS ──────────────────────────────────────────
+  /reports:
+    get:
+      tags:
+        - "Citizen Crowdsourced Reports"
+      summary: List crowdsourced reports (Government sees all, citizen sees own)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Report'
+    post:
+      tags:
+        - "Citizen Crowdsourced Reports"
+      summary: Submit a new citizen report
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - description
+                - report_type
+                - location_lat
+                - location_lng
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                report_type:
+                  type: string
+                  enum: [Traffic, Emergency, Construction, Weather, Other]
+                location_lat:
+                  type: number
+                location_lng:
+                  type: number
+      responses:
+        '201':
+          description: Report submitted successfully
+
+  /reports/{id}:
+    delete:
+      tags:
+        - "Citizen Crowdsourced Reports"
+      summary: Delete a report (Owner/Government/Superuser)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Report deleted
+
+  /reports/{id}/approve:
+    post:
+      tags:
+        - "Citizen Crowdsourced Reports"
+      summary: Approve citizen report and promote to official alert (Government/Superuser)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Report approved and promoted to alert
+
+  /reports/{id}/reject:
+    post:
+      tags:
+        - "Citizen Crowdsourced Reports"
+      summary: Reject citizen report (Government/Superuser)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Report rejected
+
+  # ── SAVED ROUTES ENDPOINTS ───────────────────────────────────────────────────
+  /routes:
+    get:
+      tags:
+        - "Commuter Saved Routes"
+      summary: Retrieve saved commuter routes
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of saved routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SavedRoute'
+    post:
+      tags:
+        - "Commuter Saved Routes"
+      summary: Bookmark a new saved route
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - start_lat
+                - start_lng
+                - end_lat
+                - end_lng
+              properties:
+                name:
+                  type: string
+                start_lat:
+                  type: number
+                start_lng:
+                  type: number
+                end_lat:
+                  type: number
+                end_lng:
+                  type: number
+      responses:
+        '201':
+          description: Route bookmarked
+
+  /routes/{id}:
+    delete:
+      tags:
+        - "Commuter Saved Routes"
+      summary: Remove a saved route
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Route deleted successfully
+
+  # ── ANALYTICS ENDPOINTS ──────────────────────────────────────────────────────
+  /analytics/summary:
+    get:
+      tags:
+        - "System Analytics"
+      summary: Core totals (Government/Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Data summary counts
+
+  /analytics/by-type:
+    get:
+      tags:
+        - "System Analytics"
+      summary: Grouped counts by alert type (Government/Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Alert groups data
+
+  /analytics/weekly:
+    get:
+      tags:
+        - "System Analytics"
+      summary: Alert frequency over last 7 days (Government/Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Weekly counts array
+
+  /analytics/hotspots:
+    get:
+      tags:
+        - "System Analytics"
+      summary: Rounded clustered coordinate density analysis (Government/Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Clustered locations array
+
+  /analytics/recent-activity:
+    get:
+      tags:
+        - "System Analytics"
+      summary: Latest alerts and reports feed (Government/Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Recent items logs
+
+  # ── CONTACT ENDPOINT ─────────────────────────────────────────────────────────
+  /contact:
+    post:
+      tags:
+        - "Guest Support Inquiry"
+      summary: Send contact message (Public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  required:
+                    - name
+                    - email
+                    - subject
+                    - message
+                  properties:
+                    name:
+                      type: string
+                    email:
+                      type: string
+                    subject:
+                      type: string
+                    message:
+                      type: string
+      responses:
+        '200':
+          description: Query submitted successfully
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        is_government:
+          type: boolean
+        is_verified:
+          type: boolean
+        is_superuser:
+          type: boolean
+        agency_name:
+          type: string
+          nullable: true
+        department:
+          type: string
+          nullable: true
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        alert_type:
+          type: string
+        location_lat:
+          type: number
+        location_lng:
+          type: number
+        is_broadcast:
+          type: boolean
+        author_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SavedRoute:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        start_lat:
+          type: number
+        start_lng:
+          type: number
+        end_lat:
+          type: number
+        end_lng:
+          type: number
+        user_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        report_type:
+          type: string
+        location_lat:
+          type: number
+        location_lng:
+          type: number
+        status:
+          type: string
+        submitted_by:
+          type: integer
+        promoted_to:
+          type: integer
+          nullable: true
+        review_note:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            username:
+              type: string
+            email:
+              type: string
