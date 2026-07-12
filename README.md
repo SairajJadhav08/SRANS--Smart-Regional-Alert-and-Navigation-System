@@ -1,6 +1,6 @@
 # SRANS – Smart Regional Alert & Navigation System
 
-**🌐 [View Live Application](https://srans-smart-regional-alert-and-navi.vercel.app)** | **📄 [Read the Case Study](docs/case-study.md)** | **⚙️ [API Documentation](docs/api-design.md)**
+**🌐 [View Live Application](https://srans-smart-regional-alert-and-navi.vercel.app)** | **📄 [Read the Case Study](docs/case-study.md)** | **⚡ [Live API Portal](https://SairajJadhav08.github.io/SRANS--Smart-Regional-Alert-and-Navigation-System/API_DOCUMENTATION/)**
 
 SRANS is an AI-powered smart navigation platform designed to help commuters avoid traffic congestion and road disruptions caused by government infrastructure projects, public utility work, road maintenance, and natural disasters.
 
