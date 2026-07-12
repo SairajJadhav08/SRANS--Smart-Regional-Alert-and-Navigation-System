@@ -1,5 +1,7 @@
 # Engineering Case Study: Smart Regional Alert & Navigation System (SRANS)
 
+**🌐 [View Live Application](https://srans-smart-regional-alert-and-navi.vercel.app)** | **⚙️ [View API Documentation](api-design.md)** | **🏠 [Back to Main Readme](../README.md)**
+
 This document provides a detailed overview of the SRANS architecture, engineering design choices, database structures, and development challenges.
 
 ---
