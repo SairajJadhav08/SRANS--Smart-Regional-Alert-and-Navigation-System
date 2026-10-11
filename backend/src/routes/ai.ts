@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { prisma } from '../config/db'
-import { createCompletion, DATA_RULE, fenceData } from '../lib/ai'
+import { createCompletion, DATA_RULE, FORMAT_RULE, fenceData } from '../lib/ai'
 import { authenticate } from '../middleware/auth'
 import type { AuthRequest } from '../middleware/auth'
 
@@ -70,7 +70,8 @@ Based on these alerts, provide a concise, practical travel recommendation. Inclu
 3. Any specific roads or areas to avoid
 4. An alternative approach if disruptions are severe
 
-Keep your response under 150 words. Write in a helpful, conversational tone.`
+Keep your response under 150 words. Write in a helpful, conversational tone.
+${FORMAT_RULE}`
 
     const completion = await createCompletion({
       messages: [{ role: 'user', content: prompt }],
@@ -118,7 +119,8 @@ Current regional alerts:
 ${fenceData('alerts', alertContext)}
 
 ${DATA_RULE}
-Answer the user's question helpfully and concisely. Focus on travel safety, route planning, and regional conditions. Use short paragraphs or bullet points. Keep your response under 200 words.`
+Answer the user's question helpfully and concisely. Focus on travel safety, route planning, and regional conditions. Keep your response under 200 words.
+${FORMAT_RULE}`
 
     // Optional prior turns so the assistant can follow up on earlier answers
     const history = Array.isArray(req.body.history)
@@ -381,7 +383,8 @@ ${routeContext}
 Active alerts along or near this route:
 ${alertContext}
 
-Answer the user's question helpfully and concisely. You are a friendly co-pilot — be direct, practical, and safety-focused. Keep your response under 150 words. If the user asks about their current route, use the context above to give specific guidance.`
+Answer the user's question helpfully and concisely. You are a friendly co-pilot — be direct, practical, and safety-focused. Keep your response under 150 words. If the user asks about their current route, use the context above to give specific guidance.
+${FORMAT_RULE}`
 
     const completion = await createCompletion({
       messages: [
@@ -464,7 +467,8 @@ Generate a concise, friendly morning commute briefing for this commuter. Include
 3. Any roads, areas, or routes they should specifically avoid
 4. A practical departure recommendation (leave early, take alternate route, etc.)
 
-Format as short bullet points. Keep it under 180 words. Be specific about locations and disruption types. Write like a helpful local navigation assistant.`
+Use short bullet points. Keep it under 180 words. Be specific about locations and disruption types. Write like a helpful local navigation assistant.
+${FORMAT_RULE}`
 
     const completion = await createCompletion({
       messages: [{ role: 'user', content: prompt }],

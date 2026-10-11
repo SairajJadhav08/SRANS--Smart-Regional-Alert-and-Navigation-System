@@ -846,8 +846,6 @@ a.list-row:hover { background: var(--bg-primary); }
 
 /* ── Overview ── */
 .overview-brief {
-  font-size: var(--text-base) !important;
-  color: #E3F1ED !important;
   max-width: 900px;
 }
 
@@ -1052,3 +1050,101 @@ a.list-row:hover { background: var(--bg-primary); }
   position: relative;
   z-index: 1;
 }
+
+
+/* ── AI rich text (Markdown rendered by components/ai/RichText) ── */
+.rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.rich-text p { margin: 0; }
+
+.rich-text .rt-heading {
+  font-weight: var(--weight-bold);
+  color: var(--ink-900);
+  margin-top: var(--space-1);
+  margin-bottom: calc(-1 * var(--space-2));
+}
+
+.rich-text ul,
+.rich-text ol { display: flex; flex-direction: column; gap: 6px; padding-left: 0; margin: 0; }
+
+.rich-text li { display: flex; gap: 10px; align-items: flex-start; }
+.rich-text li > span { flex: 1; min-width: 0; }
+
+.rich-text ul li::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  margin-top: 0.65em;
+  flex-shrink: 0;
+}
+
+.rich-text ol { counter-reset: item; }
+.rich-text ol li { counter-increment: item; }
+.rich-text ol li::before {
+  content: counter(item);
+  min-width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary-strong);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  display: grid;
+  place-items: center;
+  margin-top: 0.2em;
+  flex-shrink: 0;
+}
+
+.rich-text strong { font-weight: var(--weight-bold); color: var(--ink-900); }
+
+.rich-text code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--bg-subtle);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.rt-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.rt-table-wrap table { width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.5; }
+
+.rt-table-wrap th {
+  text-align: left;
+  font-weight: var(--weight-bold);
+  background: var(--bg-subtle);
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.rt-table-wrap td {
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-light);
+  vertical-align: top;
+  min-width: 120px;
+}
+
+/* On the dark AI cards */
+.rich-text-dark { color: #D3E8E2; font-size: var(--text-base); }
+.rich-text-dark strong,
+.rich-text-dark .rt-heading { color: #fff; }
+.rich-text-dark ul li::before { background: #34D399; }
+.rich-text-dark ol li::before { background: rgba(240, 122, 30, 0.2); color: #FDBA74; }
+.rich-text-dark code { background: rgba(255, 255, 255, 0.1); }
+.rich-text-dark .rt-table-wrap { border-color: rgba(255, 255, 255, 0.14); }
+.rich-text-dark .rt-table-wrap th { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.rich-text-dark .rt-table-wrap td { border-top-color: rgba(255, 255, 255, 0.08); }

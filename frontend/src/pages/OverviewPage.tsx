@@ -10,6 +10,7 @@ import Seo from '../components/Seo'
 import { AiChip, AiShimmer, EmptyState, Kpi, OptionalImg, TypeIcon } from '../components/ui'
 import RouteRiskCard from '../components/ai/RouteRiskCard'
 import AlertExplainer from '../components/ai/AlertExplainer'
+import RichText from '../components/ai/RichText'
 
 interface Coords { lat: number; lng: number }
 interface Briefing { briefing: string; alertCount: number; city: string; at: number }
@@ -152,7 +153,7 @@ export default function OverviewPage() {
         <h2 id="brief-title" className="sr-only">AI commute briefing</h2>
         {(briefingLoading || (locating && !briefing)) && <AiShimmer lines={5} />}
         {briefingError && !briefingLoading && <p className="ai-text">{briefingError}</p>}
-        {briefing && !briefingLoading && <p className="ai-text overview-brief">{briefing.briefing}</p>}
+        {briefing && !briefingLoading && <div className="overview-brief"><RichText text={briefing.briefing} tone="dark" /></div>}
         <div className="flex gap-3 flex-wrap mt-6">
           <Link to="/ai-assistant" className="btn btn-signal btn-sm">
             <i className="fas fa-comments" aria-hidden="true"></i> Ask a follow-up

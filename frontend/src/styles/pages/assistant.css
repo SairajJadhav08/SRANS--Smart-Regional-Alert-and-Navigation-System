@@ -211,35 +211,6 @@
   color: #991B1B;
 }
 
-.rich-text { display: flex; flex-direction: column; gap: var(--space-3); }
-.rich-text ul, .rich-text ol { display: flex; flex-direction: column; gap: 6px; padding-left: 0; }
-.rich-text ul li { display: flex; gap: 10px; }
-.rich-text ul li::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  margin-top: 9px;
-  flex-shrink: 0;
-}
-.rich-text ol { counter-reset: item; }
-.rich-text ol li { display: flex; gap: 10px; counter-increment: item; }
-.rich-text ol li::before {
-  content: counter(item);
-  min-width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--color-primary-light);
-  color: var(--color-primary-strong);
-  font-size: 11px;
-  font-weight: var(--weight-bold);
-  display: grid;
-  place-items: center;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-.rich-text strong { font-weight: var(--weight-bold); color: var(--ink-900); }
 
 .msg-meta {
   display: flex;

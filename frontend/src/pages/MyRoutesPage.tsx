@@ -5,6 +5,7 @@ import type { SavedRoute } from '../types'
 import Seo from '../components/Seo'
 import { AiShimmer, EmptyState, PageHead } from '../components/ui'
 import RouteRiskCard from '../components/ai/RouteRiskCard'
+import RichText from '../components/ai/RichText'
 
 export default function MyRoutesPage() {
   const [routes, setRoutes] = useState<SavedRoute[]>([])
@@ -108,7 +109,7 @@ export default function MyRoutesPage() {
           <h2 id="plan-title" className="mb-3" style={{ fontSize: 'var(--text-lg)' }}>
             {planFor.name} · arrive by {arrival}
           </h2>
-          {planLoading ? <AiShimmer lines={4} /> : <p className="ai-text">{plan}</p>}
+          {planLoading ? <AiShimmer lines={4} /> : <RichText text={plan ?? ''} tone="dark" />}
         </section>
       )}
 
