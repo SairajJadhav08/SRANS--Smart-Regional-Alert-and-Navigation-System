@@ -422,3 +422,28 @@
   .navbar-modern.scrolled { padding: 8px 10px 0; }
   .navbar-modern.scrolled .navbar-container { height: 52px; padding-left: var(--space-3); padding-right: var(--space-3); }
 }
+
+/* backdrop-filter on the header itself turns it into the containing block for
+   its position:fixed mobile drawer, collapsing the drawer to the header's
+   64px height. Paint the frosted glass on a pseudo-element instead. */
+.navbar-modern,
+.navbar-modern.scrolled,
+.navbar-modern.on-dark {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.navbar-modern::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+.navbar-modern.scrolled::before,
+.navbar-modern.on-dark::before {
+  display: none;
+}

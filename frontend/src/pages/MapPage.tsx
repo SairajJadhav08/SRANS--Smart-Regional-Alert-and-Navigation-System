@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { getAlerts, createRoute, getAiNavigationChat, getAiDetectAlerts, getRoutes } from '../api'
 import type { Alert, SavedRoute } from '../types'
@@ -426,6 +427,7 @@ export default function MapPage() {
 
     // Keep tiles correct when the container resizes (sidebar, sheet, window)
     const ro = new ResizeObserver(() => map.invalidateSize())
+    let deepLinkTimer: number | undefined
     ro.observe(mapEl.current)
 
     // Deep links: ?start_lat&start_lng&end_lat&end_lng (saved routes, shared links) or ?lat&lng (focus an alert)
@@ -438,7 +440,7 @@ export default function MapPage() {
       setStartCoords(s); setStartText(fmtCoords(s[0], s[1]))
       setEndCoords(t); setEndText(fmtCoords(t[0], t[1]))
       setTab('route')
-      setTimeout(() => startRouting(s, t), 250)
+      deepLinkTimer = window.setTimeout(() => startRouting(s, t), 250)
     } else if (f.every(v => !isNaN(v))) {
       focusRef.current = f
       map.setView(f, 16)
@@ -446,6 +448,7 @@ export default function MapPage() {
     }
 
     return () => {
+      window.clearTimeout(deepLinkTimer)
       ro.disconnect()
       map.remove()
       mapRef.current = null
@@ -1022,7 +1025,7 @@ export default function MapPage() {
       </section>
 
       {/* ── Save route modal ── */}
-      {saveOpen && (
+      {saveOpen && createPortal(
         <div className="modal-overlay" style={{ zIndex: 1000 }} role="dialog" aria-modal="true" aria-labelledby="save-route-title">
           <form className="modal-card" onSubmit={e => { e.preventDefault(); confirmSave() }}>
             <div className="modal-card-header">
@@ -1042,7 +1045,7 @@ export default function MapPage() {
             </div>
           </form>
         </div>
-      )}
+        , document.body)}
     </div>
   )
 }

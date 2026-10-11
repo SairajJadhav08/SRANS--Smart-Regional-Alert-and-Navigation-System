@@ -84,13 +84,25 @@ export function createRouter() {
   const routers = ROUTERS.map(serviceUrl => L.Routing.osrmv1({ serviceUrl, profile: 'driving', timeout: 15000 }))
   return {
     route(waypoints: any, callback: (err: any, routes?: any) => void, context: any, options: any) {
+      // Routing Machine aborts the pending request when its control is removed
+      // or re-routed; without a working abort, a late response would draw onto a
+      // removed control and throw ("Cannot read properties of null").
+      let aborted = false
+      let current: any = null
       const attempt = (i: number) => {
-        routers[i].route(waypoints, (err: any, routes: any) => {
+        current = routers[i].route(waypoints, (err: any, routes: any) => {
+          if (aborted) return
           if (err && i < routers.length - 1) attempt(i + 1)
           else callback.call(context, err, routes)
         }, context, options)
       }
       attempt(0)
+      return {
+        abort() {
+          aborted = true
+          current?.abort?.()
+        },
+      }
     },
     // Lets Routing Machine re-request finer geometry after zooming in
     requiresMoreDetail(route: any, zoom: number, bounds: any) {

@@ -13,6 +13,9 @@ html.map-lock body {
   --mp-panel-w: 360px;
   --mp-sheet-peek: 108px;
   position: relative;
+  /* Keep Leaflet's panes and the map overlays (z-index 400–900) inside the map,
+     so the app sidebar and mobile menus always open above them */
+  isolation: isolate;
   display: grid;
   grid-template-columns: var(--mp-panel-w) minmax(0, 1fr);
   height: calc(100vh - var(--nav-height));
