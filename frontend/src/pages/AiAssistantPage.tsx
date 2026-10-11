@@ -1,289 +1,304 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { getAiChat } from '../api'
+import { getAiChatWithHistory, getAiSmartSearch, getAlerts } from '../api'
+import type { ChatTurn } from '../api'
+import type { Alert } from '../types'
+import { timeAgo, typeMeta } from '../lib/alertMeta'
+import Seo from '../components/Seo'
+import { BrandMark, TypeIcon } from '../components/ui'
+import RichText from '../components/ai/RichText'
+import '../styles/pages/assistant.css'
 
 interface Message {
   id: number
   role: 'user' | 'assistant'
   content: string
-  timestamp: Date
+  at: number
   loading?: boolean
+  error?: boolean
+  matches?: number[]        // alert ids from smart search
 }
 
-const SUGGESTED_QUESTIONS = [
-  'Is it safe to travel through the city right now?',
-  'What road disruptions are active today?',
-  'Which roads should I avoid due to flooding?',
-  'Are there any construction diversions I should know about?',
-  'What is the safest time to commute this morning?',
-  'Summarize all active regional alerts for me.',
+type Mode = 'chat' | 'search'
+
+const STORAGE_KEY = 'srans_assistant_chat'
+
+const PROMPT_GROUPS: Array<{ label: string; icon: string; prompts: string[] }> = [
+  {
+    label: 'Right now',
+    icon: 'fa-bolt',
+    prompts: [
+      'Is it safe to travel through the city right now?',
+      'Summarise all active alerts in 5 bullet points.',
+      'Which roads should I avoid due to flooding?',
+    ],
+  },
+  {
+    label: 'Plan ahead',
+    icon: 'fa-calendar-check',
+    prompts: [
+      'What is the best time to leave for a 9 AM office arrival?',
+      'Are there construction diversions I should plan around this week?',
+    ],
+  },
+  {
+    label: 'Safety',
+    icon: 'fa-shield-heart',
+    prompts: [
+      'What should I do if I get stuck in a waterlogged underpass?',
+      'Any emergency incidents I should know about today?',
+    ],
+  },
 ]
 
+const GREETING: Message = {
+  id: 0,
+  role: 'assistant',
+  at: Date.now(),
+  content:
+    "Hi! I'm the SRANS travel assistant.\n\nI read every live regional alert — construction, flooding, diversions and emergencies — so you can ask me anything about current conditions or your commute. I remember our conversation, so feel free to ask follow-ups.",
+}
+
+function loadMessages(): Message[] {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Message[]
+      if (Array.isArray(parsed) && parsed.length) return parsed.filter(m => !m.loading)
+    }
+  } catch { /* ignore */ }
+  return [GREETING]
+}
+
 export default function AiAssistantPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 0,
-      role: 'assistant',
-      content: "Hi! I'm the SRANS Travel Assistant.\n\nI have access to all live regional alerts — road construction, flooding, traffic diversions, and infrastructure disruptions. Ask me anything about current conditions or your commute and I'll give you a real-time answer.",
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState<Message[]>(loadMessages)
   const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [mode, setMode] = useState<Mode>('chat')
+  const [alertsById, setAlertsById] = useState<Map<number, Alert>>(new Map())
+  const [copied, setCopied] = useState<number | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  // Auto-scroll to latest message
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    getAlerts().then(res => setAlertsById(new Map(res.data.map(a => [a.id, a])))).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages.filter(m => !m.loading))) } catch { /* ignore */ }
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  const sendMessage = async (text: string) => {
+  // Grow the textarea with its content (up to a cap)
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+  }, [input])
+
+  const send = async (text: string) => {
     const trimmed = text.trim()
-    if (!trimmed || isLoading) return
+    if (!trimmed || busy) return
 
-    const userMsg: Message = {
-      id: Date.now(),
-      role: 'user',
-      content: trimmed,
-      timestamp: new Date(),
-    }
+    const history: ChatTurn[] = messages
+      .filter(m => m.id !== 0 && !m.loading && !m.error && !m.matches)
+      .slice(-10)
+      .map(m => ({ role: m.role, content: m.content }))
 
-    const loadingMsg: Message = {
-      id: Date.now() + 1,
-      role: 'assistant',
-      content: '',
-      timestamp: new Date(),
-      loading: true,
-    }
-
-    setMessages(prev => [...prev, userMsg, loadingMsg])
+    const now = Date.now()
+    const userMsg: Message = { id: now, role: 'user', content: trimmed, at: now }
+    const pending: Message = { id: now + 1, role: 'assistant', content: '', at: now, loading: true }
+    setMessages(prev => [...prev, userMsg, pending])
     setInput('')
-    setIsLoading(true)
+    setBusy(true)
 
     try {
-      const res = await getAiChat(trimmed)
-      setMessages(prev =>
-        prev.map(m =>
-          m.loading ? { ...m, content: res.data.reply, loading: false } : m
-        )
-      )
-    } catch {
-      setMessages(prev =>
-        prev.map(m =>
-          m.loading
-            ? { ...m, content: 'Sorry, I could not reach the AI right now. Please try again in a moment.', loading: false }
-            : m
-        )
-      )
+      if (mode === 'search') {
+        const res = await getAiSmartSearch(trimmed)
+        setMessages(prev => prev.map(m => m.id === pending.id
+          ? { ...m, loading: false, content: res.data.answer || 'Here are the most relevant alerts.', matches: res.data.alert_ids, at: Date.now() }
+          : m))
+      } else {
+        const res = await getAiChatWithHistory(trimmed, history)
+        setMessages(prev => prev.map(m => m.id === pending.id ? { ...m, loading: false, content: res.data.reply, at: Date.now() } : m))
+      }
+    } catch (err: any) {
+      const msg = err?.response?.status === 429
+        ? 'You are sending messages a little fast. Please wait a moment and try again.'
+        : 'Sorry, I could not reach the AI right now. Please try again in a moment.'
+      setMessages(prev => prev.map(m => m.id === pending.id ? { ...m, loading: false, error: true, content: msg } : m))
     } finally {
-      setIsLoading(false)
+      setBusy(false)
       inputRef.current?.focus()
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    sendMessage(input)
-  }
+  const onSubmit = (e: FormEvent) => { e.preventDefault(); send(input) }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage(input)
-    }
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input) }
   }
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: Date.now(),
-        role: 'assistant',
-        content: "Chat cleared. I'm ready for your next question about regional conditions or your commute.",
-        timestamp: new Date(),
-      },
-    ])
+    setMessages([{ ...GREETING, id: Date.now(), at: Date.now(), content: "Chat cleared. What would you like to know about today's road conditions?" }])
   }
 
+  const copy = async (m: Message) => {
+    try {
+      await navigator.clipboard.writeText(m.content)
+      setCopied(m.id)
+      setTimeout(() => setCopied(c => (c === m.id ? null : c)), 1500)
+    } catch { /* clipboard blocked */ }
+  }
+
+  const onlyGreeting = messages.length === 1
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', background: 'var(--bg-subtle)' }}>
+    <div className="assistant">
+      <Seo title="AI Assistant" noindex />
 
-      {/* Header */}
-      <div className="bg-white" style={{ borderBottom: '1px solid var(--border-color)', padding: 'var(--space-4) 0', flexShrink: 0 }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-            <div className="icon-box accent" style={{ width: '44px', height: '44px', fontSize: '20px', flexShrink: 0 }}>
-              <i className="fas fa-robot"></i>
-            </div>
-            <div>
-              <h1 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--weight-bold)', margin: 0, lineHeight: 1.2 }}>
-                AI Travel Assistant
-              </h1>
-              <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-muted)', margin: 0 }}>
-                AI-powered · Live alert context
-              </p>
+      <aside className="assistant-rail" aria-label="Suggested questions">
+        <div className="assistant-rail-head">
+          <span className="ai-chip on-light"><i className="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Groq AI · live alerts</span>
+          <p>The assistant answers using every active alert in the region.</p>
+        </div>
+        {PROMPT_GROUPS.map(g => (
+          <div key={g.label} className="assistant-group">
+            <h2 className="assistant-group-label"><i className={`fas ${g.icon}`} aria-hidden="true"></i> {g.label}</h2>
+            {g.prompts.map(p => (
+              <button key={p} type="button" className="assistant-prompt" onClick={() => { setMode('chat'); send(p) }} disabled={busy}>
+                {p}
+              </button>
+            ))}
+          </div>
+        ))}
+        <Link to="/my-routes" className="assistant-rail-link">
+          <i className="fas fa-route" aria-hidden="true"></i>
+          <span><strong>Route risk scores</strong><br />See AI risk for your saved routes</span>
+          <i className="fas fa-arrow-right" aria-hidden="true"></i>
+        </Link>
+      </aside>
+
+      <section className="assistant-main" aria-label="Conversation">
+        <header className="assistant-head">
+          <div className="flex items-center gap-3" style={{ minWidth: 0 }}>
+            <BrandMark />
+            <div style={{ minWidth: 0 }}>
+              <h1 className="assistant-title">SRANS Travel Assistant</h1>
+              <p className="assistant-sub"><span className="live-dot" aria-hidden="true"></span> Connected to live alerts</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
-            <button className="btn btn-ghost btn-sm" onClick={clearChat} title="Clear chat">
-              <i className="fas fa-trash-alt mr-1"></i> Clear
+          <div className="flex items-center gap-2">
+            <div className="assistant-mode" role="group" aria-label="Assistant mode">
+              <button type="button" aria-pressed={mode === 'chat'} onClick={() => setMode('chat')}>
+                <i className="fas fa-comments" aria-hidden="true"></i> Chat
+              </button>
+              <button type="button" aria-pressed={mode === 'search'} onClick={() => setMode('search')}>
+                <i className="fas fa-magnifying-glass-location" aria-hidden="true"></i> Find alerts
+              </button>
+            </div>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={clearChat} disabled={busy} aria-label="Clear conversation" title="Clear conversation">
+              <i className="fas fa-rotate-left"></i>
             </button>
-            <Link to="/my-routes" className="btn btn-secondary btn-sm">
-              <i className="fas fa-route mr-1"></i> Route Planner
-            </Link>
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Main layout — sidebar + chat */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', gap: 0 }}>
-
-        {/* Sidebar — suggested questions, hide on mobile */}
-        <aside className="hide-mobile" style={{ width: '280px', flexShrink: 0, background: 'var(--bg-white)', borderRight: '1px solid var(--border-color)', overflowY: 'auto', padding: 'var(--space-6)' }}>
-          <p style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 'var(--space-4)' }}>
-            Suggested Questions
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-            {SUGGESTED_QUESTIONS.map((q, i) => (
-              <button
-                key={i}
-                className="btn btn-ghost"
-                style={{ textAlign: 'left', padding: 'var(--space-3)', fontSize: 'var(--text-sm)', lineHeight: 1.4, height: 'auto', whiteSpace: 'normal', justifyContent: 'flex-start', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}
-                onClick={() => sendMessage(q)}
-                disabled={isLoading}
-              >
-                <i className="fas fa-comment-dots text-primary" style={{ marginRight: 'var(--space-2)', flexShrink: 0, marginTop: '2px' }}></i>
-                {q}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ marginTop: 'var(--space-8)', padding: 'var(--space-4)', background: 'var(--color-primary-lighter)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-primary-light)' }}>
-            <p style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--weight-semibold)', color: 'var(--color-primary)', marginBottom: 'var(--space-2)' }}>
-              <i className="fas fa-info-circle mr-1"></i> How it works
-            </p>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0 }}>
-              The assistant reads all live regional alerts from the database and uses Groq AI to answer your commuting questions in natural language.
-            </p>
-          </div>
-        </aside>
-
-        {/* Chat area */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-            {messages.map(msg => (
-              <div
-                key={msg.id}
-                style={{
-                  display: 'flex',
-                  flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-                  gap: 'var(--space-3)',
-                  alignItems: 'flex-end',
-                  maxWidth: '100%',
-                }}
-              >
-                {/* Avatar */}
-                <div style={{
-                  width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                  background: msg.role === 'user' ? 'var(--color-primary)' : 'var(--color-accent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '14px', color: 'white',
-                }}>
-                  <i className={`fas ${msg.role === 'user' ? 'fa-user' : 'fa-robot'}`}></i>
-                </div>
-
-                {/* Bubble */}
-                <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <div style={{
-                    padding: 'var(--space-3) var(--space-4)',
-                    borderRadius: msg.role === 'user'
-                      ? 'var(--radius-lg) var(--radius-lg) var(--radius-sm) var(--radius-lg)'
-                      : 'var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-sm)',
-                    background: msg.role === 'user' ? 'var(--color-primary)' : 'var(--bg-white)',
-                    color: msg.role === 'user' ? 'white' : 'var(--text-primary)',
-                    boxShadow: 'var(--shadow-sm)',
-                    border: msg.role === 'assistant' ? '1px solid var(--border-color)' : 'none',
-                    fontSize: 'var(--text-sm)',
-                    lineHeight: 1.6,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-word',
-                  }}>
-                    {msg.loading ? (
-                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center', padding: '4px 0' }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--text-muted)', animation: 'pulse 1s infinite' }}></span>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--text-muted)', animation: 'pulse 1s infinite 0.2s' }}></span>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--text-muted)', animation: 'pulse 1s infinite 0.4s' }}></span>
-                      </div>
-                    ) : msg.content}
+        <div className="assistant-scroll" ref={scrollRef} aria-live="polite">
+          <div className="assistant-thread">
+            {messages.map(m => (
+              <div key={m.id} className={`msg msg-${m.role}${m.error ? ' is-error' : ''}`}>
+                {m.role === 'assistant' && <span className="msg-avatar" aria-hidden="true"><i className="fas fa-wand-magic-sparkles"></i></span>}
+                <div className="msg-body">
+                  <div className="msg-bubble">
+                    {m.loading ? (
+                      <span className="typing" aria-label="Assistant is typing"><span /><span /><span /></span>
+                    ) : m.role === 'assistant' ? (
+                      <RichText text={m.content} />
+                    ) : (
+                      m.content
+                    )}
                   </div>
-                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
-                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+
+                  {m.matches && (
+                    m.matches.length === 0 ? (
+                      <p className="msg-meta">No matching alerts.</p>
+                    ) : (
+                      <ul className="msg-matches">
+                        {m.matches.map(id => {
+                          const a = alertsById.get(id)
+                          if (!a) return null
+                          return (
+                            <li key={id}>
+                              <Link to={`/map?lat=${a.location_lat}&lng=${a.location_lng}`} className="msg-match">
+                                <TypeIcon type={a.alert_type} size={30} />
+                                <span style={{ minWidth: 0, flex: 1 }}>
+                                  <span className="msg-match-title">{a.title}</span>
+                                  <span className="msg-match-meta">{typeMeta(a.alert_type).label} · {timeAgo(a.created_at)}</span>
+                                </span>
+                                <i className="fas fa-map-location-dot" aria-hidden="true"></i>
+                              </Link>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )
+                  )}
+
+                  {!m.loading && (
+                    <div className="msg-meta">
+                      <time>{new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+                      {m.role === 'assistant' && m.id !== 0 && !m.error && (
+                        <button type="button" className="msg-action" onClick={() => copy(m)} aria-label="Copy answer">
+                          <i className={`fas ${copied === m.id ? 'fa-check' : 'fa-copy'}`} aria-hidden="true"></i> {copied === m.id ? 'Copied' : 'Copy'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
-            <div ref={bottomRef} />
-          </div>
 
-          {/* Input bar */}
-          <div style={{ flexShrink: 0, background: 'var(--bg-white)', borderTop: '1px solid var(--border-color)', padding: 'var(--space-4)' }}>
-            {/* Mobile suggested chips */}
-            <div className="hide-desktop" style={{ display: 'flex', gap: 'var(--space-2)', overflowX: 'auto', paddingBottom: 'var(--space-3)', scrollbarWidth: 'none' }}>
-              {SUGGESTED_QUESTIONS.slice(0, 3).map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => sendMessage(q)}
-                  disabled={isLoading}
-                  style={{ flexShrink: 0, fontSize: 'var(--text-xs)', padding: '6px 12px', borderRadius: 'var(--radius-full)', background: 'var(--bg-subtle)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-end' }}>
-              <div style={{ flex: 1, position: 'relative' }}>
-                <textarea
-                  ref={inputRef}
-                  className="input"
-                  placeholder="Ask about road conditions, diversions, flooding, or your commute..."
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  rows={1}
-                  disabled={isLoading}
-                  style={{
-                    resize: 'none',
-                    minHeight: '44px',
-                    maxHeight: '120px',
-                    paddingRight: 'var(--space-4)',
-                    lineHeight: '1.5',
-                    overflowY: 'auto',
-                  }}
-                  autoFocus
-                />
+            {onlyGreeting && (
+              <div className="assistant-starters">
+                {PROMPT_GROUPS.flatMap(g => g.prompts).slice(0, 4).map(p => (
+                  <button key={p} type="button" className="assistant-starter" onClick={() => send(p)} disabled={busy}>
+                    <i className="fas fa-arrow-turn-down fa-rotate-270" aria-hidden="true"></i> {p}
+                  </button>
+                ))}
               </div>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isLoading || !input.trim()}
-                style={{ minWidth: '48px', height: '44px', flexShrink: 0 }}
-                title="Send (Enter)"
-              >
-                {isLoading
-                  ? <span className="spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></span>
-                  : <i className="fas fa-paper-plane"></i>
-                }
-              </button>
-            </form>
-            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-2)', textAlign: 'center' }}>
-              Press <kbd style={{ padding: '1px 5px', borderRadius: '4px', border: '1px solid var(--border-color)', fontSize: '11px' }}>Enter</kbd> to send · <kbd style={{ padding: '1px 5px', borderRadius: '4px', border: '1px solid var(--border-color)', fontSize: '11px' }}>Shift+Enter</kbd> for new line
-            </p>
+            )}
           </div>
         </div>
-      </div>
+
+        <form className="assistant-composer" onSubmit={onSubmit}>
+          <div className="assistant-input">
+            <label htmlFor="assistant-input" className="sr-only">
+              {mode === 'search' ? 'Describe the alerts you are looking for' : 'Message the assistant'}
+            </label>
+            <textarea
+              id="assistant-input"
+              ref={inputRef}
+              rows={1}
+              placeholder={mode === 'search'
+                ? 'Describe what you are looking for, e.g. "flooding near the railway station"'
+                : 'Ask about road conditions, diversions, flooding or your commute…'}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              disabled={busy}
+              autoFocus
+            />
+            <button type="submit" className="assistant-send" disabled={busy || !input.trim()} aria-label="Send">
+              {busy ? <span className="spinner" /> : <i className="fas fa-arrow-up"></i>}
+            </button>
+          </div>
+          <p className="assistant-hint">
+            <kbd>Enter</kbd> to send · <kbd>Shift</kbd> + <kbd>Enter</kbd> for a new line · AI can make mistakes — check official alerts before acting.
+          </p>
+        </form>
+      </section>
     </div>
   )
 }

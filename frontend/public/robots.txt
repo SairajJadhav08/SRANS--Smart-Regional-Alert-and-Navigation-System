@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /overview
+Disallow: /dashboard
+Disallow: /analytics
+Disallow: /my-routes
+Disallow: /ai-assistant
+Disallow: /report
+Disallow: /reports/
+Disallow: /superuser
+Disallow: /alerts/new
+Disallow: /alerts/edit/
+
+Sitemap: https://srans-smart-regional-alert-and-navi.vercel.app/sitemap.xml

@@ -4,9 +4,9 @@ This document details the REST API specification for the Smart Regional Alert & 
 
 ---
 
-## 🤖 1. AI API Endpoints (Groq Llama 3.3 Engine)
+## 🤖 1. AI API Endpoints (Groq)
 
-The following endpoints power the SRANS AI capabilities. They are listed at the beginning as prioritized.
+The following endpoints power the SRANS AI capabilities. Every LLM call goes through `backend/src/lib/ai.ts`, which tries `GROQ_MODEL` (if set), then `openai/gpt-oss-120b`, then `openai/gpt-oss-20b`, skipping any model Groq has retired. Alert and report text is wrapped in delimited data blocks so the model treats it as data, not instructions.
 
 ### AI Endpoints Executive Summary
 
@@ -14,31 +14,31 @@ The following endpoints power the SRANS AI capabilities. They are listed at the 
     *   **Purpose**: Suggests safe travel departures by matching route coordinates against nearby alerts.
     *   **Input**: JSON payload containing `route_id` (integer) and optional `arrival_time` (string).
     *   **Output**: JSON containing a text `recommendation` under 150 words.
-    *   **LLM/AI Used**: Groq `llama-3.3-70b-versatile` (Llama-3 Serverless).
+    *   **LLM/AI Used**: Groq `openai/gpt-oss-120b` (fallback `openai/gpt-oss-20b`).
     *   **Business Value**: Increases driver safety and reduces commute time through proactive warning advisories.
 *   **`POST /api/ai/chat`**
     *   **Purpose**: Answers general commuter questions on regional travel hazards using live database alerts.
     *   **Input**: JSON payload containing user query `message` (string).
     *   **Output**: JSON response containing the chatbot's structured text `reply` (under 200 words).
-    *   **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+    *   **LLM/AI Used**: Groq `openai/gpt-oss-120b`.
     *   **Business Value**: Provides a low-friction conversational portal for accessing complex safety and weather advisories.
 *   **`POST /api/ai/detect-alerts`**
     *   **Purpose**: Autogenerates alerts near a user's location based on local coordinates, time, and seasonal trends.
     *   **Input**: JSON payload containing `lat` (latitude float) and `lng` (longitude float).
     *   **Output**: JSON detailing the count of `created` alerts and a list of new hazard records.
-    *   **LLM/AI Used**: Groq `llama-3.3-70b-versatile` (with system-enforced JSON schema parsing).
+    *   **LLM/AI Used**: Groq `openai/gpt-oss-120b` (with JSON array extraction).
     *   **Business Value**: Pre-seeds regional hazard maps with high probability risks, lowering bootstrap data requirements.
 *   **`POST /api/ai/navigation-chat`**
     *   **Purpose**: Acts as an in-route co-pilot by digesting driving metrics (steps, coordinates, distance) and answering questions.
     *   **Input**: JSON containing `message`, route bounding coordinates, `current_step` text, `total_distance`, and `total_time`.
     *   **Output**: JSON containing co-pilot advice `reply` (under 150 words).
-    *   **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+    *   **LLM/AI Used**: Groq `openai/gpt-oss-120b`.
     *   **Business Value**: Maximizes app session duration and creates a highly interactive, sticky navigator experience.
 *   **`POST /api/ai/daily-briefing`**
     *   **Purpose**: Produces a structured morning travel report for a specific city or geographical bounds.
     *   **Input**: JSON containing optional `city` name (string) or user coordinate pair `lat`/`lng`.
     *   **Output**: JSON containing a structured `briefing` bullet list and an `alertCount` tally.
-    *   **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+    *   **LLM/AI Used**: Groq `openai/gpt-oss-120b`.
     *   **Business Value**: Drives daily recurring traffic to the application by sending actionable, simple briefings.
 
 ---
@@ -73,7 +73,11 @@ The following endpoints power the SRANS AI capabilities. They are listed at the 
 *   **Request Body**:
     ```json
     {
-      "message": "Is it safe to drive near Shivajinagar right now?"
+      "message": "Is it safe to drive near Shivajinagar right now?",
+      "history": [
+        { "role": "user", "content": "Any flooding today?" },
+        { "role": "assistant", "content": "Yes, the Sancheti underpass is waterlogged." }
+      ]
     }
     ```
 *   **Success Response (200 OK)**:
@@ -84,7 +88,8 @@ The following endpoints power the SRANS AI capabilities. They are listed at the 
     ```
 *   **Error Codes**:
     *   `400 Bad Request`: Empty message parameter.
-    *   `500 Internal Server Error`: LLM response parser failed.
+    *   `500 Internal Server Error`: LLM call failed.
+*   **Notes**: `history` is optional. The last 10 `user` / `assistant` turns are used, each capped at 2,000 characters.
 
 #### POST /api/ai/detect-alerts
 *   **Authentication**: Required (JWT Bearer Token)
@@ -162,6 +167,122 @@ The following endpoints power the SRANS AI capabilities. They are listed at the 
     ```
 *   **Error Codes**:
     *   `400 Bad Request`: Missing both `city` name and coordinates.
+
+### AI Insight Endpoints
+
+These endpoints live in `backend/src/routes/insights.ts`. They use Groq JSON mode and validate every field server-side. All `/api/ai/*` routes share a rate limit of **30 requests per minute per client** (`429` when exceeded) and return `502` when the model gives no usable answer.
+
+#### POST /api/ai/route-risk
+*   **Authentication**: Required, route owner only
+*   **Purpose**: Scores a saved route 0–100 from alerts within 2 km of its start→end corridor. The score is computed deterministically (type weight × proximity × recency); the model only writes `summary`, `advice` and `best_departure`.
+*   **Request Body**:
+    ```json
+    { "route_id": 4, "arrival_time": "09:00" }
+    ```
+*   **Success Response (200 OK)**:
+    ```json
+    {
+      "route_id": 4,
+      "score": 42,
+      "level": "moderate",
+      "length_km": 12.4,
+      "summary": "Construction on University Road may slow the middle of this route.",
+      "advice": ["Leave 15 minutes earlier", "Use Ganeshkhind Road"],
+      "best_departure": "Leave by 8:10 AM",
+      "alerts": [{ "id": 11, "title": "Metro pillar work narrows University Road", "alert_type": "Construction", "distance_km": 0.4 }],
+      "generated_at": "2026-10-11T08:00:00.000Z"
+    }
+    ```
+    `level` is `low` (<20), `moderate` (<45), `high` (<70) or `severe`.
+
+#### POST /api/ai/explain-alert
+*   **Authentication**: Required
+*   **Request Body**: `{ "alert_id": 13 }`
+*   **Success Response (200 OK)**:
+    ```json
+    {
+      "alert_id": 13,
+      "impact": "Two of three lanes are blocked near Warje bridge towards Mumbai.",
+      "who_affected": "Mumbai-bound bypass traffic",
+      "expected_delay": "20–30 min",
+      "advice": ["Use the Paud Road–Chandni Chowk route"]
+    }
+    ```
+
+#### POST /api/ai/draft-alert
+*   **Authentication**: Required
+*   **Purpose**: Turns rough notes into a structured alert (`mode: "alert"`, for officials) or citizen report (`mode: "report"`).
+*   **Request Body**:
+    ```json
+    { "notes": "water main burst near city hall jn, left lane of MG road dug up till friday", "mode": "alert" }
+    ```
+*   **Success Response (200 OK)**:
+    ```json
+    {
+      "title": "MG Road left lane closed near City Hall for water main repair",
+      "description": "A burst water main is being repaired outside City Hall junction. The left lane is closed until Friday; use Station Road.",
+      "alert_type": "Construction",
+      "severity": "moderate",
+      "expected_duration": "Until Friday",
+      "broadcast_recommended": false
+    }
+    ```
+
+#### POST /api/ai/triage-report
+*   **Authentication**: Required, verified government or superuser
+*   **Purpose**: Helps officials review a citizen report. It considers nearby alerts from the last 72 hours and the reporter's approval history.
+*   **Request Body**: `{ "report_id": 31 }`
+*   **Success Response (200 OK)**:
+    ```json
+    {
+      "report_id": 31,
+      "credibility": 78,
+      "severity": "moderate",
+      "suggested_type": "Traffic",
+      "duplicate_of": null,
+      "recommendation": "approve",
+      "reasoning": "Specific location and impact, consistent with recent reports.",
+      "suggested_title": "Potholes in left lane near Deccan bus stop",
+      "suggested_description": "Several deep potholes in the left lane are forcing two-wheelers into traffic."
+    }
+    ```
+    `recommendation` is `approve`, `reject`, `merge` (duplicate) or `needs_info`. `duplicate_of` is `{ id, title }` of an existing alert when the model finds a match.
+
+#### POST /api/ai/situation-report
+*   **Authentication**: Required, verified government or superuser
+*   **Purpose**: Command-center briefing of the last 48 hours of alerts and pending reports.
+*   **Success Response (200 OK)**:
+    ```json
+    {
+      "status": "elevated",
+      "headline": "Rain-related waterlogging and two work zones are slowing central Pune.",
+      "key_points": ["Sancheti underpass waterlogged; diversion via JM Road"],
+      "recommended_actions": ["Deploy a pump crew to Sancheti underpass"],
+      "counts": { "Traffic": 2, "Construction": 2, "Weather": 1 },
+      "pending_reports": 2,
+      "generated_at": "2026-10-11T08:00:00.000Z"
+    }
+    ```
+
+#### POST /api/ai/smart-search
+*   **Authentication**: Required
+*   **Request Body**: `{ "query": "anything blocking the road to the airport this morning?" }`
+*   **Success Response (200 OK)**:
+    ```json
+    { "answer": "Yes. A collision near Warje is blocking two lanes towards the bypass.", "alert_ids": [13, 15] }
+    ```
+
+#### POST /api/ai/analytics-insights
+*   **Authentication**: Required, verified government or superuser
+*   **Purpose**: Trend analysis over 14 days of aggregated alert statistics (per day, per hour, per type, top grid cells). No raw user text is sent to the model.
+*   **Success Response (200 OK)**:
+    ```json
+    {
+      "insights": ["Alerts peak between 8–10 AM and 6–8 PM"],
+      "forecast": "More rain is likely to cause waterlogging at known underpasses.",
+      "generated_at": "2026-10-11T08:00:00.000Z"
+    }
+    ```
 
 ---
 
@@ -544,9 +665,13 @@ Allows citizens to submit hazard details, which officers can verify.
 *   **Request Body**:
     ```json
     {
-      "note": "Verified by traffic patrol crew. Promoted to official construction alert."
+      "note": "Verified by traffic patrol crew. Promoted to official construction alert.",
+      "title": "Pothole on flyover climb near Bund Garden",
+      "description": "A large pothole is slowing traffic on the flyover climb. Use the left lane.",
+      "alert_type": "Traffic"
     }
     ```
+    `title`, `description` and `alert_type` are optional overrides (for example the AI triage's cleaned-up wording). Without them, the report's own text is published.
 *   **Success Response (200 OK)**:
     ```json
     {
@@ -567,6 +692,7 @@ Allows citizens to submit hazard details, which officers can verify.
       "alert_id": 18
     }
     ```
+*   **Error Codes**: `409 Conflict` when the report has already been reviewed.
 
 #### POST /api/reports/:id/reject
 *   **Authentication**: Required
@@ -753,6 +879,8 @@ Incident and alert statistics for dashboard maps and charts.
 
 Allows guests to submit contact inquiries.
 
+> The web app's contact form now posts directly to Formspree (`https://formspree.io/f/mrbyjvyj`), which emails the message to the team. This endpoint remains available for API clients and only logs the submission.
+
 #### POST /api/contact
 *   **Authentication**: None (Public)
 *   **Request Body**:
@@ -784,4 +912,6 @@ Allows guests to submit contact inquiries.
 | **`403`** | `Forbidden` | Authenticated session lacks proper user privileges (e.g. non-verified Gov user requesting admin actions). |
 | **`404`** | `Not Found` | The requested database resource does not exist. |
 | **`409`** | `Conflict` | Resource conflict (e.g. register username or email already present in DB). |
+| **`429`** | `Too Many Requests` | More than 30 AI requests per minute from one client. Retry after the `Retry-After` header. |
+| **`502`** | `Bad Gateway` | The AI model returned no usable answer. |
 | **`500`** | `Internal Error` | Server/Database crash or external API timeout (Groq, Neon connection limits). |

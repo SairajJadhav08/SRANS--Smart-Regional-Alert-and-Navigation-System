@@ -1,287 +1,205 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { register as apiRegister } from '../api'
+import AuthLayout from '../components/layout/AuthLayout'
+import Seo from '../components/Seo'
+
+type AccountType = 'user' | 'government'
 
 export default function RegisterPage() {
-  const [userType, setUserType] = useState<'user' | 'government'>('user')
+  const [userType, setUserType] = useState<AccountType>('user')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [passwordError, setPasswordError] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Government fields
+  const [showPassword, setShowPassword] = useState(false)
   const [agencyName, setAgencyName] = useState('')
   const [department, setDepartment] = useState('')
-  const [officialEmail, setOfficialEmail] = useState('')
-
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+
+  const passwordMismatch = confirmPassword.length > 0 && password !== confirmPassword
+  const isGov = userType === 'government'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      setPasswordError(true)
-      return
-    }
-    setPasswordError(false)
+    if (password !== confirmPassword) return
     setError(null)
     setLoading(true)
     try {
       await apiRegister({
         username,
-        email: userType === 'government' ? officialEmail || email : email,
+        email,
         password,
         user_type: userType,
-        ...(userType === 'government' && { agency_name: agencyName, department }),
+        ...(isGov && { agency_name: agencyName, department }),
       })
+      window.dispatchEvent(new CustomEvent('toast:show', {
+        detail: {
+          message: isGov
+            ? 'Agency account created. You can sign in now; Command Center unlocks after verification.'
+            : 'Account created. Sign in to get your first AI briefing.',
+          type: 'success',
+        },
+      }))
       navigate('/login')
     } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Registration failed. Please try again.'
-      setError(msg)
+      setError(err?.response?.data?.message || 'Registration failed. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="auth-layout">
-      {/* Brand Panel */}
-      <div className="auth-panel-brand">
-        <div className="auth-brand-content">
-          <div className="auth-brand-logo">
-            <i className="fas fa-location-arrow"></i> SRANS
-          </div>
-          <h2 className="auth-brand-title">Commute smarter, starting today.</h2>
-          <p className="auth-brand-subtitle">
-            Save your daily routes, get AI-powered disruption alerts, and receive safe route recommendations before you leave home.
-          </p>
-        </div>
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <div className="flex-col gap-4" style={{ opacity: 0.85 }}>
-            <div className="flex gap-3 items-center">
-              <i className="fas fa-check-circle" style={{ opacity: 0.7 }}></i>
-              <span>AI-Powered Safe Route Recommendations</span>
-            </div>
-            <div className="flex gap-3 items-center">
-              <i className="fas fa-check-circle" style={{ opacity: 0.7 }}></i>
-              <span>Save Frequent Routes & Get Daily Alerts</span>
-            </div>
-            <div className="flex gap-3 items-center">
-              <i className="fas fa-check-circle" style={{ opacity: 0.7 }}></i>
-              <span>Government Dashboard Access</span>
-            </div>
-          </div>
-        </div>
+    <AuthLayout
+      wide
+      title={isGov ? 'Register your agency' : 'Create your free account'}
+      subtitle={isGov
+        ? 'Publish official alerts, triage citizen reports with AI and brief your control room.'
+        : 'Save your routes and get AI briefings and risk scores before every commute.'}
+      panelTitle={isGov ? 'A command center for your city’s roads.' : 'Commute smarter, starting today.'}
+      panelPoints={isGov
+        ? ['AI drafts clear public alerts from field notes', 'AI triage for every citizen report', 'Live situation reports and analytics']
+        : ['Free forever for commuters', 'AI risk score for every saved route', 'In-journey AI co-pilot on the live map']}
+      footer={<>Already have an account? <Link to="/login">Sign in</Link></>}
+    >
+      <Seo
+        title="Create an account"
+        description="Create a free SRANS account to save routes, get AI commute briefings and route risk scores, or register your government agency."
+        path="/register"
+      />
+
+      <div className="segmented" role="group" aria-label="Account type">
+        <button type="button" aria-pressed={!isGov} onClick={() => setUserType('user')}>
+          <i className="fas fa-user" aria-hidden="true"></i> Commuter
+        </button>
+        <button type="button" aria-pressed={isGov} onClick={() => setUserType('government')}>
+          <i className="fas fa-building-columns" aria-hidden="true"></i> Government agency
+        </button>
       </div>
 
-      {/* Form Panel */}
-      <div className="auth-panel-form" style={{ maxWidth: '700px', overflowY: 'auto' }}>
-        <div className="auth-form-container" style={{ maxWidth: '500px' }}>
-          <div className="auth-header">
-            {/* Mobile-only logo */}
-            <Link to="/" className="flex items-center gap-2 mb-6 hide-desktop" style={{ textDecoration: 'none' }}>
-              <div className="navbar-logo-icon">
-                <i className="fas fa-location-arrow"></i>
-              </div>
-              <span className="navbar-brand-text">SRANS</span>
-            </Link>
+      {error && (
+        <div className="alert-banner is-danger mb-6" role="alert">
+          <i className="fas fa-circle-exclamation" aria-hidden="true"></i>
+          <span>{error}</span>
+        </div>
+      )}
 
-            <h1>Create your account</h1>
-            <p>Get started with SRANS today</p>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-2" style={{ gap: 'var(--space-4)' }}>
+          <div className="field mb-0">
+            <label className="label" htmlFor="reg-username">Username</label>
+            <input
+              id="reg-username"
+              className="input input-lg"
+              type="text"
+              autoComplete="username"
+              placeholder="e.g. priya_commutes"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              minLength={4}
+              required
+            />
+            <p className="help-text">At least 4 characters</p>
           </div>
+          <div className="field mb-0">
+            <label className="label" htmlFor="reg-email">{isGov ? 'Official email' : 'Email'}</label>
+            <input
+              id="reg-email"
+              className="input input-lg"
+              type="email"
+              autoComplete="email"
+              placeholder={isGov ? 'name@department.gov.in' : 'you@example.com'}
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
+            {isGov && <p className="help-text">Use your department email to speed up verification</p>}
+          </div>
+        </div>
 
-          {error && (
-            <div className="alert-banner is-danger mb-6">
-              <i className="fas fa-exclamation-circle"></i>
-              <span>{error}</span>
-              <button className="btn-icon btn-sm btn-ghost ml-auto" onClick={() => setError(null)}>
-                <i className="fas fa-times"></i>
+        {isGov && (
+          <div className="grid grid-2 mt-4" style={{ gap: 'var(--space-4)' }}>
+            <div className="field mb-0">
+              <label className="label" htmlFor="reg-agency">Agency name</label>
+              <input
+                id="reg-agency"
+                className="input input-lg"
+                type="text"
+                placeholder="e.g. Pune Municipal Corporation"
+                value={agencyName}
+                onChange={e => setAgencyName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="field mb-0">
+              <label className="label" htmlFor="reg-dept">Department</label>
+              <input
+                id="reg-dept"
+                className="input input-lg"
+                type="text"
+                placeholder="e.g. Traffic Planning"
+                value={department}
+                onChange={e => setDepartment(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-2 mt-4" style={{ gap: 'var(--space-4)' }}>
+          <div className="field mb-0">
+            <label className="label" htmlFor="reg-password">Password</label>
+            <div className="relative">
+              <input
+                id="reg-password"
+                className="input input-lg"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                minLength={8}
+                required
+                style={{ paddingRight: '3rem' }}
+              />
+              <button
+                type="button"
+                className="pw-toggle"
+                onClick={() => setShowPassword(s => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
               </button>
             </div>
-          )}
-
-          {/* Account Type Toggle */}
-          <div className="tabs-list mb-6" style={{ background: 'var(--bg-subtle)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-1)' }}>
-            <button
-              className={`tab-btn ${userType === 'user' ? 'active' : ''}`}
-              onClick={() => setUserType('user')}
-              type="button"
-              style={{ flex: 1 }}
-            >
-              <i className="fas fa-user mr-2"></i> Citizen
-            </button>
-            <button
-              className={`tab-btn ${userType === 'government' ? 'active' : ''}`}
-              onClick={() => setUserType('government')}
-              type="button"
-              style={{ flex: 1 }}
-            >
-              <i className="fas fa-building mr-2"></i> Government
-            </button>
           </div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-2">
-              <div className="field">
-                <label className="label">Username</label>
-                <div className="input-icon">
-                  <i className="fas fa-user icon-left"></i>
-                  <input
-                    className="input"
-                    type="text"
-                    placeholder="Choose a username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                  />
-                </div>
-                <p className="help-text">At least 4 characters</p>
-              </div>
-
-              <div className="field">
-                <label className="label">Email</label>
-                <div className="input-icon">
-                  <i className="fas fa-envelope icon-left"></i>
-                  <input
-                    className="input"
-                    type="email"
-                    placeholder="Your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-2">
-              <div className="field">
-                <label className="label">Password</label>
-                <div className="input-icon">
-                  <i className="fas fa-lock icon-left"></i>
-                  <input
-                    className="input"
-                    type="password"
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value)
-                      if (confirmPassword && e.target.value !== confirmPassword) {
-                        setPasswordError(true)
-                      } else {
-                        setPasswordError(false)
-                      }
-                    }}
-                    required
-                  />
-                </div>
-                <p className="help-text">At least 8 characters</p>
-              </div>
-
-              <div className="field">
-                <label className="label">Confirm Password</label>
-                <div className="input-icon">
-                  <i className="fas fa-lock icon-left"></i>
-                  <input
-                    className={`input ${passwordError ? 'is-error' : ''}`}
-                    type="password"
-                    placeholder="Confirm password"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value)
-                      if (password !== e.target.value) {
-                        setPasswordError(true)
-                      } else {
-                        setPasswordError(false)
-                      }
-                    }}
-                    required
-                  />
-                </div>
-                {passwordError && <p className="help-text is-danger">Passwords do not match</p>}
-              </div>
-            </div>
-
-            {/* Government Fields */}
-            {userType === 'government' && (
-              <>
-                <hr className="separator" />
-                <h4 className="font-semibold mb-4"><i className="fas fa-building text-primary mr-2"></i>Agency Information</h4>
-
-                <div className="grid grid-2">
-                  <div className="field">
-                    <label className="label">Agency Name</label>
-                    <div className="input-icon">
-                      <i className="fas fa-building icon-left"></i>
-                      <input
-                        className="input"
-                        type="text"
-                        placeholder="Full agency name"
-                        value={agencyName}
-                        onChange={e => setAgencyName(e.target.value)}
-                        required={userType === 'government'}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="label">Department</label>
-                    <div className="input-icon">
-                      <i className="fas fa-briefcase icon-left"></i>
-                      <input
-                        className="input"
-                        type="text"
-                        placeholder="Your department"
-                        value={department}
-                        onChange={e => setDepartment(e.target.value)}
-                        required={userType === 'government'}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="field">
-                  <label className="label">Official Email</label>
-                  <div className="input-icon">
-                    <i className="fas fa-envelope icon-left"></i>
-                    <input
-                      className="input"
-                      type="email"
-                      placeholder="Your government email address"
-                      value={officialEmail}
-                      onChange={e => setOfficialEmail(e.target.value)}
-                      required={userType === 'government'}
-                    />
-                  </div>
-                  <p className="help-text">Must be a valid government email domain</p>
-                </div>
-              </>
-            )}
-
-            <div className="field mt-4">
-              <label className="flex gap-2 items-center text-sm text-secondary cursor-pointer">
-                <input type="checkbox" required style={{ accentColor: 'var(--color-primary)' }} />
-                <span>I agree to the <a href="#">terms of service</a> and <a href="#">privacy policy</a></span>
-              </label>
-            </div>
-
-            <button type="submit" className="btn btn-primary btn-full btn-lg mt-4" disabled={loading}>
-              {loading ? <span className="spinner"></span> : (
-                <>
-                  <i className={userType === 'user' ? 'fas fa-user-plus' : 'fas fa-building'}></i>
-                  {userType === 'user' ? ' Create Account' : ' Register Agency'}
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="text-center mt-6 text-secondary text-sm">
-            Already have an account? <Link to="/login" className="font-semibold" style={{ color: 'var(--color-primary)' }}>Sign in</Link>
-          </p>
+          <div className="field mb-0">
+            <label className="label" htmlFor="reg-confirm">Confirm password</label>
+            <input
+              id="reg-confirm"
+              className={`input input-lg${passwordMismatch ? ' is-error' : ''}`}
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              placeholder="Repeat password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              aria-invalid={passwordMismatch}
+              aria-describedby={passwordMismatch ? 'reg-confirm-err' : undefined}
+              required
+            />
+            {passwordMismatch && <p id="reg-confirm-err" className="help-text is-danger">Passwords do not match</p>}
+          </div>
         </div>
-      </div>
-    </div>
+
+        <button type="submit" className="btn btn-primary btn-full btn-lg mt-8" disabled={loading || passwordMismatch}>
+          {loading ? <span className="spinner" /> : isGov ? 'Register agency' : 'Create account'}
+        </button>
+
+        <p className="help-text text-center mt-4">
+          By creating an account you agree to use SRANS responsibly and report incidents truthfully.
+        </p>
+      </form>
+    </AuthLayout>
   )
 }

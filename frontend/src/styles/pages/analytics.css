@@ -1,0 +1,106 @@
+/* Analytics (/analytics) */
+.an-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+@media (max-width: 1000px) {
+  .an-grid { grid-template-columns: 1fr; }
+}
+
+.an-insights {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+@media (max-width: 860px) {
+  .an-insights { grid-template-columns: 1fr; }
+}
+
+.an-forecast {
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--space-4);
+}
+
+.an-forecast p { font-size: var(--text-sm); color: #E3F1ED; line-height: 1.65; }
+
+/* Column chart */
+.an-columns {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-2);
+  height: 210px;
+  align-items: end;
+}
+
+.an-columns li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.an-col-value { font-size: var(--text-xs); font-weight: var(--weight-bold); color: var(--text-secondary); font-family: var(--font-mono); }
+
+.an-col-track {
+  flex: 1;
+  width: 100%;
+  max-width: 44px;
+  display: flex;
+  align-items: flex-end;
+  background: var(--bg-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.an-col-bar {
+  width: 100%;
+  border-radius: 8px;
+  background: linear-gradient(180deg, var(--color-primary), var(--ink-700));
+  transition: height 0.6s ease;
+}
+
+.an-columns li:hover .an-col-bar { background: linear-gradient(180deg, var(--signal), var(--signal-strong)); }
+
+.an-col-label { font-size: 11px; color: var(--text-muted); font-weight: var(--weight-semibold); }
+
+/* Hotspots */
+.an-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ink-900);
+  color: #fff;
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.an-hot:first-child .an-rank { background: var(--color-danger); }
+
+.an-hot-bar {
+  width: 80px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.an-hot-bar span {
+  display: block;
+  height: 100%;
+  background: var(--color-danger);
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 480px) {
+  .an-hot-bar { display: none; }
+}

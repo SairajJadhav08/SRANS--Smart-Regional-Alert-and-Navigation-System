@@ -1,250 +1,167 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getRoutes, deleteRoute, getAiRoutinePlan } from '../api'
 import type { SavedRoute } from '../types'
+import Seo from '../components/Seo'
+import { AiShimmer, EmptyState, PageHead } from '../components/ui'
+import RouteRiskCard from '../components/ai/RouteRiskCard'
 
 export default function MyRoutesPage() {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [deleteModalActive, setDeleteModalActive] = useState(false)
-  const [routeToDelete, setRouteToDelete] = useState<number | null>(null)
   const [routes, setRoutes] = useState<SavedRoute[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
-  const [aiPlans, setAiPlans] = useState<Record<number, string>>({})
-  const [loadingAi, setLoadingAi] = useState<Record<number, boolean>>({})
-  const [arrivalTimes, setArrivalTimes] = useState<Record<number, string>>({})
+  const [search, setSearch] = useState('')
+  const [arrival, setArrival] = useState('09:00')
+  const [toDelete, setToDelete] = useState<SavedRoute | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  // AI departure planner (routine-planner endpoint)
+  const [planFor, setPlanFor] = useState<SavedRoute | null>(null)
+  const [plan, setPlan] = useState<string | null>(null)
+  const [planLoading, setPlanLoading] = useState(false)
 
   useEffect(() => {
     getRoutes()
-      .then(res => {
-        setRoutes(res.data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setError('Failed to load saved routes.')
-        setLoading(false)
-      })
+      .then(res => setRoutes(res.data))
+      .catch(() => setError('Failed to load saved routes.'))
+      .finally(() => setLoading(false))
   }, [])
 
-  const filteredRoutes = routes.filter(r => r.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filtered = routes.filter(r => r.name.toLowerCase().includes(search.trim().toLowerCase()))
 
-  const handleDelete = async () => {
-    if (routeToDelete !== null) {
-      try {
-        await deleteRoute(routeToDelete)
-        setRoutes(routes.filter(r => r.id !== routeToDelete))
-        setDeleteModalActive(false)
-        setRouteToDelete(null)
-      } catch {
-        alert('Failed to delete route')
-      }
+  const confirmDelete = async () => {
+    if (!toDelete) return
+    setDeleting(true)
+    try {
+      await deleteRoute(toDelete.id)
+      setRoutes(prev => prev.filter(r => r.id !== toDelete.id))
+      window.dispatchEvent(new CustomEvent('toast:show', { detail: { message: `“${toDelete.name}” deleted`, type: 'success' } }))
+    } catch {
+      window.dispatchEvent(new CustomEvent('toast:show', { detail: { message: 'Failed to delete route', type: 'danger' } }))
+    } finally {
+      setDeleting(false)
+      setToDelete(null)
     }
   }
 
-  const handleAskAi = async (routeId: number) => {
-    const time = arrivalTimes[routeId] || '09:00'
-    setLoadingAi(prev => ({ ...prev, [routeId]: true }))
+  const askPlanner = async (route: SavedRoute) => {
+    setPlanFor(route)
+    setPlan(null)
+    setPlanLoading(true)
     try {
-      const res = await getAiRoutinePlan(routeId, time)
-      setAiPlans(prev => ({ ...prev, [routeId]: res.data.recommendation }))
-    } catch (err) {
-      setAiPlans(prev => ({ ...prev, [routeId]: 'Sorry, failed to get AI recommendation. Please try again.' }))
+      const res = await getAiRoutinePlan(route.id, arrival)
+      setPlan(res.data.recommendation)
+    } catch {
+      setPlan('Sorry, the AI planner is unavailable right now. Please try again in a moment.')
     } finally {
-      setLoadingAi(prev => ({ ...prev, [routeId]: false }))
+      setPlanLoading(false)
     }
   }
 
   return (
-    <>
-      <div className="page-header bg-white">
-        <div className="container flex-between flex-wrap gap-4">
-          <div>
-            <h1>My Saved Routes</h1>
-            <p>View and manage your favorite paths</p>
-          </div>
-          <Link to="/map" className="btn btn-primary">
-            <i className="fas fa-plus"></i> Create New Route
-          </Link>
+    <div className="app-page">
+      <Seo title="My Routes" noindex />
+
+      <PageHead
+        title="My Routes"
+        subtitle="Every saved route is scored by AI against live alerts along its corridor."
+        actions={<Link to="/map" className="btn btn-primary"><i className="fas fa-plus" aria-hidden="true"></i> New route</Link>}
+      />
+
+      <div className="routes-toolbar panel">
+        <div className="input-icon routes-search">
+          <i className="fas fa-magnifying-glass icon-left" aria-hidden="true"></i>
+          <input
+            className="input"
+            type="search"
+            placeholder="Search routes"
+            aria-label="Search routes"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
         </div>
+        <div className="routes-arrival">
+          <label className="label mb-0" htmlFor="arrival-time">
+            <i className="fas fa-flag-checkered" aria-hidden="true"></i> Arrive by
+          </label>
+          <input
+            id="arrival-time"
+            type="time"
+            className="input"
+            value={arrival}
+            onChange={e => setArrival(e.target.value)}
+          />
+        </div>
+        <span className="text-sm text-muted routes-count">
+          {filtered.length} of {routes.length} route{routes.length === 1 ? '' : 's'}
+        </span>
       </div>
 
-      <section className="section pt-0">
-        <div className="container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          {/* Search */}
-          <div className="dashboard-toolbar mb-6">
-            <div className="dashboard-search">
-              <div className="input-icon">
-                <i className="fas fa-search icon-left"></i>
-                <input
-                  className="input"
-                  type="text"
-                  placeholder="Search your routes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </div>
-            <span className="text-sm text-muted">{filteredRoutes.length} route{filteredRoutes.length !== 1 ? 's' : ''}</span>
+      {planFor && (
+        <section className="ai-card mb-6" aria-live="polite" aria-labelledby="plan-title">
+          <div className="flex-between flex-wrap gap-3 mb-3">
+            <span className="ai-chip"><i className="fas fa-wand-magic-sparkles" aria-hidden="true"></i> AI departure plan</span>
+            <button type="button" className="btn btn-outline-white btn-sm" onClick={() => setPlanFor(null)} aria-label="Close plan">
+              <i className="fas fa-xmark" aria-hidden="true"></i> Close
+            </button>
           </div>
+          <h2 id="plan-title" className="mb-3" style={{ fontSize: 'var(--text-lg)' }}>
+            {planFor.name} · arrive by {arrival}
+          </h2>
+          {planLoading ? <AiShimmer lines={4} /> : <p className="ai-text">{plan}</p>}
+        </section>
+      )}
 
-          {loading ? (
-            <div className="flex-center py-12">
-              <span className="spinner"></span>
-            </div>
-          ) : error ? (
-            <div className="card">
-              <div className="card-body py-12 text-center text-danger">
-                <i className="fas fa-exclamation-circle text-3xl mb-4" style={{ fontSize: '32px', marginBottom: '16px' }}></i>
-                <p>{error}</p>
-              </div>
-            </div>
-          ) : filteredRoutes.length > 0 ? (
-            <div className="grid grid-3">
-              {filteredRoutes.map(route => (
-                <div className="card card-hover h-full" key={route.id}>
-                  <div className="card-body" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <div className="flex gap-3 items-start mb-4">
-                      <div className="icon-box info" style={{ flexShrink: 0 }}>
-                        <i className="fas fa-route"></i>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">{route.name}</h3>
-                        <p className="text-xs text-muted">Added {new Date(route.created_at).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-
-                    {/* Map Preview Placeholder */}
-                    <div style={{
-                      height: '120px',
-                      background: 'var(--bg-subtle)',
-                      borderRadius: 'var(--radius-md)',
-                      marginBottom: 'var(--space-4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px dashed var(--border-color)'
-                    }}>
-                      <span className="text-muted text-sm"><i className="fas fa-map mr-2"></i>Route Preview</span>
-                    </div>
-
-                    <div className="flex-col gap-2 mb-4 flex-1">
-                      <div className="flex gap-2 items-center text-sm">
-                        <i className="fas fa-flag-checkered text-primary" style={{ width: '16px' }}></i>
-                        <span className="text-muted">Start:</span>
-                        <span className="font-medium">{route.start_lat.toFixed(4)}, {route.start_lng.toFixed(4)}</span>
-                      </div>
-                      <div className="flex gap-2 items-center text-sm">
-                        <i className="fas fa-map-marker-alt text-danger" style={{ width: '16px' }}></i>
-                        <span className="text-muted">End:</span>
-                        <span className="font-medium">{route.end_lat.toFixed(4)}, {route.end_lng.toFixed(4)}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 mt-auto" style={{ borderTop: '1px solid var(--border-light)', paddingTop: 'var(--space-4)' }}>
-                      <Link
-                        to={`/map?start_lat=${route.start_lat}&start_lng=${route.start_lng}&end_lat=${route.end_lat}&end_lng=${route.end_lng}`}
-                        className="btn btn-primary btn-sm flex-1"
-                      >
-                        <i className="fas fa-directions"></i> Navigate
-                      </Link>
-                      <button
-                        className="btn btn-danger-light btn-sm"
-                        onClick={() => { setRouteToDelete(route.id); setDeleteModalActive(true) }}
-                      >
-                        <i className="fas fa-trash-alt"></i>
-                      </button>
-                    </div>
-
-                    <div className="flex-col mt-4 pt-4" style={{ borderTop: '1px solid var(--border-light)' }}>
-                      <div className="flex gap-2 items-center mb-3">
-                        <span className="text-xs text-muted font-medium">Target Arrival:</span>
-                        <input
-                          type="time"
-                          className="input flex-1"
-                          style={{ padding: '0.25rem 0.5rem', minHeight: '32px' }}
-                          value={arrivalTimes[route.id] || '09:00'}
-                          onChange={(e) => setArrivalTimes(prev => ({ ...prev, [route.id]: e.target.value }))}
-                        />
-                        <button
-                          className="btn btn-sm text-white"
-                          style={{ background: 'var(--color-primary)' }}
-                          onClick={() => handleAskAi(route.id)}
-                          disabled={loadingAi[route.id]}
-                        >
-                          {loadingAi[route.id] ? <span className="spinner text-xs"></span> : <><i className="fas fa-magic mr-1"></i> Ask AI</>}
-                        </button>
-                      </div>
-                      
-                      {aiPlans[route.id] && (
-                        <div className="alert-banner is-info text-sm p-3 rounded" style={{ whiteSpace: 'pre-line', background: 'var(--bg-subtle)' }}>
-                          <i className="fas fa-robot text-primary mb-1"></i><br/>
-                          {aiPlans[route.id]}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="card">
-              <div className="card-body py-12 flex-center flex-col text-center">
-                <div className="icon-box bg-subtle text-muted mb-4 text-3xl" style={{ width: '80px', height: '80px' }}>
-                  <i className="fas fa-map"></i>
-                </div>
-                <h3 className="font-display font-bold text-2xl mb-2">No Saved Routes</h3>
-                <p className="text-secondary mb-6">You haven't saved any routes matching your search.</p>
-                <Link to="/map" className="btn btn-primary"><i className="fas fa-plus"></i> Create New Route</Link>
-              </div>
-            </div>
-          )}
+      {loading ? (
+        <div className="route-grid">
+          {[0, 1, 2].map(i => <div key={i} className="skeleton" style={{ height: 240 }} />)}
         </div>
-      </section>
-
-      {/* Tips */}
-      <section className="section bg-subtle">
-        <div className="container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <h3 className="font-display font-bold text-2xl text-center mb-8" style={{ marginBottom: 'var(--space-8)' }}>Route Management Tips</h3>
-          <div className="grid grid-3">
-            {[
-              { icon: 'fa-save', color: 'info', title: 'Save Frequent Routes', text: 'Save routes you travel frequently to quickly check for alerts and disruptions along your path before you depart.' },
-              { icon: 'fa-bell', color: 'primary', title: 'Get Route Notifications', text: 'When logged in, you\'ll automatically receive notifications about alerts affecting your saved routes.' },
-              { icon: 'fa-clipboard-list', color: 'accent', title: 'Organize Your Routes', text: 'Give your routes descriptive names like "Home to Work" or "School Pickup" to easily identify them later.' },
-            ].map((tip, i) => (
-              <div key={i} className="card h-full">
-                <div className="card-body">
-                  <div className={`icon-box-sm ${tip.color} mb-4`}>
-                    <i className={`fas ${tip.icon}`}></i>
-                  </div>
-                  <h4 className="font-semibold mb-2">{tip.title}</h4>
-                  <p className="text-secondary text-sm" style={{ lineHeight: 1.6 }}>{tip.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+      ) : error ? (
+        <div className="panel"><EmptyState icon="fa-circle-exclamation" title="Something went wrong">{error}</EmptyState></div>
+      ) : routes.length === 0 ? (
+        <div className="panel">
+          <EmptyState
+            icon="fa-route"
+            title="No saved routes yet"
+            action={<Link to="/map" className="btn btn-primary">Plan your first route</Link>}
+          >
+            Plan a route on the live map and save it. SRANS will score it against live disruptions every time you check in.
+          </EmptyState>
         </div>
-      </section>
+      ) : filtered.length === 0 ? (
+        <div className="panel"><EmptyState icon="fa-magnifying-glass" title="No routes match your search" /></div>
+      ) : (
+        <div className="route-grid">
+          {filtered.map(route => (
+            <div key={route.id} className="routes-item">
+              <RouteRiskCard route={route} arrivalTime={arrival} showAlerts onDelete={() => setToDelete(route)} />
+              <button type="button" className="btn btn-ai btn-sm btn-full" onClick={() => askPlanner(route)}>
+                <i className="fas fa-clock" aria-hidden="true"></i> Plan my departure with AI
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
-      {/* Delete Modal */}
-      {deleteModalActive && (
-        <div className="modal-overlay">
+      {toDelete && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="del-route-title">
           <div className="modal-card">
             <div className="modal-card-header">
-              <h3 className="text-danger flex items-center gap-2"><i className="fas fa-exclamation-triangle"></i> Confirm Deletion</h3>
-              <button className="close-btn" onClick={() => setDeleteModalActive(false)}><i className="fas fa-times"></i></button>
+              <h3 id="del-route-title">Delete “{toDelete.name}”?</h3>
+              <button className="close-btn" onClick={() => setToDelete(null)} aria-label="Close"><i className="fas fa-xmark"></i></button>
             </div>
             <div className="modal-card-body">
-              <p>Are you sure you want to delete this route?</p>
-              <p className="text-danger text-sm mt-2">This action cannot be undone.</p>
+              <p className="text-secondary">This route will be removed from your account. This cannot be undone.</p>
             </div>
             <div className="modal-card-footer">
-              <button className="btn btn-ghost" onClick={() => setDeleteModalActive(false)}>Cancel</button>
-              <button className="btn btn-danger" onClick={handleDelete}>Delete Route</button>
+              <button className="btn btn-ghost" onClick={() => setToDelete(null)}>Cancel</button>
+              <button className="btn btn-danger" onClick={confirmDelete} disabled={deleting}>
+                {deleting ? <span className="spinner" /> : 'Delete route'}
+              </button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

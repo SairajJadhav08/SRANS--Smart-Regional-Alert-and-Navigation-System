@@ -1,233 +1,252 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { getGovUsers, approveGovUser, revokeGovUser, sendBroadcast } from '../api'
 import type { User } from '../types'
+import { ALERT_TYPES } from '../lib/alertMeta'
+import Seo from '../components/Seo'
+import { EmptyState, Kpi, PageHead } from '../components/ui'
+import '../styles/pages/admin.css'
+
+type Filter = 'pending' | 'verified' | 'all'
 
 export default function SuperuserPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState<number | null>(null)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved'>('all')
+  const [filter, setFilter] = useState<Filter>('pending')
+  const [busyId, setBusyId] = useState<number | null>(null)
+  const [confirm, setConfirm] = useState<{ user: User; action: 'approve' | 'revoke' } | null>(null)
 
-  // Broadcast state
-  const [broadcastTitle, setBroadcastTitle] = useState('')
-  const [broadcastDesc, setBroadcastDesc] = useState('')
-  const [broadcastType, setBroadcastType] = useState('Emergency')
+  const [bTitle, setBTitle] = useState('')
+  const [bDesc, setBDesc] = useState('')
+  const [bType, setBType] = useState('Emergency')
+  const [bConfirm, setBConfirm] = useState(false)
   const [broadcasting, setBroadcasting] = useState(false)
-  const [broadcastSuccess, setBroadcastSuccess] = useState(false)
 
-  const fetchUsers = async () => {
+  const toast = (message: string, type: 'success' | 'danger' | 'info' = 'success') =>
+    window.dispatchEvent(new CustomEvent('toast:show', { detail: { message, type } }))
+
+  useEffect(() => {
+    getGovUsers()
+      .then(res => setUsers(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setUsers([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const pending = users.filter(u => !u.is_verified)
+  const verified = users.filter(u => u.is_verified)
+  const list = filter === 'pending' ? pending : filter === 'verified' ? verified : users
+
+  const doAction = async () => {
+    if (!confirm) return
+    const { user, action } = confirm
+    setBusyId(user.id)
     try {
-      setLoading(true)
-      const res = await getGovUsers()
-      if (Array.isArray(res.data)) {
-        setUsers(res.data)
-      } else {
-        console.error('API did not return an array of users')
-        setUsers([])
-      }
+      if (action === 'approve') await approveGovUser(user.id)
+      else await revokeGovUser(user.id)
+      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, is_verified: action === 'approve' } : u)))
+      toast(action === 'approve' ? `${user.agency_name || user.username} verified` : `Access revoked for ${user.agency_name || user.username}`,
+        action === 'approve' ? 'success' : 'info')
     } catch {
-      // error
+      toast(`Failed to ${action} account`, 'danger')
     } finally {
-      setLoading(false)
+      setBusyId(null)
+      setConfirm(null)
     }
   }
 
-  useEffect(() => { fetchUsers() }, [])
-
-  const handleBroadcast = async (e: React.FormEvent) => {
+  const reviewBroadcast = (e: FormEvent) => {
     e.preventDefault()
-    if (!broadcastTitle.trim() || !broadcastDesc.trim()) return
+    if (bTitle.trim() && bDesc.trim()) setBConfirm(true)
+  }
+
+  const doBroadcast = async () => {
     setBroadcasting(true)
     try {
-      await sendBroadcast({ title: broadcastTitle, description: broadcastDesc, alert_type: broadcastType })
-      setBroadcastSuccess(true); setBroadcastTitle(''); setBroadcastDesc('')
-      setTimeout(() => setBroadcastSuccess(false), 5000)
-    } catch { alert('Failed to send broadcast.') } finally { setBroadcasting(false) }
-  }
-
-  const handleApprove = async (id: number) => {    setActionLoading(id)
-    try {
-      await approveGovUser(id)
-      // Update local state directly — backend returns { message } not a user object
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, is_verified: true } : u))
+      await sendBroadcast({ title: bTitle.trim(), description: bDesc.trim(), alert_type: bType })
+      toast('Emergency broadcast is live for all users')
+      setBTitle(''); setBDesc('')
     } catch {
-      alert('Failed to approve user.')
+      toast('Failed to send broadcast', 'danger')
     } finally {
-      setActionLoading(null)
+      setBroadcasting(false)
+      setBConfirm(false)
     }
   }
-
-  const handleRevoke = async (id: number) => {
-    setActionLoading(id)
-    try {
-      await revokeGovUser(id)
-      // Update local state directly — backend returns { message } not a user object
-      setUsers(prev => prev.map(u => u.id === id ? { ...u, is_verified: false } : u))
-    } catch {
-      alert('Failed to revoke user.')
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  const filtered = users.filter(u => {
-    if (filter === 'pending') return !u.is_verified
-    if (filter === 'approved') return u.is_verified
-    return true
-  })
-
-  const pendingCount = users.filter(u => !u.is_verified).length
-  const approvedCount = users.filter(u => u.is_verified).length
 
   return (
-    <>
-      <div className="page-header bg-white">
-        <div className="container">
-          <h1>System Administration</h1>
-          <p>Manage government agency access and system health</p>
-        </div>
+    <div className="app-page">
+      <Seo title="Admin Panel" noindex />
+      <PageHead title="Administration" subtitle="Verify government agencies and issue region-wide emergency broadcasts." />
+
+      <div className="kpi-grid mb-6">
+        <Kpi label="Awaiting verification" value={loading ? '—' : pending.length} icon="fa-hourglass-half" tone="signal" />
+        <Kpi label="Verified agencies" value={loading ? '—' : verified.length} icon="fa-building-columns" tone="ink" />
+        <Kpi label="Total agency accounts" value={loading ? '—' : users.length} icon="fa-users" tone="primary" />
+        <Kpi label="Broadcast channel" value="Ready" icon="fa-tower-broadcast" tone="danger" foot="Reaches every signed-in and public page" />
       </div>
 
-      <section className="section pt-0">
-        <div className="container">
-          {/* Emergency Broadcast */}
-          <div className="card mb-8" style={{ border: '2px solid #fca5a5', background: '#fff5f5' }}>
-            <div className="card-header" style={{ background: '#fef2f2', borderBottom: '1px solid #fca5a5' }}>
-              <div className="flex-center gap-3">
-                <div className="icon-box danger" style={{ width: 36, height: 36, fontSize: 16 }}><i className="fas fa-broadcast-tower"></i></div>
-                <div>
-                  <span className="font-bold text-danger">Emergency Broadcast</span>
-                  <p className="text-xs text-muted" style={{ margin: 0 }}>Sends a full-width alert banner to ALL users on the platform</p>
-                </div>
-              </div>
-            </div>
-            <div className="card-body">
-              {broadcastSuccess && (
-                <div className="alert-banner is-success mb-4">
-                  <i className="fas fa-check-circle"></i>
-                  <span>Broadcast sent — banner is now live for all users.</span>
-                </div>
-              )}
-              <form onSubmit={handleBroadcast} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                <div className="grid" style={{ gridTemplateColumns: '1fr auto', gap: 12 }}>
-                  <input className="input" placeholder="Broadcast title — e.g. Cyclone Warning: Avoid Coastal Roads" value={broadcastTitle} onChange={e => setBroadcastTitle(e.target.value)} maxLength={100} required />
-                  <select className="input" style={{ width: 140 }} value={broadcastType} onChange={e => setBroadcastType(e.target.value)}>
-                    <option>Emergency</option><option>Weather</option><option>Traffic</option><option>Construction</option>
-                  </select>
-                </div>
-                <textarea className="input" rows={2} placeholder="Describe the situation and what people should do..." value={broadcastDesc} onChange={e => setBroadcastDesc(e.target.value)} maxLength={300} required style={{ resize: 'none' }} />
-                <div className="flex gap-3 justify-end">
-                  <button type="submit" className="btn btn-danger" disabled={broadcasting || !broadcastTitle.trim() || !broadcastDesc.trim()}>
-                    {broadcasting ? <><span className="spinner"></span> Sending...</> : <><i className="fas fa-broadcast-tower mr-2"></i>Send Broadcast Now</>}
-                  </button>
-                </div>
-              </form>
+      <div className="admin-grid">
+        {/* Verification queue */}
+        <section className="panel" aria-labelledby="verify-title">
+          <div className="panel-head">
+            <h2 id="verify-title" className="section-title"><i className="fas fa-user-shield" aria-hidden="true"></i> Agency verification</h2>
+            <div className="assistant-mode" role="group" aria-label="Filter accounts">
+              {(['pending', 'verified', 'all'] as Filter[]).map(f => (
+                <button key={f} type="button" aria-pressed={filter === f} onClick={() => setFilter(f)}>
+                  {f === 'pending' ? `Pending · ${pending.length}` : f === 'verified' ? `Verified · ${verified.length}` : 'All'}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-3 mb-8">
-            <div className="stat-card cursor-pointer" onClick={() => setFilter('all')}>
-              <div className="stat-icon info"><i className="fas fa-building"></i></div>
-              <div>
-                <p className="stat-label">Total Agencies</p>
-                <p className="stat-value">{users.length}</p>
-              </div>
+          {loading ? (
+            <div className="flex-col gap-3" style={{ padding: 'var(--space-5)' }}>
+              {[0, 1, 2].map(i => <div key={i} className="skeleton" style={{ height: 48 }} />)}
             </div>
-            <div className="stat-card cursor-pointer" onClick={() => setFilter('pending')} style={{ borderTop: filter === 'pending' ? '2px solid var(--color-warning)' : '' }}>
-              <div className="stat-icon warning"><i className="fas fa-clock"></i></div>
-              <div>
-                <p className="stat-label">Pending Approval</p>
-                <p className="stat-value text-warning">{pendingCount}</p>
-              </div>
-            </div>
-            <div className="stat-card cursor-pointer" onClick={() => setFilter('approved')} style={{ borderTop: filter === 'approved' ? '2px solid var(--color-primary)' : '' }}>
-              <div className="stat-icon primary"><i className="fas fa-check-circle"></i></div>
-              <div>
-                <p className="stat-label">Approved Agencies</p>
-                <p className="stat-value text-primary">{approvedCount}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="card-header border-b border-color">
-              <div className="tabs-list">
-                <button className={`tab-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All Accounts</button>
-                <button className={`tab-btn ${filter === 'pending' ? 'active' : ''}`} onClick={() => setFilter('pending')}>Pending <span className="badge badge-warning ml-1">{pendingCount}</span></button>
-                <button className={`tab-btn ${filter === 'approved' ? 'active' : ''}`} onClick={() => setFilter('approved')}>Approved</button>
-              </div>
-            </div>
-            
-            {loading ? (
-              <div className="flex-center py-12">
-                <span className="spinner"></span>
-              </div>
-            ) : filtered.length > 0 ? (
-              <div className="table-container">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Agency / Department</th>
-                      <th>Account</th>
-                      <th>Status</th>
-                      <th style={{ textAlign: 'right' }}>Actions</th>
+          ) : list.length === 0 ? (
+            <EmptyState icon={filter === 'pending' ? 'fa-circle-check' : 'fa-building-columns'}
+              title={filter === 'pending' ? 'No agencies waiting' : 'No accounts'}>
+              {filter === 'pending' ? 'Every registered agency has been reviewed.' : 'No government accounts match this filter.'}
+            </EmptyState>
+          ) : (
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Agency</th>
+                    <th className="hide-mobile">Contact</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'right' }}><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map(u => (
+                    <tr key={u.id}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <span className="admin-avatar" aria-hidden="true">{(u.agency_name || u.username).charAt(0).toUpperCase()}</span>
+                          <div style={{ minWidth: 0 }}>
+                            <div className="font-semibold">{u.agency_name || '—'}</div>
+                            <div className="text-xs text-muted">{u.department || 'No department'} · @{u.username}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="hide-mobile"><a href={`mailto:${u.email}`} className="text-sm">{u.email}</a></td>
+                      <td>
+                        {u.is_verified
+                          ? <span className="badge badge-success"><i className="fas fa-circle-check" aria-hidden="true"></i> Verified</span>
+                          : <span className="badge badge-warning"><i className="fas fa-hourglass-half" aria-hidden="true"></i> Pending</span>}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {u.is_verified ? (
+                          <button type="button" className="btn btn-danger-light btn-sm" disabled={busyId === u.id}
+                            onClick={() => setConfirm({ user: u, action: 'revoke' })}>Revoke</button>
+                        ) : (
+                          <button type="button" className="btn btn-primary btn-sm" disabled={busyId === u.id}
+                            onClick={() => setConfirm({ user: u, action: 'approve' })}>Verify</button>
+                        )}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map(user => (
-                      <tr key={user.id}>
-                        <td>
-                          <div className="font-semibold">{user.agency_name || 'N/A'}</div>
-                          <div className="text-sm text-muted">{user.department || 'N/A'}</div>
-                        </td>
-                        <td>
-                          <div>{user.username}</div>
-                          <div className="text-sm text-muted">{user.email}</div>
-                        </td>
-                        <td>
-                          {user.is_verified ? (
-                            <span className="badge badge-success"><i className="fas fa-check mr-1"></i> Approved</span>
-                          ) : (
-                            <span className="badge badge-warning"><i className="fas fa-clock mr-1"></i> Pending</span>
-                          )}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          {!user.is_verified ? (
-                            <button
-                              className="btn btn-sm btn-primary"
-                              onClick={() => handleApprove(user.id)}
-                              disabled={actionLoading === user.id}
-                            >
-                              {actionLoading === user.id ? <span className="spinner"></span> : <><i className="fas fa-check"></i> Approve</>}
-                            </button>
-                          ) : (
-                            <button
-                              className="btn btn-sm btn-danger-light"
-                              onClick={() => handleRevoke(user.id)}
-                              disabled={actionLoading === user.id}
-                            >
-                              {actionLoading === user.id ? <span className="spinner"></span> : <><i className="fas fa-ban"></i> Revoke</>}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* Emergency broadcast */}
+        <section className="admin-broadcast" aria-labelledby="broadcast-title">
+          <div className="admin-broadcast-head">
+            <span className="admin-broadcast-icon" aria-hidden="true"><i className="fas fa-tower-broadcast"></i></span>
+            <div>
+              <h2 id="broadcast-title">Emergency broadcast</h2>
+              <p>Shows a red banner at the top of every page for all users. Use only for life-safety events.</p>
+            </div>
+          </div>
+          <form onSubmit={reviewBroadcast} className="flex-col gap-4">
+            <div className="field mb-0">
+              <label className="label" htmlFor="b-title">Headline</label>
+              <input id="b-title" className="input" placeholder="e.g. Flash flood warning — avoid riverside roads"
+                value={bTitle} onChange={e => setBTitle(e.target.value)} maxLength={100} required />
+            </div>
+            <div className="field mb-0">
+              <label className="label" htmlFor="b-type">Category</label>
+              <div className="select-wrapper">
+                <select id="b-type" className="input select-field" value={bType} onChange={e => setBType(e.target.value)}>
+                  {ALERT_TYPES.map(t => <option key={t}>{t}</option>)}
+                </select>
               </div>
-            ) : (
-              <div className="py-12 flex-center flex-col text-center">
-                <div className="icon-box bg-subtle text-muted mb-4 text-3xl" style={{ width: '64px', height: '64px' }}>
-                  <i className="fas fa-clipboard-list"></i>
-                </div>
-                <h4 className="font-semibold mb-2">No accounts found</h4>
-                <p className="text-secondary text-sm">No agency accounts match the current filter.</p>
-              </div>
-            )}
+            </div>
+            <div className="field mb-0">
+              <label className="label" htmlFor="b-desc">Instructions</label>
+              <textarea id="b-desc" className="textarea" rows={3} placeholder="What is happening and exactly what people should do."
+                value={bDesc} onChange={e => setBDesc(e.target.value)} maxLength={300} required style={{ minHeight: 90 }} />
+              <p className="help-text">{bDesc.length}/300</p>
+            </div>
+
+            <div className="admin-banner-preview" aria-label="Banner preview">
+              <span className="broadcast-label">EMERGENCY BROADCAST</span>
+              <strong>{bTitle || 'Headline'}</strong>
+              <span>{bDesc || 'Instructions appear here.'}</span>
+            </div>
+
+            <button type="submit" className="btn btn-danger btn-lg" disabled={!bTitle.trim() || !bDesc.trim()}>
+              <i className="fas fa-tower-broadcast" aria-hidden="true"></i> Review broadcast
+            </button>
+          </form>
+        </section>
+      </div>
+
+      {confirm && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="verify-confirm-title">
+          <div className="modal-card">
+            <div className="modal-card-header">
+              <h3 id="verify-confirm-title">{confirm.action === 'approve' ? 'Verify agency?' : 'Revoke access?'}</h3>
+              <button className="close-btn" onClick={() => setConfirm(null)} aria-label="Close"><i className="fas fa-xmark"></i></button>
+            </div>
+            <div className="modal-card-body">
+              <p className="font-semibold">{confirm.user.agency_name || confirm.user.username}</p>
+              <p className="text-sm text-muted mb-3">{confirm.user.department} · {confirm.user.email}</p>
+              <p className="text-secondary text-sm">
+                {confirm.action === 'approve'
+                  ? 'They will be able to publish official alerts, review citizen reports and use the Command Center. They need to sign in again for access to apply.'
+                  : 'They will lose access to the Command Center and can no longer publish alerts.'}
+              </p>
+            </div>
+            <div className="modal-card-footer">
+              <button className="btn btn-ghost" onClick={() => setConfirm(null)}>Cancel</button>
+              <button className={`btn ${confirm.action === 'approve' ? 'btn-primary' : 'btn-danger'}`} onClick={doAction} disabled={busyId !== null}>
+                {busyId !== null ? <span className="spinner" /> : confirm.action === 'approve' ? 'Verify agency' : 'Revoke access'}
+              </button>
+            </div>
           </div>
         </div>
-      </section>
-    </>
+      )}
+
+      {bConfirm && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="b-confirm-title">
+          <div className="modal-card">
+            <div className="modal-card-header">
+              <h3 id="b-confirm-title" className="text-danger">Send emergency broadcast?</h3>
+              <button className="close-btn" onClick={() => setBConfirm(false)} aria-label="Close"><i className="fas fa-xmark"></i></button>
+            </div>
+            <div className="modal-card-body">
+              <div className="alert-banner is-danger mb-4">
+                <i className="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                <span>This banner will appear immediately for every user of SRANS.</span>
+              </div>
+              <p className="font-semibold">{bTitle}</p>
+              <p className="text-sm text-secondary mt-1">{bDesc}</p>
+            </div>
+            <div className="modal-card-footer">
+              <button className="btn btn-ghost" onClick={() => setBConfirm(false)}>Cancel</button>
+              <button className="btn btn-danger" onClick={doBroadcast} disabled={broadcasting}>
+                {broadcasting ? <span className="spinner" /> : 'Broadcast now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

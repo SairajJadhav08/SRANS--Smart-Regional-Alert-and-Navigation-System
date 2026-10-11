@@ -9,7 +9,7 @@ Express.js + TypeScript backend for the Smart Regional Alert & Navigation System
 - **Database** — PostgreSQL via [Neon](https://neon.tech) (serverless)
 - **ORM** — Prisma v7
 - **Auth** — JWT (jsonwebtoken + bcryptjs)
-- **AI** — Groq SDK (llama-3.3-70b-versatile)
+- **AI** — Groq SDK (`openai/gpt-oss-120b`, falling back to `openai/gpt-oss-20b`), all calls via `src/lib/ai.ts`
 
 ## Setup
 
@@ -23,6 +23,10 @@ Fill in the three required values in `.env`:
 - `DATABASE_URL` — from your Neon dashboard
 - `JWT_SECRET` — any long random string
 - `GROQ_API_KEY` — from console.groq.com
+
+Optional:
+- `GROQ_MODEL` — model to try first (default `openai/gpt-oss-120b`). Change it if Groq retires a model; see [Groq deprecations](https://console.groq.com/docs/deprecations).
+- `FRONTEND_URL` / `FRONTEND_ORIGIN` — extra origins allowed by CORS.
 
 ### 2. Push schema to Neon
 
@@ -83,8 +87,20 @@ Server runs at `http://localhost:5000`
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/routine-planner` | JWT | AI route plan for a saved route |
-| POST | `/chat` | JWT | Travel assistant chat |
+| POST | `/routine-planner` | JWT | AI departure plan for a saved route |
+| POST | `/chat` | JWT | Travel assistant chat (optional `history` for multi-turn) |
+| POST | `/daily-briefing` | JWT | Commute briefing for a city or coordinates |
+| POST | `/navigation-chat` | JWT | In-journey co-pilot with route context |
+| POST | `/detect-alerts` | JWT | AI-detected likely hazards near a location |
+| POST | `/route-risk` | JWT (owner) | 0–100 risk score, summary and departure advice for a saved route |
+| POST | `/explain-alert` | JWT | Plain-language impact of an alert |
+| POST | `/draft-alert` | JWT | Draft an alert (`mode: "alert"`) or citizen report (`mode: "report"`) from notes |
+| POST | `/smart-search` | JWT | Natural-language search over current alerts |
+| POST | `/triage-report` | Gov | Credibility, severity, duplicates and cleaned wording for a citizen report |
+| POST | `/situation-report` | Gov | 48-hour command-center briefing |
+| POST | `/analytics-insights` | Gov | 14-day trend insights and 3-day outlook |
+
+All `/api/ai/*` routes are rate-limited to 30 requests per minute per client (`429` when exceeded).
 
 ### Contact — `/api/contact`
 

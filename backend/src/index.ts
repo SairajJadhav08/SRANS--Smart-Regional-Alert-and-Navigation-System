@@ -8,10 +8,12 @@ import authRouter from './routes/auth'
 import alertsRouter from './routes/alerts'
 import routesRouter from './routes/routes'
 import aiRouter from './routes/ai'
+import insightsRouter from './routes/insights'
 import contactRouter from './routes/contact'
 import analyticsRouter from './routes/analytics'
 import reportsRouter from './routes/reports'
 import { errorHandler, notFound } from './middleware/errorHandler'
+import { rateLimit } from './middleware/rateLimit'
 
 const app = express()
 const PORT = process.env.PORT ?? 5000
@@ -43,7 +45,7 @@ app.use(
 )
 
 // ── Body Parsing ──────────────────────────────────────────────────────────────
-app.use(express.json())
+app.use(express.json({ limit: '100kb' }))
 app.use(express.urlencoded({ extended: true }))
 
 // ── Health Check ──────────────────────────────────────────────────────────────
@@ -55,7 +57,10 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRouter)
 app.use('/api/alerts', alertsRouter)
 app.use('/api/routes', routesRouter)
+// AI endpoints call a paid LLM — cap each client to 30 requests per minute
+app.use('/api/ai', rateLimit({ windowMs: 60_000, max: 30 }))
 app.use('/api/ai', aiRouter)
+app.use('/api/ai', insightsRouter)
 app.use('/api/contact', contactRouter)
 app.use('/api/analytics', analyticsRouter)
 app.use('/api/reports', reportsRouter)

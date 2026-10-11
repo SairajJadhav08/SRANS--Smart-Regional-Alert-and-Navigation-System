@@ -5,9 +5,11 @@ info:
     REST API specification for the Smart Regional Alert & Navigation System (SRANS).
     This API allows Citizens, Government Officers, and Superusers to communicate road disruptions, hazards, and custom routes.
     
-    The AI Endpoints (Groq Llama 3.3 Engine) are highlighted at the top of the paths below.
-  version: 1.0.0
+    The AI endpoints (Groq, `openai/gpt-oss-120b` with `openai/gpt-oss-20b` as fallback) are listed first. All `/ai/*` routes are rate-limited to 30 requests per minute per client.
+  version: 1.1.0
 servers:
+  - url: https://srans-backend.onrender.com/api
+    description: Production (Render)
   - url: http://localhost:5000/api
     description: Local Development Server
 tags:
@@ -36,7 +38,7 @@ paths:
       summary: Suggests safe travel departures (AI Feature)
       description: |
         **Purpose**: Suggests safe travel departures by matching route coordinates against nearby alerts.
-        **LLM/AI Used**: Groq `llama-3.3-70b-versatile` (Llama-3 Serverless).
+        **LLM/AI Used**: Groq `openai/gpt-oss-120b` (fallback `openai/gpt-oss-20b`).
         **Business Value**: Increases driver safety and reduces commute time through proactive warning advisories.
       security:
         - BearerAuth: []
@@ -77,7 +79,7 @@ paths:
       summary: General travel chatbot (AI Feature)
       description: |
         **Purpose**: Answers general commuter questions on regional travel hazards using live database alerts.
-        **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+        **LLM/AI Used**: Groq `openai/gpt-oss-120b`.
         **Business Value**: Provides a low-friction conversational portal for accessing complex safety and weather advisories.
       security:
         - BearerAuth: []
@@ -93,6 +95,17 @@ paths:
                 message:
                   type: string
                   description: The query message from the commuter
+                history:
+                  type: array
+                  description: Optional prior turns; the last 10 are used
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [user, assistant]
+                      content:
+                        type: string
       responses:
         '200':
           description: Chat reply generated
@@ -113,7 +126,7 @@ paths:
       summary: Automated hazard prediction based on GPS coordinates (AI Feature)
       description: |
         **Purpose**: Autogenerates alerts near a user's location based on local coordinates, time, and seasonal trends.
-        **LLM/AI Used**: Groq `llama-3.3-70b-versatile` (with system-enforced JSON schema parsing).
+        **LLM/AI Used**: Groq `openai/gpt-oss-120b` (with JSON array extraction).
         **Business Value**: Pre-seeds regional hazard maps with high probability risks, lowering bootstrap data requirements.
       security:
         - BearerAuth: []
@@ -159,7 +172,7 @@ paths:
       summary: Real-time driving assistant (AI Feature)
       description: |
         **Purpose**: Acts as an in-route co-pilot by digesting driving metrics (steps, coordinates, distance) and answering questions.
-        **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+        **LLM/AI Used**: Groq `openai/gpt-oss-120b`.
         **Business Value**: Maximizes app session duration and creates a highly interactive, sticky navigator experience.
       security:
         - BearerAuth: []
@@ -208,7 +221,7 @@ paths:
       summary: Personalised morning commute briefing (AI Feature)
       description: |
         **Purpose**: Produces a structured morning travel report for a specific city or geographical bounds.
-        **LLM/AI Used**: Groq `llama-3.3-70b-versatile`.
+        **LLM/AI Used**: Groq `openai/gpt-oss-120b`.
         **Business Value**: Drives daily recurring traffic to the application by sending actionable, simple briefings.
       security:
         - BearerAuth: []
@@ -239,6 +252,235 @@ paths:
                     type: integer
         '400':
           description: Missing both city and coordinates
+
+  /ai/route-risk:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Risk score (0–100) for a saved route (AI Feature)
+      description: |
+        **Purpose**: Scores a saved route from alerts within 2 km of its corridor. The score is deterministic (type weight × proximity × recency); the model only writes the summary, advice and best departure.
+        **LLM/AI Used**: Groq `openai/gpt-oss-120b` (JSON mode).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [route_id]
+              properties:
+                route_id:
+                  type: integer
+                arrival_time:
+                  type: string
+                  example: "09:00"
+      responses:
+        '200':
+          description: Route scored
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  route_id: { type: integer }
+                  score: { type: integer, minimum: 0, maximum: 100 }
+                  level: { type: string, enum: [low, moderate, high, severe] }
+                  length_km: { type: number }
+                  summary: { type: string }
+                  advice: { type: array, items: { type: string } }
+                  best_departure: { type: string, nullable: true }
+                  alerts:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: integer }
+                        title: { type: string }
+                        alert_type: { type: string }
+                        distance_km: { type: number }
+                  generated_at: { type: string, format: date-time }
+        '404':
+          description: Route not found or not owned by the user
+        '429':
+          description: AI rate limit exceeded (30 requests per minute)
+
+  /ai/explain-alert:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Plain-language impact of one alert (AI Feature)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [alert_id]
+              properties:
+                alert_id: { type: integer }
+      responses:
+        '200':
+          description: Explanation generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alert_id: { type: integer }
+                  impact: { type: string }
+                  who_affected: { type: string }
+                  expected_delay: { type: string }
+                  advice: { type: array, items: { type: string } }
+        '404':
+          description: Alert not found
+        '502':
+          description: The model returned no usable answer
+
+  /ai/draft-alert:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Draft an alert or citizen report from rough notes (AI Feature)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notes]
+              properties:
+                notes: { type: string, maxLength: 1200 }
+                mode: { type: string, enum: [alert, report], default: alert }
+      responses:
+        '200':
+          description: Draft generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  title: { type: string }
+                  description: { type: string }
+                  alert_type: { type: string, enum: [Traffic, Emergency, Construction, Weather] }
+                  severity: { type: string, enum: [low, moderate, high, critical] }
+                  expected_duration: { type: string }
+                  broadcast_recommended: { type: boolean }
+
+  /ai/triage-report:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: AI triage of a citizen report (Government/Superuser)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [report_id]
+              properties:
+                report_id: { type: integer }
+      responses:
+        '200':
+          description: Triage generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id: { type: integer }
+                  credibility: { type: integer, minimum: 0, maximum: 100 }
+                  severity: { type: string, enum: [low, moderate, high, critical] }
+                  suggested_type: { type: string }
+                  duplicate_of:
+                    type: object
+                    nullable: true
+                    properties:
+                      id: { type: integer }
+                      title: { type: string }
+                  recommendation: { type: string, enum: [approve, reject, merge, needs_info] }
+                  reasoning: { type: string }
+                  suggested_title: { type: string }
+                  suggested_description: { type: string }
+        '403':
+          description: Verified government account required
+
+  /ai/situation-report:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: 48-hour command-center briefing (Government/Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Situation report generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [normal, elevated, critical] }
+                  headline: { type: string }
+                  key_points: { type: array, items: { type: string } }
+                  recommended_actions: { type: array, items: { type: string } }
+                  counts: { type: object, additionalProperties: { type: integer } }
+                  pending_reports: { type: integer }
+                  generated_at: { type: string, format: date-time }
+
+  /ai/smart-search:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: Natural-language search over current alerts (AI Feature)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string, maxLength: 300 }
+      responses:
+        '200':
+          description: Answer and matching alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer: { type: string }
+                  alert_ids: { type: array, items: { type: integer } }
+
+  /ai/analytics-insights:
+    post:
+      tags:
+        - "AI Features (Commuter Intelligence)"
+      summary: 14-day trend insights and 3-day outlook (Government/Superuser)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Insights generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  insights: { type: array, items: { type: string } }
+                  forecast: { type: string, nullable: true }
+                  generated_at: { type: string, format: date-time }
 
   # ── AUTHENTICATION ENDPOINTS ──────────────────────────────────────────────────
   /auth/register:
@@ -683,9 +925,20 @@ paths:
               properties:
                 note:
                   type: string
+                title:
+                  type: string
+                  description: Optional override for the published alert title (e.g. AI-cleaned wording)
+                description:
+                  type: string
+                  description: Optional override for the published alert description
+                alert_type:
+                  type: string
+                  enum: [Traffic, Emergency, Construction, Weather]
       responses:
         '200':
           description: Report approved and promoted to alert
+        '409':
+          description: Report has already been reviewed
 
   /reports/{id}/reject:
     post:

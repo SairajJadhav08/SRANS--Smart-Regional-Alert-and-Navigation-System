@@ -1,128 +1,76 @@
 import { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { BrandMark } from '../ui'
 import './Navbar.css'
 
+const LINKS = [
+  { to: '/features', label: 'Features' },
+  { to: '/map', label: 'Live Map' },
+  { to: '/alerts', label: 'Alerts' },
+  { to: '/about', label: 'About' },
+  { to: '/contact', label: 'Contact' },
+]
+
+// Marketing navbar for public pages. Signed-in users get a single
+// "Open app" entry point instead of a copy of the app navigation.
 export default function Navbar() {
-  const { isLoggedIn, user, isAnyGovUser, isSuperuser, logout } = useAuth()
+  const { isLoggedIn, user } = useAuth()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
-  // Handle scroll for sticky glassmorphism effect
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20)
-    }
-    window.addEventListener('scroll', handleScroll)
+    const handleScroll = () => setScrolled(window.scrollY > 12)
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const handleLogout = () => {
-    logout()
+  // Close the drawer whenever the route changes
+  const [lastPath, setLastPath] = useState(location.pathname)
+  if (lastPath !== location.pathname) {
+    setLastPath(location.pathname)
+    setMobileMenuOpen(false)
   }
 
-  const isActive = (path: string) => {
-    return location.pathname === path ? 'active' : ''
-  }
+  const onDarkHero = location.pathname === '/' && !scrolled && !mobileMenuOpen
 
   return (
-    <header className={`navbar-modern ${scrolled ? 'scrolled' : ''}`}>
+    <header className={`navbar-modern${scrolled ? ' scrolled' : ''}${onDarkHero ? ' on-dark' : ''}`}>
       <div className="container navbar-container">
-        <Link to="/" className="navbar-brand">
-          <div className="navbar-logo-icon">
-            <i className="fas fa-location-arrow"></i>
-          </div>
+        <Link to="/" className="navbar-brand" aria-label="SRANS home">
+          <BrandMark />
           <span className="navbar-brand-text">SRANS</span>
         </Link>
 
-        {/* Desktop Menu */}
-        <nav className="navbar-menu hide-mobile">
-          <Link to="/" className={`nav-link ${isActive('/')}`}>Home</Link>
-          <Link to="/map" className={`nav-link ${isActive('/map')}`}>Live Map</Link>
-          <Link to="/alerts" className={`nav-link ${isActive('/alerts')}`}>Alerts</Link>
-          {!isLoggedIn && (
-            <>
-              <Link to="/features" className={`nav-link ${isActive('/features')}`}>Features</Link>
-              <Link to="/about" className={`nav-link ${isActive('/about')}`}>About</Link>
-              <Link to="/contact" className={`nav-link ${isActive('/contact')}`}>Contact</Link>
-            </>
-          )}
-          {isLoggedIn && (
-            <>
-              <Link to="/my-routes" className={`nav-link ${isActive('/my-routes')}`}>My Routes</Link>
-              <Link to="/ai-assistant" className={`nav-link ${isActive('/ai-assistant')}`}>
-                <i className="fas fa-robot" style={{ marginRight: '4px', fontSize: '12px' }}></i>AI Assistant
-              </Link>
-              <Link to="/report" className={`nav-link ${isActive('/report')}`}>
-                <i className="fas fa-flag" style={{ marginRight: '4px', fontSize: '12px' }}></i>Report
-              </Link>
-            </>
-          )}
+        <nav className="navbar-menu hide-mobile" aria-label="Primary">
+          {LINKS.map(l => (
+            <NavLink key={l.to} to={l.to} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              {l.label}
+            </NavLink>
+          ))}
         </nav>
 
-        {/* Desktop Auth */}
         <div className="navbar-auth hide-mobile">
           {isLoggedIn ? (
-            <div className="navbar-user-dropdown">
-              <button className="navbar-user-btn">
-                <div className="avatar">
-                  {user?.username?.charAt(0).toUpperCase()}
-                </div>
-                <span>{user?.username}</span>
-                <i className="fas fa-chevron-down text-xs"></i>
-              </button>
-              <div className="dropdown-menu">
-                <div className="dropdown-header">
-                  <p className="font-semibold">{user?.username}</p>
-                  <p className="text-muted text-xs">{user?.email}</p>
-                  {isAnyGovUser && <span className="badge badge-primary mt-2">Gov Official</span>}
-                </div>
-                <div className="dropdown-divider"></div>
-                <Link to="/ai-assistant" className="dropdown-item">
-                  <i className="fas fa-robot"></i> AI Assistant
-                </Link>
-                <Link to="/report" className="dropdown-item">
-                  <i className="fas fa-flag"></i> Report Incident
-                </Link>
-                {(isAnyGovUser || isSuperuser) && (
-                  <Link to="/dashboard" className="dropdown-item">
-                    <i className="fas fa-tachometer-alt"></i> Dashboard
-                  </Link>
-                )}
-                {(isAnyGovUser || isSuperuser) && (
-                  <Link to="/analytics" className="dropdown-item">
-                    <i className="fas fa-chart-bar"></i> Analytics
-                  </Link>
-                )}
-                {(isAnyGovUser || isSuperuser) && (
-                  <Link to="/reports/review" className="dropdown-item">
-                    <i className="fas fa-clipboard-check"></i> Review Reports
-                  </Link>
-                )}
-                {isSuperuser && (
-                  <Link to="/superuser" className="dropdown-item">
-                    <i className="fas fa-shield-alt"></i> Admin Panel
-                  </Link>
-                )}
-                <button onClick={handleLogout} className="dropdown-item text-danger">
-                  <i className="fas fa-sign-out-alt"></i> Log Out
-                </button>
-              </div>
-            </div>
+            <Link to="/overview" className="btn btn-primary">
+              <span className="nav-avatar" aria-hidden="true">{user?.username?.charAt(0).toUpperCase()}</span>
+              Open app <i className="fas fa-arrow-right"></i>
+            </Link>
           ) : (
             <div className="auth-buttons">
-              <Link to="/login" className="btn btn-ghost">Log In</Link>
-              <Link to="/register" className="btn btn-primary">Sign Up</Link>
+              <Link to="/login" className="btn btn-ghost nav-login">Log in</Link>
+              <Link to="/register" className="btn btn-primary">Get started free</Link>
             </div>
           )}
         </div>
 
-        {/* Mobile Toggle */}
         <button
           className={`mobile-toggle hide-desktop ${mobileMenuOpen ? 'is-active' : ''}`}
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
+          aria-expanded={mobileMenuOpen}
         >
           <span></span>
           <span></span>
@@ -130,63 +78,26 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu Drawer */}
       <div className={`mobile-drawer ${mobileMenuOpen ? 'is-open' : ''}`}>
         <div className="mobile-drawer-inner">
-          <nav className="mobile-nav">
-            <Link to="/" className={`mobile-nav-link ${isActive('/')}`} onClick={() => setMobileMenuOpen(false)}>Home</Link>
-            <Link to="/map" className={`mobile-nav-link ${isActive('/map')}`} onClick={() => setMobileMenuOpen(false)}>Live Map</Link>
-            <Link to="/alerts" className={`mobile-nav-link ${isActive('/alerts')}`} onClick={() => setMobileMenuOpen(false)}>Alerts</Link>
-            {!isLoggedIn && (
-              <>
-                <Link to="/features" className={`mobile-nav-link ${isActive('/features')}`} onClick={() => setMobileMenuOpen(false)}>Features</Link>
-                <Link to="/about" className={`mobile-nav-link ${isActive('/about')}`} onClick={() => setMobileMenuOpen(false)}>About</Link>
-                <Link to="/contact" className={`mobile-nav-link ${isActive('/contact')}`} onClick={() => setMobileMenuOpen(false)}>Contact</Link>
-              </>
-            )}
-            {isLoggedIn && (
-              <>
-                <Link to="/my-routes" className={`mobile-nav-link ${isActive('/my-routes')}`} onClick={() => setMobileMenuOpen(false)}>My Routes</Link>
-                <Link to="/ai-assistant" className={`mobile-nav-link ${isActive('/ai-assistant')}`} onClick={() => setMobileMenuOpen(false)}>
-                  <i className="fas fa-robot" style={{ marginRight: '6px', fontSize: '14px' }}></i>AI Assistant
-                </Link>
-              </>
-            )}
+          <nav className="mobile-nav" aria-label="Mobile">
+            <NavLink to="/" end className={({ isActive }) => `mobile-nav-link${isActive ? ' active' : ''}`}>Home</NavLink>
+            {LINKS.map(l => (
+              <NavLink key={l.to} to={l.to} className={({ isActive }) => `mobile-nav-link${isActive ? ' active' : ''}`}>
+                {l.label}
+              </NavLink>
+            ))}
           </nav>
 
           <div className="mobile-auth">
             {isLoggedIn ? (
-              <>
-                <div className="mobile-user-info">
-                  <div className="avatar avatar-lg">
-                    {user?.username?.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold">{user?.username}</p>
-                    <p className="text-muted text-sm">{user?.email}</p>
-                  </div>
-                </div>
-
-                <div className="mobile-auth-links">
-                  {(isAnyGovUser || isSuperuser) && (
-                    <Link to="/dashboard" className="btn btn-secondary btn-full mb-3" onClick={() => setMobileMenuOpen(false)}>
-                      <i className="fas fa-tachometer-alt"></i> Dashboard
-                    </Link>
-                  )}
-                  {isSuperuser && (
-                    <Link to="/superuser" className="btn btn-warning btn-full mb-3" onClick={() => setMobileMenuOpen(false)}>
-                      <i className="fas fa-shield-alt"></i> Admin Panel
-                    </Link>
-                  )}
-                  <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="btn btn-danger-light btn-full">
-                    <i className="fas fa-sign-out-alt"></i> Log Out
-                  </button>
-                </div>
-              </>
+              <Link to="/overview" className="btn btn-primary btn-full">
+                Open app <i className="fas fa-arrow-right"></i>
+              </Link>
             ) : (
               <div className="mobile-auth-buttons">
-                <Link to="/login" className="btn btn-secondary btn-full mb-3">Log In</Link>
-                <Link to="/register" className="btn btn-primary btn-full">Sign Up</Link>
+                <Link to="/login" className="btn btn-secondary btn-full mb-3">Log in</Link>
+                <Link to="/register" className="btn btn-primary btn-full">Get started free</Link>
               </div>
             )}
           </div>

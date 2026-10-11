@@ -1,22 +1,15 @@
 {
   "short_name": "SRANS",
-  "name": "Smart Regional Alert and Navigation System",
-  "description": "Real-time alerts, traffic intelligence, weather monitoring, and emergency notifications for smarter communities.",
+  "name": "SRANS — Smart Regional Alert & Navigation System",
+  "description": "Live alerts for road construction, diversions and flooding, with AI-recommended safe routes for your daily commute.",
   "icons": [
-    {
-      "src": "/Logo.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "/Logo.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
+    { "src": "/icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/icons/icon-512.png", "type": "image/png", "sizes": "512x512" },
+    { "src": "/icons/maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ],
   "start_url": "/",
-  "background_color": "#F8FAFC",
-  "theme_color": "#10B981",
+  "background_color": "#F5F8F7",
+  "theme_color": "#073B33",
   "display": "standalone",
   "orientation": "portrait"
 }

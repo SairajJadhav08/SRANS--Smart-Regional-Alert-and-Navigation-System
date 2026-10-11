@@ -8,40 +8,76 @@ The platform aggregates regional alerts such as road construction, traffic diver
 
 ---
 
+![SRANS landing page](docs/screenshots/landing.png)
+
 ## 🚀 Key Features
 
-*   **Intelligent Route Optimization**: Dynamic route adjustments based on real-time regional events.
-*   **Infrastructure Work Alerts**: Real-time notifications for public utility works, road construction, maintenance, and diversions.
-*   **Natural Disaster Warnings**: Instant weather alerts, including regional flooding and environmental disruptions.
-*   **Safe Route Recommendations**: Intelligent navigation options that steer you clear of hazardous or heavily congested areas.
-*   **Interactive Map Visualization**: Interactive map layouts showing live traffic indicators, user tracking, and active incident flags.
-*   **Personalized Commuter Plans**: Save typical route paths and receive custom recommendations before you leave.
+### For commuters
+*   **Live disruption map**: colour-coded alerts with impact radii, place search and turn-by-turn routing that flags any alert within 500 m of your actual road path.
+*   **Today overview**: an AI commute briefing for your location, your saved routes with risk scores, nearby alerts and the status of your reports.
+*   **Saved routes**: one-click navigation and an AI departure planner.
+*   **Citizen reporting**: describe an incident in your own words; AI drafts the report for officials to review.
+*   **Installable PWA** with browser notifications for new alerts.
 
-### 🤖 AI Features (Powered by Groq API & Llama 3.3)
-*   **AI Route Recommendation Engine**: Analyzes live regional alerts, road closures, traffic conditions, and user destinations to generate the safest and fastest alternative route using LLM-powered reasoning.
-*   **AI Travel Assistant**: An intelligent conversational assistant that explains traffic conditions, summarizes regional alerts, answers user queries, and provides travel recommendations in natural language, helping users make informed commuting decisions.
+### For government agencies
+*   **Command Center**: AI situation report, KPIs, your published alerts and the citizen-report review queue.
+*   **Publish alerts** with an AI drafter, a map picker and a live commuter preview.
+*   **Report review** with AI triage (credibility, severity, duplicates, cleaned-up wording).
+*   **Analytics** with trends, hotspots and AI insights; **emergency broadcasts** for administrators.
+
+### 🤖 AI features (Groq · `openai/gpt-oss-120b`)
+
+| Feature | Who | Endpoint |
+| :--- | :--- | :--- |
+| Daily commute briefing | Commuters | `POST /api/ai/daily-briefing` |
+| Route risk score (0–100) | Commuters | `POST /api/ai/route-risk` |
+| Multi-turn travel assistant | Commuters | `POST /api/ai/chat` |
+| Smart alert search | Commuters | `POST /api/ai/smart-search` |
+| Alert impact explainer | Commuters | `POST /api/ai/explain-alert` |
+| In-journey navigation co-pilot | Commuters | `POST /api/ai/navigation-chat` |
+| Hazard detection near you | Commuters | `POST /api/ai/detect-alerts` |
+| Departure planner | Commuters | `POST /api/ai/routine-planner` |
+| Alert / report drafter | Both | `POST /api/ai/draft-alert` |
+| Citizen report triage | Agencies | `POST /api/ai/triage-report` |
+| Situation report | Agencies | `POST /api/ai/situation-report` |
+| Analytics trend insights | Agencies | `POST /api/ai/analytics-insights` |
+
+All AI calls go through one helper with a model fallback chain (`GROQ_MODEL` → `openai/gpt-oss-120b` → `openai/gpt-oss-20b`), Groq JSON mode for structured features, prompt fencing of user-supplied text and a 30-requests-per-minute rate limit.
+
+### 🗺️ Free map stack, no API keys
+Leaflet with OpenStreetMap tiles (OSM France HOT as fallback), OSRM routing (FOSSGIS with demo-server fallback) and Photon geocoding (Nominatim fallback). No sign-up or key is needed for any map feature.
+
+---
+
+## 📸 Screenshots
+
+| Today (commuter) | Live map |
+| :---: | :---: |
+| ![Today](docs/screenshots/todayOverview.png) | ![Live map](docs/screenshots/LiveMapsShowingAlerts.png) |
+| **Command Center (agency)** | **AI report triage** |
+| ![Command Center](docs/screenshots/governmentDashboard.png) | ![Report triage](docs/screenshots/reportReviewTriage.png) |
+
+More screens and design notes are in the [case study](docs/case-study.md#6-screenshots).
 
 ---
 
 ## 📊 System Architecture Diagram
-
-This simple block diagram illustrates how the frontend navigation client, the Express API backend, and the AI engines interact to compile regional alert updates:
 
 ```mermaid
 graph TD
     Client[React Frontend Web App]
     Backend[Express.js API Server]
     Database[(Neon PostgreSQL Database)]
-    AI[Groq Llama 3.3 Engine]
-    OSRM[OSRM Spatial Routing Engine]
+    AI[Groq · gpt-oss-120b]
+    OSM[OpenStreetMap tiles · OSRM routing · Photon geocoding]
+    Forms[Formspree]
 
-    %% Interactions
-    Client -- 1. Requests route & updates --> Backend
-    Client -- 2. Computes turn-by-turn geometry --> OSRM
-    Backend -- 3. Reads/Writes alerts & user data --> Database
-    Backend -- 4. Sends coordinates + alert context --> AI
-    AI -- 5. Returns route recommendations & chat answers --> Backend
-    Backend -- 6. Sends structured JSON response --> Client
+    Client -- 1. Requests alerts, routes & AI insights --> Backend
+    Client -- 2. Tiles, turn-by-turn routes, place search --> OSM
+    Client -- 3. Contact form --> Forms
+    Backend -- 4. Reads/writes users, alerts, routes & reports --> Database
+    Backend -- 5. Fenced alert context --> AI
+    AI -- 6. Briefings, scores, triage & chat answers --> Backend
 ```
 
 ---
@@ -104,19 +140,26 @@ erDiagram
 
 ```text
 SRANS/
-├── README.md                  # This main readme guide
-├── API_DOCUMENTATION/         # Dynamic API reference portal
-│   ├── index.html             # Premium Dark Mode API browser UI
-│   └── openapi.yaml           # Full OpenAPI v3.0 REST Specification
-│
-├── docs/                      # Architectural designs and case studies
-│   ├── case-study.md          # Comprehensive Engineering Case Study
-│   ├── api-design.md          # Detailed endpoints breakdown for devs
-│   └── screenshots/           # Application layout images directory
-│
-├── backend/                   # Node.js + Express + TypeScript + Prisma API
-├── frontend/                  # React + TypeScript + Vite + Leaflet Web Application
-└── Project-Code/              # Original Python + Flask Prototype Codebase
+├── README.md                  # This guide
+├── API_DOCUMENTATION/         # OpenAPI v3 spec + browsable API portal
+├── docs/
+│   ├── case-study.md          # Engineering case study
+│   ├── api-design.md          # Endpoint-by-endpoint reference
+│   └── screenshots/           # App screenshots used in the docs
+├── backend/                   # Express 5 + TypeScript + Prisma API
+│   └── src/
+│       ├── lib/ai.ts          # Groq helper: model fallback, JSON mode, prompt fencing
+│       ├── middleware/        # JWT auth, RBAC, AI rate limiter
+│       └── routes/            # auth, alerts, routes, reports, analytics, ai, insights
+├── frontend/                  # React 19 + Vite + Leaflet web app
+│   ├── IMAGE_PROMPTS.md       # Prompts for every image slot in the UI
+│   ├── public/                # Logo, images, icons, robots.txt, sitemap.xml, PWA files
+│   └── src/
+│       ├── components/        # App shell, public layout, AI widgets, UI kit
+│       ├── lib/               # Map config, geocoding, alert metadata, AI cache
+│       ├── pages/             # Landing, Today, Map, Alerts, Command Center, …
+│       └── styles/            # Design system and page styles
+└── Project-Code/              # Original Python + Flask prototype
 ```
 
 ---
@@ -124,48 +167,37 @@ SRANS/
 ## 🛠️ Quick Installation & Setup
 
 ### Prerequisites
-*   Node.js (v18+)
-*   PostgreSQL instance (e.g., [Neon](https://neon.tech/))
-*   Groq API Key (from [console.groq.com](https://console.groq.com/))
+*   Node.js 18+
+*   A PostgreSQL database (e.g. [Neon](https://neon.tech/))
+*   A Groq API key from [console.groq.com](https://console.groq.com/)
 
-### 1. Backend Server Setup
-1. Enter backend folder and install modules:
-   ```bash
-   cd backend
-   npm install
-   ```
-2. Copy configuration variables:
-   ```bash
-   cp .env.example .env
-   ```
-   *Fill in your database URL, JWT secret, and Groq API token inside the newly created `.env` file.*
-3. Initialize the database and seed the system:
-   ```bash
-   npm run db:push
-   npm run db:generate
-   npx tsx seed-ai-user.ts
-   ```
-4. Boot development server:
-   ```bash
-   npm run dev
-   ```
+### 1. Backend
+```bash
+cd backend
+npm install
+cp .env.example .env   # set DATABASE_URL, JWT_SECRET and GROQ_API_KEY
+npm run db:push
+npm run db:generate
+npx tsx seed-ai-user.ts
+npm run dev            # http://localhost:5000
+```
 
-### 2. Frontend Web App Setup
-1. Enter frontend folder and install modules:
-   ```bash
-   cd ../frontend
-   npm install
-   ```
-2. Set API endpoints:
-   ```bash
-   cp .env.sample .env
-   ```
-   *Make sure `VITE_API_URL` points to your backend (default is `http://localhost:5000/api`).*
-3. Boot development web client:
-   ```bash
-   npm run dev
-   ```
-   *Open `http://localhost:5173` in your browser.*
+Optional: set `GROQ_MODEL` to change the first model the AI helper tries (default `openai/gpt-oss-120b`). See [Groq deprecations](https://console.groq.com/docs/deprecations) if a model is retired.
+
+### 2. Frontend
+```bash
+cd frontend
+npm install
+cp .env.sample .env    # VITE_API_URL=http://localhost:5000/api
+npm run dev            # http://localhost:5173
+```
+
+To develop the frontend against the deployed API instead, set `VITE_API_URL=https://srans-backend.onrender.com/api`. Note that this uses the live database.
+
+### Deployment
+*   **Frontend** on Vercel (`frontend/vercel.json` rewrites all routes to the SPA).
+*   **Backend** on Render. Set `DATABASE_URL`, `JWT_SECRET`, `GROQ_API_KEY`, `FRONTEND_URL` (and optionally `GROQ_MODEL`) in the service environment.
+*   The contact form posts directly to Formspree, so it needs no backend configuration.
 
 ---
 

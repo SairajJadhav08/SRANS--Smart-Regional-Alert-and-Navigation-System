@@ -1,182 +1,150 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { sendContact } from '../api'
+import Seo from '../components/Seo'
+import '../styles/pages/marketing.css'
+
+const SUBJECTS = ['General question', 'Agency onboarding', 'Report a problem', 'Partnership', 'Feedback']
+
+const FAQ = [
+  { q: 'How do I get my agency verified?', a: 'Register a government account with your agency and department, then contact us from your official email. An administrator verifies the account, usually within one working day.' },
+  { q: 'An alert on the map is wrong or outdated.', a: 'Use “Report a problem” below with the alert title and location, or report it from the app. The publishing agency is notified to correct or remove it.' },
+  { q: 'Which cities does SRANS cover?', a: 'SRANS works anywhere OpenStreetMap does. Alert coverage depends on the agencies and citizens publishing in your region.' },
+]
 
 export default function ContactPage() {
-  const [submitted, setSubmitted] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [subject, setSubject] = useState(SUBJECTS[0])
+  const [message, setMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
-    setTimeout(() => setSubmitted(false), 5000)
+    setSending(true)
+    setError(null)
+    try {
+      await sendContact({ name: name.trim(), email: email.trim(), subject, message: message.trim() })
+      setSent(true)
+      setName(''); setEmail(''); setMessage(''); setSubject(SUBJECTS[0])
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Could not send your message. Please email us directly.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
     <>
-      {/* Hero */}
-      <div className="page-header bg-white" style={{ paddingTop: 'var(--space-16)', paddingBottom: 'var(--space-16)' }}>
-        <div className="container text-center" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <div className="icon-box primary mb-6 mx-auto" style={{ width: '56px', height: '56px', fontSize: '24px', margin: '0 auto var(--space-6)' }}>
-            <i className="fas fa-envelope-open-text"></i>
-          </div>
-          <h1 className="font-display font-bold" style={{ fontSize: 'var(--text-4xl)', marginBottom: 'var(--space-4)' }}>Get In Touch</h1>
-          <p className="text-secondary text-lg">Have a question or want to collaborate? We'd love to hear from you.</p>
-        </div>
-      </div>
+      <Seo
+        title="Contact SRANS — Support & Agency Onboarding"
+        description="Contact the SRANS team for support, government agency onboarding, partnerships or feedback. Based in Pune, Maharashtra, India."
+        path="/contact"
+      />
 
-      {/* Contact Section */}
-      <section className="section pt-0">
-        <div className="container" style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div className="grid contact-grid" style={{ gap: 'var(--space-8)', alignItems: 'start' }}>
-
-            {/* Form */}
-            <div className="card">
-              <div className="card-header">
-                <h3>Send a Message</h3>
-              </div>
-              <div className="card-body">
-                <p className="text-secondary text-sm mb-6">Fill out the form and we'll get back to you within 24 hours.</p>
-
-                {submitted && (
-                  <div className="alert-banner is-success mb-6">
-                    <i className="fas fa-check-circle"></i>
-                    <div>
-                      <strong>Message sent!</strong>
-                      <p className="mt-1">We'll get back to you shortly.</p>
-                    </div>
-                    <button className="btn-icon btn-sm btn-ghost ml-auto" onClick={() => setSubmitted(false)}>
-                      <i className="fas fa-times"></i>
-                    </button>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit}>
-                  <div className="grid grid-2 mb-0">
-                    <div className="field">
-                      <label className="label">Name</label>
-                      <div className="input-icon">
-                        <i className="fas fa-user icon-left"></i>
-                        <input className="input" type="text" placeholder="Your name" required />
-                      </div>
-                    </div>
-                    <div className="field">
-                      <label className="label">Email</label>
-                      <div className="input-icon">
-                        <i className="fas fa-envelope icon-left"></i>
-                        <input className="input" type="email" placeholder="Your email" required />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="label">Subject</label>
-                    <div className="select-wrapper">
-                      <select className="input select-field">
-                        <option>General Inquiry</option>
-                        <option>Technical Support</option>
-                        <option>Partnership</option>
-                        <option>Government Registration</option>
-                        <option>Feedback</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="label">Message</label>
-                    <textarea className="textarea" placeholder="Write your message here..." rows={5} required></textarea>
-                  </div>
-
-                  <div className="field">
-                    <label className="flex gap-2 items-center text-sm text-secondary cursor-pointer">
-                      <input type="checkbox" required style={{ accentColor: 'var(--color-primary)' }} />
-                      <span>I agree to the <a href="#">privacy policy</a> and <a href="#">terms of service</a></span>
-                    </label>
-                  </div>
-
-                  <button type="submit" className="btn btn-primary btn-full btn-lg mt-2">
-                    <i className="fas fa-paper-plane"></i> Send Message
-                  </button>
-                </form>
-              </div>
-            </div>
-
-            {/* Info Column */}
-            <div className="flex-col gap-6">
-              <div className="card">
-                <div className="card-header"><h3>Contact Information</h3></div>
-                <div className="card-body">
-                  <div className="flex-col gap-5">
-                    {[
-                      { icon: 'fa-envelope', label: 'Email', value: 'sairajjadhav433@gmail.com', href: 'mailto:sairajjadhav433@gmail.com' },
-                      { icon: 'fa-phone', label: 'Phone', value: '+91-9356860010', href: 'tel:+919356860010' },
-                      { icon: 'fa-map-marker-alt', label: 'Location', value: 'Pune, Maharashtra, India' },
-                      { icon: 'fa-clock', label: 'Availability', value: 'Mon – Fri, 9 AM – 6 PM IST' },
-                    ].map((item, i) => (
-                      <div key={i} className="flex gap-4 items-start">
-                        <div className="icon-box-sm primary" style={{ flexShrink: 0 }}>
-                          <i className={`fas ${item.icon}`}></i>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted font-medium mb-1" style={{ textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</p>
-                          {item.href ? (
-                            <a href={item.href} className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{item.value}</a>
-                          ) : (
-                            <p className="font-semibold text-sm">{item.value}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="card-header"><h3>Connect With Me</h3></div>
-                <div className="card-body">
-                  <div className="flex gap-3 flex-wrap">
-                    {[
-                      { icon: 'fab fa-github', href: 'https://github.com/SairajJadhav08', label: 'GitHub' },
-                      { icon: 'fab fa-linkedin-in', href: 'https://www.linkedin.com/in/sairaj-jadhav-/', label: 'LinkedIn' },
-                      { icon: 'fab fa-instagram', href: 'https://www.instagram.com/sairajjadhav08/', label: 'Instagram' },
-                      { icon: 'fab fa-x-twitter', href: 'https://x.com/BuildsbySairaj', label: 'X / Twitter' },
-                    ].map((s, i) => (
-                      <a key={i} href={s.href} target="_blank" rel="noreferrer" className="social-icon" title={s.label}>
-                        <i className={s.icon}></i>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section className="mk-hero" style={{ paddingBottom: 'var(--space-20)' }}>
+        <div className="container">
+          <span className="eyebrow on-dark">Contact</span>
+          <h1>Let’s talk</h1>
+          <p className="mk-lead">Questions, agency onboarding or feedback on an alert — we reply within one working day.</p>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="section bg-subtle">
-        <div className="container" style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h2 className="font-display font-bold text-3xl text-center mb-8" style={{ marginBottom: 'var(--space-10)' }}>Frequently Asked Questions</h2>
+      <section className="mk-section" style={{ paddingTop: 0 }}>
+        <div className="container mk-contact">
+          <div className="mk-contact-card">
+            {sent ? (
+              <div className="empty-state" role="status">
+                <div className="empty-state-icon" style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary-strong)' }} aria-hidden="true">
+                  <i className="fas fa-paper-plane"></i>
+                </div>
+                <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 800 }}>Message sent</h2>
+                <p>Thanks for reaching out. We will get back to you within one working day.</p>
+                <button type="button" className="btn btn-secondary" onClick={() => setSent(false)}>Send another message</button>
+              </div>
+            ) : (
+              <form onSubmit={submit}>
+                <h2 className="mb-2" style={{ fontSize: 'var(--text-xl)', fontWeight: 800 }}>Send us a message</h2>
+                <p className="text-secondary text-sm mb-6">All fields are required.</p>
 
-          <div className="grid grid-2">
-            {[
-              { q: 'How do I report an inaccurate alert?', a: 'Contact us immediately via the form above or email sairajjadhav433@gmail.com with details about the alert.', icon: 'fa-flag' },
-              { q: 'How can my government agency become a partner?', a: 'Select "Partnership" in the contact form and our team will reach out to discuss collaboration opportunities.', icon: 'fa-handshake' },
-              { q: 'Is the service available in my region?', a: 'We are continually expanding coverage. Contact us to inquire about availability or request expansion.', icon: 'fa-globe' },
-              { q: 'How do I get technical support?', a: 'Select "Technical Support" in the form. We typically respond within 24 hours on business days.', icon: 'fa-headset' },
-            ].map((faq, i) => (
-              <div key={i} className="card h-full">
-                <div className="card-body">
-                  <div className="flex gap-4 items-start">
-                    <div className="icon-box-sm primary" style={{ flexShrink: 0 }}>
-                      <i className={`fas ${faq.icon}`}></i>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold mb-2">{faq.q}</h4>
-                      <p className="text-secondary text-sm" style={{ lineHeight: 1.6 }}>{faq.a}</p>
-                    </div>
+                {error && (
+                  <div className="alert-banner is-danger mb-5" role="alert">
+                    <i className="fas fa-circle-exclamation" aria-hidden="true"></i><span>{error}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-2" style={{ gap: 'var(--space-4)' }}>
+                  <div className="field mb-0">
+                    <label className="label" htmlFor="c-name">Name</label>
+                    <input id="c-name" className="input" autoComplete="name" value={name} onChange={e => setName(e.target.value)} required />
+                  </div>
+                  <div className="field mb-0">
+                    <label className="label" htmlFor="c-email">Email</label>
+                    <input id="c-email" className="input" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
                   </div>
                 </div>
-              </div>
-            ))}
+
+                <div className="field mt-4">
+                  <span className="label" id="c-subject-label">Topic</span>
+                  <div className="pill-filters" role="radiogroup" aria-labelledby="c-subject-label">
+                    {SUBJECTS.map(s => (
+                      <button key={s} type="button" role="radio" aria-checked={subject === s}
+                        className={`pill${subject === s ? ' active' : ''}`} onClick={() => setSubject(s)}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label className="label" htmlFor="c-message">Message</label>
+                  <textarea id="c-message" className="textarea" rows={5} value={message} onChange={e => setMessage(e.target.value)}
+                    placeholder="How can we help?" maxLength={2000} required />
+                </div>
+
+                <button type="submit" className="btn btn-primary btn-lg btn-full" disabled={sending}>
+                  {sending ? <span className="spinner" /> : <>Send message <i className="fas fa-paper-plane" aria-hidden="true"></i></>}
+                </button>
+              </form>
+            )}
           </div>
+
+          <aside className="mk-contact-info" aria-label="Contact details">
+            <div className="mk-contact-item">
+              <span className="mk-card-icon ink" aria-hidden="true"><i className="fas fa-envelope"></i></span>
+              <div>
+                <h3>Email</h3>
+                <a href="mailto:sairajjadhav433@gmail.com">sairajjadhav433@gmail.com</a>
+              </div>
+            </div>
+            <div className="mk-contact-item">
+              <span className="mk-card-icon ink" aria-hidden="true"><i className="fas fa-phone"></i></span>
+              <div>
+                <h3>Phone</h3>
+                <a href="tel:+919356860010">+91-9356860010</a>
+                <p>Mon–Sat, 10:00–18:00 IST</p>
+              </div>
+            </div>
+            <div className="mk-contact-item">
+              <span className="mk-card-icon ink" aria-hidden="true"><i className="fas fa-location-dot"></i></span>
+              <div>
+                <h3>Location</h3>
+                <p>Pune, Maharashtra, India</p>
+              </div>
+            </div>
+
+            <div className="mk-contact-card" style={{ padding: 'var(--space-5)', boxShadow: 'none' }}>
+              <h2 className="mb-3" style={{ fontSize: 'var(--text-base)', fontWeight: 800 }}>Common questions</h2>
+              <div className="flex-col gap-2">
+                {FAQ.map(f => (
+                  <details key={f.q} className="lp-faq-item" style={{ padding: 'var(--space-3) var(--space-4)' }}>
+                    <summary><h3 style={{ fontSize: 'var(--text-sm)' }}>{f.q}</h3><i className="fas fa-plus" aria-hidden="true"></i></summary>
+                    <p>{f.a}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       </section>
     </>

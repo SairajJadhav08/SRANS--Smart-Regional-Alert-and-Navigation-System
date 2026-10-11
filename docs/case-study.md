@@ -8,9 +8,9 @@ This document provides a detailed overview of the SRANS architecture, engineerin
 
 ## 1. Overview
 
-**SRANS (Smart Regional Alert & Navigation System)** is a web-based, real-time spatial routing and alert dashboard. It enables citizens and regional government authorities to collaborate on regional travel hazards, road disruptions, and emergency broadcasts. 
+**SRANS (Smart Regional Alert & Navigation System)** is a web platform that connects the agencies who fix a city's roads with the commuters who use them. Government agencies publish official alerts for road construction, utility work, diversions, flooding and emergencies; citizens report what they see on the ground; and an AI layer turns those alerts into plain-language decisions — which route is safest and when to leave.
 
-Built using a modern decoupled architecture, SRANS incorporates an **Express.js + TypeScript** API, a **React + Vite** frontend, and a **Neon PostgreSQL** serverless database. In addition, it employs the **Groq API** (`llama-3.3-70b-versatile`) to deliver specialized, context-aware navigational guidance, automated hazard predictions, and interactive driving copilots.
+It is built as a decoupled **React 19 + Vite** single-page app and an **Express 5 + TypeScript + Prisma** API on **Neon PostgreSQL**. Maps use **Leaflet** with free, key-less **OpenStreetMap** tiles, **OSRM** routing and **Photon / Nominatim** geocoding. AI features run on **Groq** (`openai/gpt-oss-120b`, falling back to `openai/gpt-oss-20b`).
 
 ---
 
@@ -26,22 +26,45 @@ Regional transportation networks suffer from a lack of real-time communication b
 
 ## 3. Solution
 
-SRANS bridges this gap by creating a unified spatial platform featuring:
-*   **Crowdsourced Citizen Reporting**: Citizens report micro-hazards directly on an interactive map.
-*   **Verified Official Promotion**: Regional government officers review and promote citizen reports to official status.
-*   **Decoupled spatial routing engine**: Leaflet + OSM maps utilizing the Open Source Routing Machine (OSRM) for turn-by-turn navigation.
-*   **Generative AI Commuter Intelligence**: A multi-faceted LLM copilot that digests nearby alerts and route vectors to write concise travel recommendations, run interactive navigation chats, and predict localized road hazards dynamically.
+SRANS brings everything into one platform with three surfaces:
+*   **A commuter app**: live disruption map with turn-by-turn routing, saved routes with AI risk scores, a daily AI briefing, an AI travel assistant and citizen incident reporting.
+*   **An agency Command Center**: an AI situation report, an AI alert drafter, AI-assisted triage of citizen reports, analytics with AI trend insights and region-wide emergency broadcasts.
+*   **A public site**: landing, features, about and contact pages, optimised for SEO, with a live-alerts strip pulled from the public API.
 
 ---
 
 ## 4. Features
 
-### Core Capabilities
-*   **Spatial Alert Map**: Category-based filtering (Traffic, Emergency, Construction, Weather) using Leaflet.
-*   **Evacuation & Emergency Broadcasts**: Superusers can issue a global critical alert shown immediately to all connected browsers.
-*   **Role-Based Access Control (RBAC)**: Distinct permissions for Citizens, Government Officers (who must be approved by an Admin), and Superusers.
-*   **Commute Routine Planner**: Custom trip planner that alerts commuters about hazards along their regular route and estimates ideal departure times.
-*   **Spatial AI Co-pilot**: An AI chatbot that receives the live coordinates of the current path and actively guides the driver.
+### For commuters
+*   **Live disruption map**: colour-coded alert markers with impact radii, place search, type filters, and OSRM turn-by-turn routing that flags any alert within 500 m of the *actual road geometry*.
+*   **Today overview**: the signed-in home screen with the AI commute briefing, saved routes with risk scores, nearby alerts and the status of your own reports.
+*   **Saved routes**: one-click navigation and an AI departure planner for a target arrival time.
+*   **Citizen reporting**: describe an incident in your own words and the AI drafts the title, description and category; pin the location on the map.
+*   **Browser notifications** and an installable PWA.
+
+### AI features (Groq)
+
+| Feature | Endpoint | What it does |
+| :--- | :--- | :--- |
+| Daily commute briefing | `POST /api/ai/daily-briefing` | Summarises the alerts around the user's location into a short briefing. |
+| Route risk score | `POST /api/ai/route-risk` | Deterministic 0–100 score from alerts within 2 km of a saved route (distance × recency × type weight). The model only writes the summary and departure advice. |
+| Travel assistant | `POST /api/ai/chat` | Multi-turn chat grounded in live alerts (the last 10 turns are sent as history). |
+| Smart alert search | `POST /api/ai/smart-search` | Natural-language search that returns an answer plus the matching alert IDs. |
+| Alert explainer | `POST /api/ai/explain-alert` | Who is affected, the expected delay and what to do for a single alert. |
+| Navigation co-pilot | `POST /api/ai/navigation-chat` | In-journey chat that knows the route, the current step and nearby alerts. |
+| Hazard detection | `POST /api/ai/detect-alerts` | Flags likely, unreported seasonal / time-of-day hazards near the user. |
+| Departure planner | `POST /api/ai/routine-planner` | Plan for a saved route and a target arrival time. |
+| Alert / report drafter | `POST /api/ai/draft-alert` | Turns rough notes into a structured alert (agencies) or report (citizens). |
+| Report triage | `POST /api/ai/triage-report` | Credibility score, severity, duplicate detection, recommendation and cleaned-up wording. |
+| Situation report | `POST /api/ai/situation-report` | Control-room briefing of the last 48 hours with recommended actions. |
+| Analytics insights | `POST /api/ai/analytics-insights` | Trends, peaks and a 3-day outlook from 14 days of aggregated incidents. |
+
+### For agencies
+*   **Command Center** with KPIs, the AI situation report, a searchable alerts table with bulk delete and the review queue.
+*   **Publish / edit alerts** with the AI drafter, a map picker and a live commuter preview.
+*   **Report review** with AI triage; officials can publish the AI-cleaned wording.
+*   **Analytics**: 7-day trend, type mix, hotspots, recent activity and AI insights.
+*   **Admin panel**: verify or revoke agency accounts and send emergency broadcasts.
 
 ---
 
@@ -49,89 +72,107 @@ SRANS bridges this gap by creating a unified spatial platform featuring:
 
 | Component | Technology | Rationale |
 | :--- | :--- | :--- |
-| **Frontend UI** | React v18, TypeScript, Vite | Fast build cycles, component reusability, and strong compile-time type safety. |
-| **Frontend Map** | Leaflet, Leaflet Routing Machine | Lightweight, open-source mapping engine. Free from expensive commercial API limits (e.g., Google Maps). |
-| **Backend API** | Express.js (v5), TypeScript | Asynchronous performance, extensive middleware library, and unified language stack. |
-| **Database** | PostgreSQL via Neon | Serverless SQL database offering autoscaling, point-in-time recovery, and instant branching. |
-| **ORM** | Prisma (v7) | Type-safe queries, auto-generated TypeScript clients, and declarations matching schema models. |
-| **AI LLM** | Groq SDK (`llama-3.3-70b-versatile`) | Ultra-low latency inference, enabling real-time navigation copilot responses. |
-| **Authentication** | JSON Web Tokens (JWT) & bcryptjs | Stateless, secure, signature-verified user session tracking. |
+| **Frontend UI** | React 19, TypeScript, Vite | Fast builds, lazy-loaded routes, strong typing. |
+| **Maps** | Leaflet, Leaflet Routing Machine, leaflet.heat | Open source and free of commercial API limits. |
+| **Map data** | OpenStreetMap tiles (OSM France HOT fallback), OSRM (FOSSGIS, demo-server fallback), Photon geocoding (Nominatim fallback) | All key-less, and every service has an automatic fallback. |
+| **Backend API** | Express 5, TypeScript | Mature middleware ecosystem, one language across the stack. |
+| **Database** | PostgreSQL on Neon + Prisma 7 | Serverless Postgres with type-safe queries. |
+| **AI** | Groq SDK: `openai/gpt-oss-120b`, falling back to `openai/gpt-oss-20b` (override with `GROQ_MODEL`) | Very low-latency inference; JSON mode for structured features. |
+| **Auth** | JWT + bcryptjs | Stateless sessions with role-based access control. |
+| **Contact form** | Formspree | Delivers contact messages by email without running a mail server. |
+| **Hosting** | Vercel (frontend), Render (backend) | Git-based deploys. |
 
 ---
 
 ## 6. Screenshots
 
-### Interface Previews
+> Screenshots use sample data for Pune.
 
-#### 1. Interactive Navigation Map
-Displays real-time Leaflet maps, custom travel routes, location overlays, and active hazard coordinates.
-![Interactive Navigation Map](./screenshots/LiveMapsShowingAlerts.png)
+#### 1. Landing page
+Hero with a live product preview and a strip of real-time alerts from the public API.
+![Landing page](./screenshots/landing.png)
 
-#### 2. AI Travel Assistant
-An interactive, natural-language conversational co-pilot answering query tickets using contextual live alerts database logs.
-![AI Travel Assistant](./screenshots/AiTravelAssistance.png)
+#### 2. Today, the commuter home screen
+AI commute briefing, saved routes with AI risk scores, nearby alerts and report status.
+![Today overview](./screenshots/todayOverview.png)
 
-#### 3. Saved Routes & AI Planner
-Enables citizens to save recurring journeys and queries Llama 3.3 for departure warnings and hazard avoidance recommendations.
-![Saved Routes & AI Planner](./screenshots/savedRoutesWithAi.png)
+#### 3. Live disruption map
+Single control panel (Route / Alerts / Layers), saved-route quick start, type filters and OpenStreetMap tiles.
+![Live map](./screenshots/LiveMapsShowingAlerts.png)
 
-#### 4. Citizen Incident Reporting
-A simplified portal for commuters to log localized hazards on the map.
-![Citizen Incident Reporting](./screenshots/reportpage.png)
+#### 4. AI travel assistant
+Multi-turn chat grounded in live alerts, with a "Find alerts" smart-search mode.
+![AI travel assistant](./screenshots/AiTravelAssistance.png)
 
-#### 5. Government Alerts Dashboard
-Administrative dashboard for traffic officers to create, edit, bulk-delete, and push broadcast alerts.
-![Government Alerts Dashboard](./screenshots/governmentDashboard.png)
+#### 5. Saved routes with AI risk scores
+Each route is scored 0–100 against the alerts along its corridor, with departure advice.
+![Saved routes](./screenshots/savedRoutesWithAi.png)
 
-#### 6. Government Incident Analytics
-Visualized statistics on hazard types, frequency hotspots, and incident reports.
-![Government Incident Analytics](./screenshots/govtAnalytics.png)
+#### 6. Regional alerts with AI explanations
+Filter by type, sort by distance, ask the AI about the alerts, and explain any alert's impact.
+![Regional alerts](./screenshots/Alerts.png)
 
-#### 7. Active Alerts Feed
-A clean list of all traffic, weather, emergency, and construction notifications.
-![Active Alerts Feed](./screenshots/Alerts.png)
+#### 7. Citizen incident reporting
+Describe the incident in your own words and the AI drafts the report.
+![Report an incident](./screenshots/reportpage.png)
+
+#### 8. Government Command Center
+AI situation report, KPIs, published alerts and the review queue.
+![Command Center](./screenshots/governmentDashboard.png)
+
+#### 9. Citizen report review with AI triage
+Credibility, severity, duplicate checks and a cleaned-up version ready to publish.
+![Report review](./screenshots/reportReviewTriage.png)
+
+#### 10. Publish an alert with the AI drafter
+Paste field notes, get a publish-ready alert, and preview it as commuters will see it.
+![Publish alert](./screenshots/publishAlertAiDrafter.png)
+
+#### 11. Analytics with AI trend insights
+![Analytics](./screenshots/govtAnalytics.png)
+
+#### 12. Sign in
+![Sign in](./screenshots/login.png)
+
+#### 13. Mobile: live map with bottom sheet
+<img src="./screenshots/mobileMap.png" alt="Mobile live map" width="320" />
 
 ---
 
 ## 7. Architecture Diagram
 
-The system employs a client-server architecture. Spatial routing is computed client-side using OSRM, whereas user data, alerts, reports, and AI reasoning are resolved on the Express API server.
+Routing and geocoding run in the browser against free OpenStreetMap services. Users, alerts, reports and all AI reasoning go through the Express API.
 
 ```mermaid
 graph TD
-    subgraph Client [React SPA Client]
-        UI[React Components]
-        Maps[Leaflet + OSM Map]
-        RouteEngine[OSRM Routing Machine]
-        Storage[LocalStorage Auth Token]
+    subgraph Client [React SPA]
+        UI[App shell + pages]
+        Maps[Leaflet + OSM tiles]
+        Route[OSRM routing]
+        Geo[Photon / Nominatim geocoding]
     end
 
-    subgraph API [Express.js Backend Server]
-        Router[API Route Controllers]
-        AuthMW[Auth Middleware]
-        Validation[Express Validator]
+    subgraph API [Express API]
+        Router[Route controllers]
+        AuthMW[JWT auth + RBAC]
+        RL[AI rate limiter]
+        AILib[AI helper: model fallback, JSON mode, prompt fencing]
     end
 
-    subgraph DB [Database & AI Services]
-        Prisma[Prisma Client]
+    subgraph Services [Data & AI]
+        Prisma[Prisma client]
         Neon[(Neon PostgreSQL)]
-        Groq[Groq Llama 3.3 Engine]
+        Groq[Groq gpt-oss-120b / 20b]
     end
 
-    %% Client Interactions
-    UI --> Maps
-    Maps --> RouteEngine
-    UI -- HTTPS Requests + JWT --> Router
-    
-    %% Backend Flow
-    Router --> AuthMW
-    AuthMW --> Validation
-    Validation -- DB Queries --> Prisma
-    Prisma --> Neon
-    
-    %% AI Pipeline
-    Router -- Live Route Context --> Groq
-    Groq -- Text Recommendations --> Router
+    Formspree[Formspree]
+
+    UI --> Maps --> Route
+    UI --> Geo
+    UI -- HTTPS + JWT --> Router
+    UI -- contact form --> Formspree
+    Router --> AuthMW --> Prisma --> Neon
+    Router --> RL --> AILib --> Groq
 ```
 
 ---
@@ -238,41 +279,51 @@ sequenceDiagram
 
 ## 10. Challenges Faced
 
-### 1. Leaflet State Synchronizations
-*   **The Issue**: React re-renders component elements frequently. This caused Leaflet map markers to re-initialize and flash, or the map to lose zoom levels whenever new live alerts were polled in the background.
-*   **Solution**: Moved maps and routing initializations into custom React `useRef` states. We decoupled map updates from typical state cycles and used raw Leaflet commands (e.g., `marker.addTo()`) within scoped `useEffect` hooks triggered strictly by dataset changes.
+### 1. Leaflet State Synchronization
+*   **The Issue**: React re-renders caused map markers to re-initialize and flash, or the map to lose its zoom level, whenever alerts were polled.
+*   **Solution**: The map, routing control and marker collections live in `useRef`s, and markers are updated in effects that run only when the alert data or filter changes. A `ResizeObserver` calls `invalidateSize()` when the sidebar or mobile sheet resizes the map.
 
-### 2. CORS and Auth Headers
-*   **The Issue**: During local development, the React frontend (`localhost:5173`) and Express backend (`localhost:5000`) triggered CORS blocks when attempting credential transfers.
-*   **Solution**: Implemented explicit CORS middleware in Express with dynamic origin validation, allowing credentials and verifying standard `Authorization` headers.
+### 2. A Retired AI Model
+*   **The Issue**: Groq shut down `llama-3.3-70b-versatile` on 16 August 2026, so every AI call started failing at once.
+*   **Solution**: All LLM calls now go through one helper (`backend/src/lib/ai.ts`). It walks a model chain (`GROQ_MODEL`, then `openai/gpt-oss-120b`, then `openai/gpt-oss-20b`), skips a model Groq reports as decommissioned, and reserves completion budget for reasoning tokens so answers are never cut off.
 
-### 3. Parse-Safe LLM JSON Outputs
-*   **The Issue**: When using Groq AI for automated hazard detection (`/detect-alerts`), Llama 3.3 occasionally output conversational preamble (e.g., *"Here is the JSON you requested..."*) surrounding the array, causing syntax errors during `JSON.parse`.
-*   **Solution**: Used strict system prompting instructions combined with regex arrays extraction (`raw.match(/\[[\s\S]*\]/)`) to clean raw text and isolate the JSON array before parsing.
+### 3. Reliable Structured AI Output
+*   **The Issue**: Free-text replies caused `JSON.parse` failures and made features like triage and risk scores unreliable.
+*   **Solution**: Structured features use Groq's JSON mode plus server-side validation and clamping of every field. The route risk score is computed from geometry, and the model only writes the explanation, so the number stays stable even if the AI call fails.
 
-### 4. Background Alert Notifications
-*   **The Issue**: Users needed to be notified of emergency broadcasts even if they were viewing a different tab.
-*   **Solution**: Added a background poll event listener to `App.tsx` matching stored notification pointers (`srans_last_alert_id`) in `localStorage` to trigger native HTML5 browser notification prompts safely.
+### 4. Prompt Injection from User Content
+*   **The Issue**: Citizen reports become alerts, and alert text is fed into prompts, so a report could try to instruct the model.
+*   **Solution**: All database and user text is wrapped in delimited data blocks with an explicit rule that it is data, not instructions. Map popups escape alert text before inserting it as HTML.
+
+### 5. Free Maps Without Sign-ups
+*   **The Issue**: CARTO basemaps began returning "API KEY REQUIRED" tiles with a 200 status, so the tile fallback never triggered.
+*   **Solution**: Switched to OpenStreetMap tiles with an OSM France HOT fallback, FOSSGIS OSRM with a demo-server fallback, and Photon with a Nominatim fallback, all centralised in `frontend/src/lib/mapConfig.ts` and `frontend/src/lib/geocode.ts`.
+
+### 6. Wrong-password Logins Silently Reloading
+*   **The Issue**: The API client treated every 401 as an expired session and reloaded `/login`, wiping the "invalid password" message.
+*   **Solution**: Only a 401 on an authenticated, non-login request clears the session and redirects.
+
+### 7. Layout Inside the App Shell
+*   **The Issue**: Logged-in users saw the marketing landing page again, and the map page scrolled behind the viewport on mobile.
+*   **Solution**: Separate layouts for the public site, the signed-in app shell and the auth screens. The map page locks document scroll and sizes itself with `100dvh`, with a bottom sheet on phones.
 
 ---
 
 ## 11. Future Improvements
 
-1.  **Websockets for Instant Evacuations**: Implement Socket.io to push emergency alerts and superuser broadcasts instantaneously to all connected screens without HTTP polling.
-2.  **Offline Map Caching**: Cache Leaflet tile layers locally using Service Workers to allow maps to remain visible in low-bandwidth regional transit corridors.
-3.  **Crowdsourced Spam Detection**: Build automated spatial clustering rules (e.g., DB-Scan) that check if multiple users are reporting similar incidents in close proximity to confirm incident severity and filter out spam.
-4.  **AI Route Re-routing Engine**: Link OSRM routing waypoints directly to the LLM context, permitting the AI to automatically construct alternative Leaflet coordinate vectors and redirect drivers directly on the map.
+1.  **WebSockets for instant broadcasts** instead of 30-second polling.
+2.  **Server-side caching of AI briefings** per area to cut LLM calls during peak hours.
+3.  **Spatial clustering of citizen reports** (e.g. DBSCAN) to merge duplicates automatically before triage.
+4.  **AI re-routing**: feed OSRM route alternatives to the model and let it pick the one that avoids the most severe alerts.
+5.  **Web Push notifications** when a saved route's risk score changes.
 
 ---
 
 ## 12. GitHub Repository
 
-- **Organization**: SRANS Open Source Project
-- **Main Repository**: `SRANS--Smart-Regional-Alert-and-Navigation-System`
-- **Development Branches**:
-  - `main`: Production-ready service deployable to Vercel/Render.
-  - `backend`: Backend API development and Prisma migrations.
-  - `frontend`: React app design, map integrations, and custom CSS styling.
+- **Repository**: [SairajJadhav08/SRANS--Smart-Regional-Alert-and-Navigation-System](https://github.com/SairajJadhav08/SRANS--Smart-Regional-Alert-and-Navigation-System)
+- **Branch**: `master`, deployed to Vercel (frontend) and Render (backend).
+- **Layout**: `frontend/` (React app), `backend/` (Express API), `docs/` (case study, API design, screenshots), `API_DOCUMENTATION/` (OpenAPI portal).
 
 ---
 

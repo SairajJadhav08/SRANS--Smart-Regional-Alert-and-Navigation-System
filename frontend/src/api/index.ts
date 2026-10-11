@@ -1,5 +1,8 @@
 import client from './client'
-import type { User, Alert, SavedRoute, AuthResponse } from '../types'
+import type {
+  User, Alert, SavedRoute, AuthResponse,
+  RouteRisk, AlertExplanation, AlertDraft, ReportTriage, SituationReport,
+} from '../types'
 
 export type { AuthResponse }
 
@@ -102,9 +105,28 @@ export const getAiNavigationChat = (data: {
 export const getAiChat = (message: string) =>
   client.post<{ reply: string }>('/ai/chat', { message })
 
-// Contact
-export const sendContact = (data: ContactPayload) =>
-  client.post('/contact', { data })
+// Contact — submitted straight to Formspree, which emails the message to the team
+const FORMSPREE_URL = 'https://formspree.io/f/mrbyjvyj'
+
+export async function sendContact(data: ContactPayload): Promise<void> {
+  const res = await fetch(FORMSPREE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      name: data.name,
+      email: data.email,
+      subject: data.subject,
+      message: data.message,
+      _subject: `SRANS contact: ${data.subject}`,
+      _replyto: data.email,
+    }),
+  })
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    const msg = body?.errors?.map((e: { message: string }) => e.message).join(' ') || 'Could not send your message.'
+    throw new Error(msg)
+  }
+}
 
 // Superuser admin
 export const getGovUsers = () => client.get<User[]>('/auth/admin/gov-users')
@@ -144,11 +166,44 @@ export const submitReport = (data: {
   location_lat: number; location_lng: number
 }) => client.post<any>('/reports', data)
 
-export const approveReport = (id: number, note?: string) =>
-  client.post<any>(`/reports/${id}/approve`, { note })
+export const approveReport = (
+  id: number,
+  note?: string,
+  overrides?: { title?: string; description?: string; alert_type?: string }
+) => client.post<any>(`/reports/${id}/approve`, { note, ...overrides })
 
 export const rejectReport = (id: number, note?: string) =>
   client.post<any>(`/reports/${id}/reject`, { note })
 
 export const deleteReport = (id: number) =>
   client.delete(`/reports/${id}`)
+
+// ── AI insights ────────────────────────────────────────────────────────────
+export interface ChatTurn { role: 'user' | 'assistant'; content: string }
+
+export const getAiChatWithHistory = (message: string, history: ChatTurn[]) =>
+  client.post<{ reply: string }>('/ai/chat', { message, history })
+
+export const getAiDailyBriefing = (data: { city?: string; lat?: number; lng?: number }) =>
+  client.post<{ briefing: string; alertCount: number }>('/ai/daily-briefing', data)
+
+export const getAiRouteRisk = (routeId: number, arrivalTime?: string) =>
+  client.post<RouteRisk>('/ai/route-risk', { route_id: routeId, arrival_time: arrivalTime })
+
+export const getAiExplainAlert = (alertId: number) =>
+  client.post<AlertExplanation>('/ai/explain-alert', { alert_id: alertId })
+
+export const getAiDraftAlert = (notes: string, mode: 'alert' | 'report' = 'alert') =>
+  client.post<AlertDraft>('/ai/draft-alert', { notes, mode })
+
+export const getAiTriageReport = (reportId: number) =>
+  client.post<ReportTriage>('/ai/triage-report', { report_id: reportId })
+
+export const getAiSituationReport = () =>
+  client.post<SituationReport>('/ai/situation-report')
+
+export const getAiSmartSearch = (query: string) =>
+  client.post<{ answer: string; alert_ids: number[] }>('/ai/smart-search', { query })
+
+export const getAiAnalyticsInsights = () =>
+  client.post<{ insights: string[]; forecast: string | null; generated_at: string }>('/ai/analytics-insights')

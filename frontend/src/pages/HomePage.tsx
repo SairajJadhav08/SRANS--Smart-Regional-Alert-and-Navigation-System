@@ -1,308 +1,410 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import Seo from '../components/Seo'
+import { getAlerts } from '../api'
+import type { Alert } from '../types'
+import { typeMeta, timeAgo, ALERT_TYPES } from '../lib/alertMeta'
+import { AiChip, OptionalImg, TypeIcon } from '../components/ui'
+import '../styles/pages/marketing.css'
 import './HomePage.css'
 
+const COMMUTER_AI = [
+  {
+    icon: 'fa-sun',
+    title: 'AI morning briefing',
+    text: 'A plain-language summary of every disruption around you, generated fresh each time you open SRANS.',
+  },
+  {
+    icon: 'fa-gauge-high',
+    title: 'Route risk score',
+    text: 'Each saved route gets a 0–100 risk score from live alerts along its corridor, plus when to leave.',
+  },
+  {
+    icon: 'fa-comments',
+    title: 'In-journey co-pilot',
+    text: 'Ask questions while you drive. The co-pilot knows your route, your next turn and what lies ahead.',
+  },
+  {
+    icon: 'fa-magnifying-glass-location',
+    title: 'Smart alert search',
+    text: 'Search the way you speak — “flooding near the station” — and get the alerts that actually matter.',
+  },
+  {
+    icon: 'fa-lightbulb',
+    title: 'Alert explainer',
+    text: 'Turn an official notice into what it means for you: who is affected, expected delay and what to do.',
+  },
+  {
+    icon: 'fa-satellite-dish',
+    title: 'Hazard detection',
+    text: 'AI scans your surroundings for likely seasonal and time-of-day hazards that are not reported yet.',
+  },
+]
+
+const AGENCY_AI = [
+  { icon: 'fa-pen-nib', title: 'AI alert drafter', text: 'Turn rough field notes into a clear, categorised public alert in one click.' },
+  { icon: 'fa-list-check', title: 'Report triage', text: 'Credibility, severity and duplicate checks for every citizen report.' },
+  { icon: 'fa-tower-broadcast', title: 'Situation report', text: 'A live control-room briefing with recommended actions for your region.' },
+  { icon: 'fa-chart-line', title: 'Trend insights', text: 'AI reads 14 days of incidents to surface peaks, hotspots and a 3-day outlook.' },
+]
+
+const HAZARD_COPY: Record<string, { title: string; text: string }> = {
+  Traffic: { title: 'Accidents & diversions', text: 'Collisions, signal failures, congestion and police diversions.' },
+  Construction: { title: 'Road & utility works', text: 'Metro and flyover work, pipeline digs, resurfacing and closures.' },
+  Weather: { title: 'Flooding & weather', text: 'Waterlogging, landslides, fog and storm warnings.' },
+  Emergency: { title: 'Emergencies', text: 'Fires, collapses, VIP movement and public-safety incidents.' },
+}
+
+const STEPS = [
+  {
+    img: '/images/step-report.webp',
+    alt: 'A citizen reporting a road hazard on their phone',
+    title: 'Disruptions are reported',
+    text: 'Agencies publish official alerts. Citizens report what they see, and officials verify it with AI triage.',
+  },
+  {
+    img: '/images/step-analyse.webp',
+    alt: 'AI analysing alerts along a route on a city map',
+    title: 'AI analyses your route',
+    text: 'Every alert along your corridor is scored by distance, recency and severity to find the best way through.',
+  },
+  {
+    img: '/images/step-route.webp',
+    alt: 'A car following a safe route around a closed road',
+    title: 'You get a clear plan',
+    text: 'A briefing, a risk score and turn-by-turn navigation around affected areas — before you leave home.',
+  },
+]
+
+const FAQS = [
+  {
+    q: 'What is SRANS?',
+    a: 'SRANS (Smart Regional Alert & Navigation System) is a free web platform that combines official and citizen-reported alerts for road construction, utility work, traffic diversions, flooding and emergencies with AI-powered route guidance for daily commuters.',
+  },
+  {
+    q: 'How does the AI choose a safer route?',
+    a: 'SRANS checks live alerts along the corridor between your start and destination, scores the route from 0 to 100 based on how close, how recent and how severe each disruption is, and uses a large language model on Groq to explain the risk and recommend when to leave or which areas to avoid.',
+  },
+  {
+    q: 'Who publishes the alerts?',
+    a: 'Verified government agencies publish official alerts. Citizens can report incidents, which officials review — with AI triage — before they become public alerts.',
+  },
+  {
+    q: 'Is SRANS free to use?',
+    a: 'Yes. Browsing the live map and alerts is open to everyone. A free account unlocks saved routes, AI briefings, route risk scores and the AI travel assistant.',
+  },
+  {
+    q: 'Can my department use SRANS?',
+    a: 'Yes. Register a government account with your agency details. Once an administrator verifies it, you get the Command Center, AI alert drafting, report triage and analytics.',
+  },
+]
+
 export default function HomePage() {
-  const { isLoggedIn, user } = useAuth()
+  const [live, setLive] = useState<Alert[] | null>(null)
+  const [showcase, setShowcase] = useState(true)
 
-  // ── Logged-in variant: show personalised dashboard instead of guest landing ─
-  if (isLoggedIn) {
-    return (
-      <>
-        <section className="hero-split">
-          <div className="hero-content">
-            <div className="badge badge-primary mb-6 animate-slideUp" style={{ animationDelay: '0.1s' }}>
-              <span className="icon"><i className="fas fa-satellite-dish"></i></span>
-              <span>Live Regional Monitoring</span>
-            </div>
-            <h1 className="title-display animate-slideUp" style={{ animationDelay: '0.2s', fontSize: 'var(--text-5xl)', fontWeight: 'var(--weight-extrabold)', marginBottom: 'var(--space-6)', lineHeight: '1.1' }}>
-              Welcome back,<br />
-              <span className="text-primary">{user?.username}.</span>
-            </h1>
-            <p className="subtitle-lead animate-slideUp" style={{ animationDelay: '0.3s', fontSize: 'var(--text-lg)', color: 'var(--text-secondary)', marginBottom: 'var(--space-8)', maxWidth: '480px', lineHeight: '1.6' }}>
-              Check live alerts, plan your route around today's disruptions, and let AI find you the safest path to your destination.
-            </p>
-            <div className="btn-group animate-slideUp" style={{ animationDelay: '0.4s' }}>
-              <Link to="/map" className="btn btn-primary btn-lg">
-                <i className="fas fa-map-marked-alt"></i> Open Live Map
-              </Link>
-              <Link to="/my-routes" className="btn btn-secondary btn-lg">
-                <i className="fas fa-route"></i> My Routes
-              </Link>
-            </div>
-            <div className="hero-stats animate-fadeIn" style={{ animationDelay: '0.8s', display: 'flex', gap: 'var(--space-8)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-8)', borderTop: '1px solid var(--border-color)', width: '100%' }}>
-              <div><p className="font-display font-bold text-2xl text-primary">12K+</p><p className="text-sm text-muted font-medium">Active Users</p></div>
-              <div><p className="font-display font-bold text-2xl text-primary">24/7</p><p className="text-sm text-muted font-medium">Monitoring</p></div>
-              <div><p className="font-display font-bold text-2xl text-primary">99%</p><p className="text-sm text-muted font-medium">Uptime</p></div>
-            </div>
-          </div>
-          <div className="hero-visual">
-            <div className="abstract-map">
-              <div className="map-line horizontal" style={{ top: '30%' }}></div>
-              <div className="map-line horizontal" style={{ top: '60%' }}></div>
-              <div className="map-line vertical" style={{ left: '40%' }}></div>
-              <div className="map-line vertical" style={{ left: '70%' }}></div>
-              <div className="map-node node-1 animate-pulse"></div>
-              <div className="map-node node-2 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-              <div className="map-node node-3 animate-pulse" style={{ animationDelay: '1s' }}></div>
-              <div className="floating-card float-1 animate-fadeIn" style={{ animationDelay: '1s' }}>
-                <div className="icon-box-sm warning"><i className="fas fa-hard-hat"></i></div>
-                <div className="fc-content"><p className="fc-title">Construction</p><p className="fc-desc">Main St Closed</p></div>
-              </div>
-              <div className="floating-card float-2 animate-fadeIn" style={{ animationDelay: '1.5s' }}>
-                <div className="icon-box-sm danger"><i className="fas fa-water"></i></div>
-                <div className="fc-content"><p className="fc-title">Flooding</p><p className="fc-desc">Diversion in effect</p></div>
-              </div>
-              <div className="floating-card float-3 animate-fadeIn" style={{ animationDelay: '2s' }}>
-                <div className="icon-box-sm info"><i className="fas fa-magic"></i></div>
-                <div className="fc-content"><p className="fc-title">AI Route</p><p className="fc-desc">Safer path found</p></div>
-              </div>
-            </div>
-          </div>
-        </section>
+  useEffect(() => {
+    getAlerts()
+      .then(res => setLive(Array.isArray(res.data) ? res.data.slice(0, 4) : []))
+      .catch(() => setLive([]))
+  }, [])
 
-        <section className="section bg-white">
-          <div className="container">
-            <div className="text-center mb-12" style={{ marginBottom: 'var(--space-12)' }}>
-              <h2 className="font-display font-bold text-3xl mb-4">Your SRANS Dashboard</h2>
-              <p className="text-secondary text-lg" style={{ maxWidth: '500px', margin: '0 auto' }}>Everything you need for a safer commute, in one place.</p>
-            </div>
-            <div className="grid grid-3">
-              <Link to="/map" className="card card-hover h-full" style={{ textDecoration: 'none' }}>
-                <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                  <div className="icon-box info"><i className="fas fa-map-marked-alt"></i></div>
-                  <h3 className="font-semibold text-lg">Live Map</h3>
-                  <p className="text-secondary flex-1">View real-time alerts on the interactive map and plan routes around active disruptions.</p>
-                  <span className="btn btn-secondary btn-sm" style={{ alignSelf: 'flex-start' }}>Open Map <i className="fas fa-arrow-right ml-1"></i></span>
-                </div>
-              </Link>
-              <Link to="/alerts" className="card card-hover h-full" style={{ textDecoration: 'none' }}>
-                <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                  <div className="icon-box danger"><i className="fas fa-bell"></i></div>
-                  <h3 className="font-semibold text-lg">Regional Alerts</h3>
-                  <p className="text-secondary flex-1">Browse all active alerts — construction, flooding, traffic diversions, and more.</p>
-                  <span className="btn btn-secondary btn-sm" style={{ alignSelf: 'flex-start' }}>View Alerts <i className="fas fa-arrow-right ml-1"></i></span>
-                </div>
-              </Link>
-              <Link to="/my-routes" className="card card-hover h-full" style={{ textDecoration: 'none' }}>
-                <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                  <div className="icon-box accent"><i className="fas fa-magic"></i></div>
-                  <h3 className="font-semibold text-lg">AI Route Planner</h3>
-                  <p className="text-secondary flex-1">Let AI analyze live alerts on your saved routes and recommend the safest departure time and path.</p>
-                  <span className="btn btn-secondary btn-sm" style={{ alignSelf: 'flex-start' }}>My Routes <i className="fas fa-arrow-right ml-1"></i></span>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </section>
-      </>
-    )
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQS.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
   }
 
-  // ── Guest landing ─────────────────────────────────────────────────────────
   return (
     <>
-      {/* Hero Section */}
-      <section className="hero-split">
-        <div className="hero-content">
-          <div className="badge badge-primary mb-6 animate-slideUp" style={{ animationDelay: '0.1s' }}>
-            <span className="icon"><i className="fas fa-satellite-dish"></i></span>
-            <span>Live Regional Monitoring</span>
-          </div>
-          <h1 className="title-display animate-slideUp" style={{ animationDelay: '0.2s', fontSize: 'var(--text-5xl)', fontWeight: 'var(--weight-extrabold)', marginBottom: 'var(--space-6)', lineHeight: '1.1' }}>
-            Navigate Smarter.<br />
-            Stay <span className="text-primary">Safer.</span>
-          </h1>
-          <p className="subtitle-lead animate-slideUp" style={{ animationDelay: '0.3s', fontSize: 'var(--text-lg)', color: 'var(--text-secondary)', marginBottom: 'var(--space-8)', maxWidth: '480px', lineHeight: '1.6' }}>
-            AI-powered route optimization that helps commuters avoid road construction, infrastructure work, traffic diversions, and natural disaster disruptions — every day.
-          </p>
-          <div className="btn-group animate-slideUp" style={{ animationDelay: '0.4s' }}>
-            <Link to="/map" className="btn btn-primary btn-lg">
-              Explore Map <i className="fas fa-arrow-right"></i>
-            </Link>
-            <Link to="/alerts" className="btn btn-secondary btn-lg">
-              View Alerts
-            </Link>
-          </div>
+      <Seo path="/" />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-          <div className="hero-stats animate-fadeIn" style={{ animationDelay: '0.8s', display: 'flex', gap: 'var(--space-8)', marginTop: 'var(--space-12)', paddingTop: 'var(--space-8)', borderTop: '1px solid var(--border-color)', width: '100%' }}>
-            <div>
-              <p className="font-display font-bold text-2xl text-primary">12K+</p>
-              <p className="text-sm text-muted font-medium">Active Users</p>
-            </div>
-            <div>
-              <p className="font-display font-bold text-2xl text-primary">24/7</p>
-              <p className="text-sm text-muted font-medium">Monitoring</p>
-            </div>
-            <div>
-              <p className="font-display font-bold text-2xl text-primary">99%</p>
-              <p className="text-sm text-muted font-medium">Uptime</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="hero-visual">
-          {/* Abstract map illustration using CSS */}
-          <div className="abstract-map">
-            <div className="map-line horizontal" style={{ top: '30%' }}></div>
-            <div className="map-line horizontal" style={{ top: '60%' }}></div>
-            <div className="map-line vertical" style={{ left: '40%' }}></div>
-            <div className="map-line vertical" style={{ left: '70%' }}></div>
-
-            <div className="map-node node-1 animate-pulse"></div>
-            <div className="map-node node-2 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-            <div className="map-node node-3 animate-pulse" style={{ animationDelay: '1s' }}></div>
-
-            <div className="floating-card float-1 animate-fadeIn" style={{ animationDelay: '1s' }}>
-              <div className="icon-box-sm warning"><i className="fas fa-hard-hat"></i></div>
-              <div className="fc-content">
-                <p className="fc-title">Construction</p>
-                <p className="fc-desc">Main St Closed</p>
-              </div>
-            </div>
-
-            <div className="floating-card float-2 animate-fadeIn" style={{ animationDelay: '1.5s' }}>
-              <div className="icon-box-sm danger"><i className="fas fa-water"></i></div>
-              <div className="fc-content">
-                <p className="fc-title">Flooding</p>
-                <p className="fc-desc">Diversion in effect</p>
-              </div>
-            </div>
-
-            <div className="floating-card float-3 animate-fadeIn" style={{ animationDelay: '2s' }}>
-              <div className="icon-box-sm info"><i className="fas fa-magic"></i></div>
-              <div className="fc-content">
-                <p className="fc-title">AI Route</p>
-                <p className="fc-desc">Safer path found</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="section bg-white">
-        <div className="container">
-          <div className="text-center mb-12" style={{ marginBottom: 'var(--space-12)' }}>
-            <h2 className="font-display font-bold text-3xl mb-4">Everything you need to navigate the city</h2>
-            <p className="text-secondary text-lg max-w-2xl mx-auto" style={{ maxWidth: '600px', margin: '0 auto' }}>
-              SRANS combines real-time regional alerts with AI-powered route intelligence to keep commuters safe from road disruptions, infrastructure projects, and natural disasters.
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <section className="lp-hero" aria-labelledby="hero-title">
+        <div className="lp-hero-grid-bg" aria-hidden="true" />
+        <div className="container lp-hero-inner">
+          <div className="lp-hero-copy">
+            <span className="lp-pill">
+              <span className="live-dot" aria-hidden="true" /> Live regional monitoring · AI-powered
+            </span>
+            <h1 id="hero-title">
+              Navigate around disruptions <span className="lp-accent">before they reach you.</span>
+            </h1>
+            <p className="lp-lead">
+              SRANS brings road construction, utility work, diversions and flood alerts into one live map — and uses
+              AI to tell you which route is safest and when to leave.
             </p>
-          </div>
-
-          <div className="grid grid-3">
-            {/* Feature 1 */}
-            <div className="card card-hover h-full">
-              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', height: '100%' }}>
-                <div className="icon-box danger"><i className="fas fa-bell"></i></div>
-                <h3 className="font-semibold text-lg">Regional Disruption Alerts</h3>
-                <p className="text-secondary flex-1">
-                  Stay ahead of road construction, utility work, traffic diversions, flooding, and other city-wide incidents that affect your daily commute.
-                </p>
-                <button
-                  className="btn btn-primary btn-sm mt-2"
-                  style={{ alignSelf: 'flex-start' }}
-                  onClick={() => {
-                    if (!('Notification' in window)) {
-                      alert('This browser does not support notifications.');
-                      return;
-                    }
-                    Notification.requestPermission().then(p => {
-                      if (p === 'granted') {
-                        new Notification('SRANS Notifications Enabled', {
-                          body: 'You will now receive alerts directly in your browser.',
-                          icon: '/Logo.png'
-                        });
-                      }
-                    });
-                  }}
-                >
-                  <i className="fas fa-bell mr-1"></i> Enable Notifications
-                </button>
-              </div>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="card card-hover h-full">
-              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', height: '100%' }}>
-                <div className="icon-box info"><i className="fas fa-magic"></i></div>
-                <h3 className="font-semibold text-lg">AI Route Recommendation</h3>
-                <p className="text-secondary flex-1">
-                  Our AI analyzes live alerts, road closures, and traffic conditions to generate the safest, fastest alternative route to your destination using LLM-powered reasoning.
-                </p>
-              </div>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="card card-hover h-full">
-              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', height: '100%' }}>
-                <div className="icon-box accent"><i className="fas fa-robot"></i></div>
-                <h3 className="font-semibold text-lg">AI Travel Assistant</h3>
-                <p className="text-secondary flex-1">
-                  Ask our conversational AI about traffic conditions, get plain-language summaries of regional alerts, and receive personalized travel recommendations before you head out.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="section bg-subtle">
-        <div className="container">
-          <div className="text-center mb-12" style={{ marginBottom: 'var(--space-12)' }}>
-            <h2 className="font-display font-bold text-3xl mb-4">How SRANS Works</h2>
-            <p className="text-secondary text-lg max-w-2xl mx-auto" style={{ maxWidth: '600px', margin: '0 auto' }}>
-              From road disruption to safe route — in seconds.
-            </p>
-          </div>
-
-          <div className="workflow-container" style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', gap: 'var(--space-8)' }}>
-            <div className="workflow-line" style={{ position: 'absolute', top: '40px', left: '10%', right: '10%', height: '2px', background: 'var(--border-color)', zIndex: 0 }}></div>
-
-            <div className="workflow-step" style={{ flex: 1, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <div className="workflow-icon" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-white)', border: '2px solid var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: 'var(--color-primary)', margin: '0 auto var(--space-4)', boxShadow: 'var(--shadow-sm)' }}>
-                <i className="fas fa-broadcast-tower"></i>
-              </div>
-              <h4 className="font-semibold text-lg mb-2">1. Disruption Detected</h4>
-              <p className="text-sm text-secondary">Government agencies report road construction, utility work, diversions, and natural disaster events.</p>
-            </div>
-
-            <div className="workflow-step" style={{ flex: 1, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <div className="workflow-icon" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-white)', border: '2px solid var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: 'var(--color-primary)', margin: '0 auto var(--space-4)', boxShadow: 'var(--shadow-sm)' }}>
-                <i className="fas fa-magic"></i>
-              </div>
-              <h4 className="font-semibold text-lg mb-2">2. AI Analysis</h4>
-              <p className="text-sm text-secondary">Our AI engine analyzes affected areas, traffic conditions, and your destination to find the safest alternative.</p>
-            </div>
-
-            <div className="workflow-step" style={{ flex: 1, textAlign: 'center', position: 'relative', zIndex: 1 }}>
-              <div className="workflow-icon" style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-white)', border: '2px solid var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: 'var(--color-primary)', margin: '0 auto var(--space-4)', boxShadow: 'var(--shadow-sm)' }}>
-                <i className="fas fa-route"></i>
-              </div>
-              <h4 className="font-semibold text-lg mb-2">3. Safe Route Delivered</h4>
-              <p className="text-sm text-secondary">Commuters receive a recommended route that avoids disrupted areas, minimizing travel delays every day.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="section cta-section" style={{ background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%)', color: 'white', textAlign: 'center' }}>
-        <div className="container">
-          <div className="cta-content" style={{ maxWidth: '800px', margin: '0 auto', padding: 'var(--space-8) 0' }}>
-            <h2 className="font-display font-bold text-3xl mb-4 text-white">Ready to commute smarter?</h2>
-            <p className="text-lg mb-8" style={{ opacity: 0.9 }}>
-              Create a free account to save your routes, get AI-powered daily travel recommendations, and avoid disruptions before they slow you down.
-            </p>
-            <div className="btn-group flex-center">
-              <Link to="/register" className="btn btn-white btn-lg">
-                Create Free Account
+            <div className="btn-group lp-hero-ctas">
+              <Link to="/register" className="btn btn-signal btn-lg">
+                Get started free <i className="fas fa-arrow-right" aria-hidden="true"></i>
               </Link>
-              <Link to="/features" className="btn btn-outline-white btn-lg">
-                Learn More
+              <Link to="/map" className="btn btn-outline-white btn-lg">
+                <i className="fas fa-map-location-dot" aria-hidden="true"></i> Explore live map
               </Link>
             </div>
+            <ul className="lp-hero-points">
+              <li><i className="fas fa-circle-check" aria-hidden="true"></i> Official agency alerts</li>
+              <li><i className="fas fa-circle-check" aria-hidden="true"></i> Citizen reports, AI-triaged</li>
+              <li><i className="fas fa-circle-check" aria-hidden="true"></i> Free for commuters</li>
+            </ul>
+          </div>
+
+          {/* Hero visual: real street photo with live product cards on top */}
+          <div className="lp-preview" aria-hidden="true">
+            <figure className="lp-photo">
+              <img
+                src="/images/hero-poster.webp"
+                alt=""
+                width={1920}
+                height={1080}
+                fetchPriority="high"
+                decoding="async"
+              />
+              <span className="lp-photo-tag"><span className="live-dot" /> Live · Metro work zone</span>
+              <span className="lp-photo-marker">
+                <span className="lp-photo-ring" />
+                <i className="fas fa-helmet-safety"></i>
+              </span>
+            </figure>
+
+            <div className="lp-float lp-float-brief">
+              <div className="flex-between mb-2">
+                <AiChip label="Morning briefing" />
+                <span className="lp-float-time">7:42 AM</span>
+              </div>
+              <p className="lp-float-title">Minor disruptions on your way to work</p>
+              <ul>
+                <li>Pipeline work narrows the main road near the university</li>
+                <li>Waterlogging reported at the railway underpass</li>
+                <li>Leave by <strong>8:10 AM</strong> to arrive on time</li>
+              </ul>
+            </div>
+
+            <div className="lp-float lp-float-risk">
+              <div className="risk-gauge risk-moderate" style={{ ['--risk' as string]: 38 }} data-score="38" />
+              <div>
+                <p className="lp-float-label">Home → Office</p>
+                <p className="risk-label risk-moderate">Moderate risk</p>
+                <p className="lp-float-sub">2 alerts within 2 km of route</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Real, live alerts from the public feed */}
+        {live && live.length > 0 && (
+          <div className="container">
+            <div className="lp-live">
+              <div className="lp-live-label">
+                <span className="live-dot" aria-hidden="true" /> Live now
+              </div>
+              <ul className="lp-live-list">
+                {live.map(a => (
+                  <li key={a.id}>
+                    <Link to="/alerts" className="lp-live-item">
+                      <TypeIcon type={a.alert_type} size={30} />
+                      <span className="lp-live-text">
+                        <span className="lp-live-title">{a.title}</span>
+                        <span className="lp-live-meta">{typeMeta(a.alert_type).label} · {timeAgo(a.created_at)}</span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ── Built for ───────────────────────────────────────────────────── */}
+      <section className="lp-audience-strip" aria-label="Who SRANS is for">
+        <div className="container">
+          <p>Built for</p>
+          <ul>
+            <li><i className="fas fa-person-walking-luggage" aria-hidden="true"></i> Daily commuters</li>
+            <li><i className="fas fa-building-columns" aria-hidden="true"></i> Municipal corporations</li>
+            <li><i className="fas fa-traffic-light" aria-hidden="true"></i> Traffic police</li>
+            <li><i className="fas fa-house-flood-water" aria-hidden="true"></i> Disaster management cells</li>
+            <li><i className="fas fa-plug-circle-bolt" aria-hidden="true"></i> Utility departments</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* ── Hazard categories: image-led cards ─────────────────────────── */}
+      <section className="lp-section" aria-labelledby="hazards-title">
+        <div className="container">
+          <div className="lp-head-row">
+            <div>
+              <span className="eyebrow">One map for every disruption</span>
+              <h2 id="hazards-title">Every reason your road might be blocked today</h2>
+            </div>
+            <p>
+              Four colour-coded categories, published by verified agencies and confirmed citizen reports — all on one live map.
+            </p>
+          </div>
+          <ul className="lp-hz-row">
+            {ALERT_TYPES.map(t => {
+              const m = typeMeta(t)
+              return (
+                <li key={t}>
+                  <Link to="/alerts" className="lp-hz" style={{ ['--hz' as string]: m.color }}>
+                    <OptionalImg
+                      className="lp-hz-img"
+                      src={`/images/hazard-${t.toLowerCase()}.webp`}
+                      alt={`${m.label} disruption on a city road`}
+                      width={640}
+                      height={800}
+                    />
+                    <span className="lp-hz-shade" aria-hidden="true" />
+                    <span className="lp-hz-chip"><i className={`fas ${m.icon}`} aria-hidden="true"></i> {m.label}</span>
+                    <span className="lp-hz-body">
+                      <span className="lp-hz-title">{HAZARD_COPY[t].title}</span>
+                      <span className="lp-hz-text">{HAZARD_COPY[t].text}</span>
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── AI for commuters: split layout ─────────────────────────────── */}
+      <section className="lp-section lp-ai" aria-labelledby="ai-title">
+        <div className="container lp-ai-split">
+          <div className="lp-ai-intro">
+            <AiChip label="Powered by Groq AI" onLight />
+            <h2 id="ai-title">An AI co-pilot for your daily commute</h2>
+            <p>SRANS reads every live alert so you don&apos;t have to — and turns hundreds of notices into one clear decision.</p>
+            <figure className="lp-ai-figure">
+              <OptionalImg src="/images/features-ai.webp" alt="AI connecting live alerts to a safe route" width={1280} height={960} />
+            </figure>
+            <Link to="/register" className="btn btn-ink btn-lg">
+              Try the AI features free <i className="fas fa-arrow-right" aria-hidden="true"></i>
+            </Link>
+          </div>
+          <ul className="lp-ai-list">
+            {COMMUTER_AI.map(f => (
+              <li key={f.title}>
+                <span className="lp-ai-icon" aria-hidden="true"><i className={`fas ${f.icon}`}></i></span>
+                <div>
+                  <h3>{f.title}</h3>
+                  <p>{f.text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── How it works ───────────────────────────────────────────────── */}
+      <section className="lp-section" aria-labelledby="how-title">
+        <div className="container">
+          <div className="lp-head-row">
+            <div>
+              <span className="eyebrow">How SRANS works</span>
+              <h2 id="how-title">From road disruption to safe route in seconds</h2>
+            </div>
+            <p>Three steps connect the people who fix the roads with the people who use them.</p>
+          </div>
+          <ol className="lp-steps">
+            {STEPS.map((s, i) => (
+              <li key={s.title}>
+                <div className="lp-step-media">
+                  <OptionalImg className="lp-step-img" src={s.img} alt={s.alt} width={640} height={400} />
+                  <span className="lp-step-num">0{i + 1}</span>
+                </div>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ── Product showcase (renders only once the screenshot exists) ───── */}
+      {showcase && (
+        <section className="lp-showcase" aria-labelledby="showcase-title">
+          <div className="container">
+            <div className="lp-section-head">
+              <span className="eyebrow">See it in action</span>
+              <h2 id="showcase-title">Your commute, briefed in one screen</h2>
+              <p>Today&apos;s AI briefing, route risk scores and nearby alerts — the first thing you see when you sign in.</p>
+            </div>
+            <div className="lp-showcase-frame">
+              <div className="lp-showcase-bar" aria-hidden="true"><span /><span /><span /></div>
+              <OptionalImg
+                src="/images/screenshot-today.webp"
+                alt="SRANS Today screen showing an AI commute briefing, route risk scores and nearby alerts"
+                width={1600}
+                height={1000}
+                onMissing={() => setShowcase(false)}
+              />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── For agencies: split with framed photo ───────────────────────── */}
+      <section className="lp-agency" aria-labelledby="agency-title">
+        <div className="container lp-agency-inner">
+          <div className="lp-agency-copy">
+            <span className="eyebrow on-dark">For government agencies</span>
+            <h2 id="agency-title">A command center for your city&apos;s roads</h2>
+            <p>
+              Publish alerts in seconds, review citizen reports with AI assistance and brief your control room with a live
+              situation report — all from one dashboard.
+            </p>
+            <ul className="lp-agency-list">
+              {AGENCY_AI.map(f => (
+                <li key={f.title}>
+                  <span className="lp-agency-icon" aria-hidden="true"><i className={`fas ${f.icon}`}></i></span>
+                  <div>
+                    <h3>{f.title}</h3>
+                    <p>{f.text}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <Link to="/register" className="btn btn-signal btn-lg">
+              Register your agency <i className="fas fa-arrow-right" aria-hidden="true"></i>
+            </Link>
+          </div>
+          <figure className="lp-agency-figure">
+            <OptionalImg src="/images/agency-control-room.webp" alt="City traffic and disaster-management control room" width={1920} height={1080} />
+            <figcaption className="lp-agency-badge">
+              <span className="ai-chip"><i className="fas fa-wand-magic-sparkles" aria-hidden="true"></i> AI situation report</span>
+              <strong>Rain-related waterlogging is slowing two arterial roads.</strong>
+              <span>3 recommended actions · generated from live alerts</span>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      {/* ── FAQ: two columns ───────────────────────────────────────────── */}
+      <section className="lp-section" aria-labelledby="faq-title">
+        <div className="container lp-faq">
+          <div className="lp-faq-side">
+            <span className="eyebrow">FAQ</span>
+            <h2 id="faq-title">Questions, answered</h2>
+            <p>Can&apos;t find what you need? Our team replies within one working day.</p>
+            <Link to="/contact" className="btn btn-secondary">Contact us</Link>
+          </div>
+          <div className="lp-faq-list">
+            {FAQS.map((f, i) => (
+              <details key={f.q} className="lp-faq-item" open={i === 0}>
+                <summary>
+                  <h3>{f.q}</h3>
+                  <i className="fas fa-plus" aria-hidden="true"></i>
+                </summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
           </div>
         </div>
       </section>

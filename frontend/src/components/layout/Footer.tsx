@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { BrandMark } from '../ui'
 import './Footer.css'
 
 export default function Footer() {
@@ -7,80 +8,82 @@ export default function Footer() {
   return (
     <footer className="footer-modern">
       <div className="container">
-        <div className="grid grid-4 footer-grid">
-          
-          {/* Brand Column */}
+        <div className="footer-cta">
+          <div>
+            <h2>Know before you go.</h2>
+            <p>Free AI commute briefings, route risk scores and live disruption alerts for your city.</p>
+          </div>
+          <div className="btn-group">
+            <Link to="/register" className="btn btn-signal btn-lg">Create free account</Link>
+            <Link to="/map" className="btn btn-outline-white btn-lg">Open live map</Link>
+          </div>
+        </div>
+
+        <div className="footer-grid">
           <div className="footer-brand-col">
             <Link to="/" className="footer-logo">
-              <div className="footer-logo-icon">
-                <i className="fas fa-location-arrow"></i>
-              </div>
+              <BrandMark />
               <span>SRANS</span>
             </Link>
             <p className="footer-desc">
-              AI-powered smart navigation for daily commuters. Avoid road construction, utility diversions, flooding, and infrastructure disruptions with real-time alerts and AI route recommendations.
+              Smart Regional Alert &amp; Navigation System. AI-powered alerts and safe-route guidance around road
+              construction, utility work, diversions and flooding.
             </p>
             <div className="footer-social">
-              <a href="https://x.com/BuildsbySairaj" target="_blank" rel="noreferrer" className="social-icon" aria-label="Twitter">
+              <a href="https://x.com/BuildsbySairaj" target="_blank" rel="noreferrer" className="social-icon" aria-label="SRANS on X">
                 <i className="fab fa-x-twitter"></i>
               </a>
-              <a href="https://github.com/SairajJadhav08" target="_blank" rel="noreferrer" className="social-icon" aria-label="GitHub">
+              <a href="https://github.com/SairajJadhav08" target="_blank" rel="noreferrer" className="social-icon" aria-label="SRANS on GitHub">
                 <i className="fab fa-github"></i>
               </a>
-              <a href="https://www.linkedin.com/in/sairaj-jadhav-/" target="_blank" rel="noreferrer" className="social-icon" aria-label="LinkedIn">
+              <a href="https://www.linkedin.com/in/sairaj-jadhav-/" target="_blank" rel="noreferrer" className="social-icon" aria-label="SRANS on LinkedIn">
                 <i className="fab fa-linkedin-in"></i>
               </a>
             </div>
           </div>
 
-          {/* Navigation */}
-          <div className="footer-links-col">
-            <h4 className="footer-heading">Platform</h4>
+          <nav className="footer-links-col" aria-label="Product">
+            <h3 className="footer-heading">Product</h3>
             <ul className="footer-links">
               <li><Link to="/map">Live Map</Link></li>
               <li><Link to="/alerts">Regional Alerts</Link></li>
-              <li><Link to="/features">Features</Link></li>
-              <li><Link to="/about">About Us</Link></li>
+              <li><Link to="/features">AI Features</Link></li>
+              <li><Link to="/register">For Commuters</Link></li>
             </ul>
-          </div>
+          </nav>
 
-          {/* Account & Resources */}
-          <div className="footer-links-col">
-            <h4 className="footer-heading">Resources</h4>
+          <nav className="footer-links-col" aria-label="Company">
+            <h3 className="footer-heading">Company</h3>
             <ul className="footer-links">
-              <li><Link to="/contact">Help Center</Link></li>
-              <li><Link to="/contact">Contact Support</Link></li>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Service</a></li>
+              <li><Link to="/about">About SRANS</Link></li>
+              <li><Link to="/register">For Government Agencies</Link></li>
+              <li><Link to="/contact">Contact &amp; Support</Link></li>
+              <li><a href="https://sairajjadhav08.github.io/SRANS--Smart-Regional-Alert-and-Navigation-System/API_DOCUMENTATION/" target="_blank" rel="noreferrer">API Documentation</a></li>
             </ul>
-          </div>
+          </nav>
 
-          {/* Contact info */}
           <div className="footer-links-col">
-            <h4 className="footer-heading">Contact</h4>
+            <h3 className="footer-heading">Contact</h3>
             <ul className="footer-contact">
               <li>
-                <i className="fas fa-envelope"></i>
+                <i className="fas fa-envelope" aria-hidden="true"></i>
                 <a href="mailto:sairajjadhav433@gmail.com">sairajjadhav433@gmail.com</a>
               </li>
               <li>
-                <i className="fas fa-phone"></i>
-                <span>+91-9356860010</span>
+                <i className="fas fa-phone" aria-hidden="true"></i>
+                <a href="tel:+919356860010">+91-9356860010</a>
               </li>
               <li>
-                <i className="fas fa-map-marker-alt"></i>
+                <i className="fas fa-location-dot" aria-hidden="true"></i>
                 <span>Pune, Maharashtra, India</span>
               </li>
             </ul>
           </div>
-
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; {currentYear} SRANS — Smart Regional Alert & Navigation System. All rights reserved.</p>
-          <div className="footer-bottom-links">
-            <span className="badge badge-neutral">System Status: All Systems Operational</span>
-          </div>
+          <p>&copy; {currentYear} SRANS — Smart Regional Alert &amp; Navigation System.</p>
+          <span className="footer-status"><span className="live-dot" aria-hidden="true"></span> Live monitoring active</span>
         </div>
       </div>
     </footer>

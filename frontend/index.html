@@ -3,45 +3,87 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>SRANS — Navigate Smarter. Stay Safer.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- Primary SEO -->
+  <title>SRANS — AI Traffic Alerts & Smart Route Navigation</title>
   <meta name="description"
-    content="Smart Regional Alert & Navigation System — Real-time alerts, traffic intelligence, weather monitoring, and emergency notifications for smarter communities." />
-  <meta name="theme-color" content="#10B981" />
+    content="SRANS is an AI-powered regional alert and navigation platform. Get live alerts for road construction, utility work, diversions and flooding, and AI-recommended safe routes for your daily commute." />
+  <meta name="keywords"
+    content="traffic alerts, road construction alerts, flood alerts, safe route planner, AI navigation, smart city, commute planner, Pune traffic, road diversions, disaster alerts India" />
+  <meta name="author" content="SRANS" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://srans-smart-regional-alert-and-navi.vercel.app/" />
+  <meta name="theme-color" content="#073B33" />
+  <meta name="color-scheme" content="light" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/Logo.png?v=2" />
-  <link rel="apple-touch-icon" href="/Logo.png?v=2" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="SRANS" />
+  <meta property="og:title" content="SRANS — AI Traffic Alerts & Smart Route Navigation" />
+  <meta property="og:description"
+    content="Live alerts for construction, diversions and flooding, plus AI-recommended safe routes for your daily commute." />
+  <meta property="og:url" content="https://srans-smart-regional-alert-and-navi.vercel.app/" />
+  <meta property="og:image" content="https://srans-smart-regional-alert-and-navi.vercel.app/images/og-cover.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_IN" />
 
-  <!-- PWA Manifest -->
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@BuildsbySairaj" />
+  <meta name="twitter:title" content="SRANS — AI Traffic Alerts & Smart Route Navigation" />
+  <meta name="twitter:description"
+    content="Live regional alerts and AI-recommended safe routes for daily commuters." />
+  <meta name="twitter:image" content="https://srans-smart-regional-alert-and-navi.vercel.app/images/og-cover.png" />
+
+  <!-- PWA / icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-  <!-- Google Fonts: Inter + Geist -->
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SRANS — Smart Regional Alert & Navigation System",
+    "url": "https://srans-smart-regional-alert-and-navi.vercel.app/",
+    "applicationCategory": "TravelApplication",
+    "operatingSystem": "Web",
+    "description": "AI-powered platform delivering live alerts for road construction, utility work, traffic diversions and flooding, with AI-recommended safe routes for commuters.",
+    "image": "https://srans-smart-regional-alert-and-navi.vercel.app/Logo.png",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "areaServed": { "@type": "Country", "name": "India" }
+  }
+  </script>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
     rel="stylesheet" />
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
 
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-  <!-- Leaflet Routing Machine (OSRM turn-by-turn navigation) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
-  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
-
-  <!-- Leaflet.heat (heatmap layer) -->
-  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
-
+  <!-- Leaflet + plugins (pinned; deferred so they never block first paint) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+  <script defer src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 </head>
 
 <body>
+  <noscript>
+    <h1>SRANS — Smart Regional Alert &amp; Navigation System</h1>
+    <p>Live alerts for road construction, diversions and flooding with AI-recommended safe routes. Please enable
+      JavaScript to use the app.</p>
+  </noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

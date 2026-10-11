@@ -75,13 +75,25 @@ router.post('/:id/approve', authenticate, requireGov, async (req: AuthRequest, r
 
     const report = await prisma.report.findUnique({ where: { id } })
     if (!report) return res.status(404).json({ message: 'Report not found' })
+    if (report.status !== 'pending') return res.status(409).json({ message: 'Report has already been reviewed' })
+
+    // Officials may publish an edited (e.g. AI-cleaned) version of the report
+    const ALERT_TYPES = ['Traffic', 'Emergency', 'Construction', 'Weather']
+    const { title, description, alert_type } = req.body
+    const finalTitle = typeof title === 'string' && title.trim() ? title.trim().slice(0, 120) : report.title
+    const finalDescription = typeof description === 'string' && description.trim()
+      ? description.trim().slice(0, 500)
+      : report.description
+    const finalType = ALERT_TYPES.includes(alert_type)
+      ? alert_type
+      : report.reportType === 'Other' ? 'Emergency' : report.reportType
 
     // Create official alert from report
     const alert = await prisma.alert.create({
       data: {
-        title: report.title,
-        description: `[Citizen Report] ${report.description}`,
-        alertType: report.reportType === 'Other' ? 'Emergency' : report.reportType,
+        title: finalTitle,
+        description: `[Citizen Report] ${finalDescription}`,
+        alertType: finalType,
         locationLat: report.locationLat,
         locationLng: report.locationLng,
         authorId: req.userId!,

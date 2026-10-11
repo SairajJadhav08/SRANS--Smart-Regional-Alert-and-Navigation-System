@@ -1,133 +1,242 @@
-import { useState, useEffect } from 'react'
-import { getReports, approveReport, rejectReport } from '../api'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { getReports, approveReport, rejectReport, getAiTriageReport } from '../api'
+import type { Report, ReportTriage } from '../types'
+import { timeAgo, typeMeta } from '../lib/alertMeta'
+import Seo from '../components/Seo'
+import { AiShimmer, EmptyState, PageHead, TypeIcon } from '../components/ui'
+import '../styles/pages/review.css'
 
-const STATUS_BADGE: Record<string, string> = {
-  pending: 'badge-warning', approved: 'badge-success', rejected: 'badge-danger'
+type Status = 'pending' | 'approved' | 'rejected'
+
+const REC_META: Record<ReportTriage['recommendation'], { label: string; cls: string; icon: string }> = {
+  approve: { label: 'Approve', cls: 'rec-approve', icon: 'fa-circle-check' },
+  reject: { label: 'Reject', cls: 'rec-reject', icon: 'fa-circle-xmark' },
+  merge: { label: 'Duplicate — merge', cls: 'rec-merge', icon: 'fa-code-merge' },
+  needs_info: { label: 'Needs more info', cls: 'rec-info', icon: 'fa-circle-question' },
 }
-const TYPE_ICONS: Record<string, string> = {
-  Traffic: 'fa-car-crash', Emergency: 'fa-exclamation-triangle',
-  Construction: 'fa-hard-hat', Weather: 'fa-cloud-rain', Other: 'fa-flag'
+
+const SEV_CLS: Record<string, string> = {
+  low: 'badge-success', moderate: 'badge-warning', high: 'badge-signal', critical: 'badge-danger',
+}
+
+function credLevel(score: number) {
+  return score >= 70 ? 'low' : score >= 45 ? 'moderate' : score >= 25 ? 'high' : 'severe'
 }
 
 export default function ReportReviewPage() {
-  const [reports, setReports] = useState<any[]>([])
+  const [reports, setReports] = useState<Report[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending')
-  const [actionId, setActionId] = useState<number | null>(null)
-  const [noteMap, setNoteMap] = useState<Record<number, string>>({})
+  const [tab, setTab] = useState<Status>('pending')
+  const [busyId, setBusyId] = useState<number | null>(null)
+  const [notes, setNotes] = useState<Record<number, string>>({})
+  const [triage, setTriage] = useState<Record<number, ReportTriage>>({})
+  const [triaging, setTriaging] = useState<Record<number, boolean>>({})
+  const [triageErr, setTriageErr] = useState<Record<number, string>>({})
+  const [useAiText, setUseAiText] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
-    getReports().then(r => setReports(Array.isArray(r.data) ? r.data : [])).catch(() => setReports([])).finally(() => setLoading(false))
+    getReports()
+      .then(r => setReports(Array.isArray(r.data) ? (r.data as Report[]) : []))
+      .catch(() => setReports([]))
+      .finally(() => setLoading(false))
   }, [])
 
-  const filtered = reports.filter(r => filter === 'all' || r.status === filter)
-  const pendingCount = reports.filter(r => r.status === 'pending').length
+  const counts = useMemo(() => ({
+    pending: reports.filter(r => r.status === 'pending').length,
+    approved: reports.filter(r => r.status === 'approved').length,
+    rejected: reports.filter(r => r.status === 'rejected').length,
+  }), [reports])
 
-  const handleApprove = async (id: number) => {
-    setActionId(id)
+  const list = reports.filter(r => r.status === tab)
+
+  const toast = (message: string, type: 'success' | 'danger' | 'info' = 'success') =>
+    window.dispatchEvent(new CustomEvent('toast:show', { detail: { message, type } }))
+
+  const runTriage = async (id: number) => {
+    setTriaging(p => ({ ...p, [id]: true }))
+    setTriageErr(p => ({ ...p, [id]: '' }))
     try {
-      await approveReport(id, noteMap[id])
-      setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'approved', review_note: noteMap[id] || null } : r))
-      window.dispatchEvent(new CustomEvent('toast:show', { detail: { message: 'Report approved and alert created', type: 'success' } }))
-    } catch { alert('Failed to approve.') } finally { setActionId(null) }
+      const res = await getAiTriageReport(id)
+      setTriage(p => ({ ...p, [id]: res.data }))
+      setUseAiText(p => ({ ...p, [id]: true }))
+    } catch (err: any) {
+      setTriageErr(p => ({ ...p, [id]: err?.response?.data?.message || 'AI triage unavailable right now.' }))
+    } finally {
+      setTriaging(p => ({ ...p, [id]: false }))
+    }
   }
 
-  const handleReject = async (id: number) => {
-    setActionId(id)
+  const approve = async (r: Report) => {
+    setBusyId(r.id)
+    const t = triage[r.id]
+    const overrides = t && useAiText[r.id]
+      ? { title: t.suggested_title, description: t.suggested_description, alert_type: t.suggested_type }
+      : undefined
     try {
-      await rejectReport(id, noteMap[id])
-      setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'rejected', review_note: noteMap[id] || null } : r))
-    } catch { alert('Failed to reject.') } finally { setActionId(null) }
+      const res = await approveReport(r.id, notes[r.id], overrides)
+      setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: 'approved', review_note: notes[r.id] || null, promoted_to: res.data?.alert_id ?? null } : x))
+      toast('Report approved and published as an official alert')
+    } catch (err: any) {
+      toast(err?.response?.data?.message || 'Failed to approve report', 'danger')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const reject = async (r: Report, noteOverride?: string) => {
+    setBusyId(r.id)
+    const note = noteOverride ?? notes[r.id]
+    try {
+      await rejectReport(r.id, note)
+      setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: 'rejected', review_note: note || null } : x))
+      toast(noteOverride ? 'Marked as duplicate' : 'Report rejected', 'info')
+    } catch {
+      toast('Failed to reject report', 'danger')
+    } finally {
+      setBusyId(null)
+    }
   }
 
   return (
-    <>
-      <div className="page-header bg-white">
-        <div className="container">
-          <div className="flex-between flex-wrap gap-4">
-            <div>
-              <h1 className="font-display font-bold text-3xl mb-1">Citizen Report Review</h1>
-              <p className="text-secondary">Review and act on community-submitted incident reports</p>
-            </div>
-            {pendingCount > 0 && <span className="badge badge-warning"><i className="fas fa-clock mr-1"></i>{pendingCount} pending review</span>}
-          </div>
-        </div>
+    <div className="app-page">
+      <Seo title="Report Review" noindex />
+      <PageHead
+        title="Citizen report review"
+        subtitle="Verify community reports before they become public alerts. AI triage checks credibility, severity and duplicates."
+        actions={<Link to="/dashboard" className="btn btn-secondary"><i className="fas fa-tower-broadcast" aria-hidden="true"></i> Command Center</Link>}
+      />
+
+      <div className="tabs-list review-tabs" role="tablist" aria-label="Report status">
+        {(['pending', 'approved', 'rejected'] as Status[]).map(s => (
+          <button key={s} type="button" role="tab" aria-selected={tab === s} className={`tab-btn${tab === s ? ' active' : ''}`} onClick={() => setTab(s)}>
+            {s === 'pending' ? 'Pending' : s === 'approved' ? 'Published' : 'Rejected'}
+            <span className={`badge ${s === 'pending' && counts.pending ? 'badge-signal' : 'badge-neutral'}`}>{counts[s]}</span>
+          </button>
+        ))}
       </div>
 
-      <section className="section pt-6">
-        <div className="container">
-          <div className="card">
-            <div className="card-header">
-              <div className="tabs-list">
-                {(['pending', 'all', 'approved', 'rejected'] as const).map(f => (
-                  <button key={f} className={`tab-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
-                    {f === 'pending' && pendingCount > 0 && <span className="badge badge-warning ml-1">{pendingCount}</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {loading ? (
-              <div className="flex-center py-12"><span className="spinner"></span></div>
-            ) : filtered.length === 0 ? (
-              <div className="flex-center flex-col py-12 text-center">
-                <div className="icon-box bg-subtle text-muted mb-3 text-2xl"><i className="fas fa-clipboard-check"></i></div>
-                <h4 className="font-semibold mb-1">No reports</h4>
-                <p className="text-secondary text-sm">No {filter === 'all' ? '' : filter} reports at this time.</p>
-              </div>
-            ) : (
-              <div>
-                {filtered.map((r, i) => (
-                  <div key={r.id} style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: i < filtered.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                    <div className="flex gap-3" style={{ alignItems: 'flex-start' }}>
-                      <div className={`icon-box-sm ${r.report_type === 'Traffic' ? 'danger' : r.report_type === 'Emergency' ? 'purple' : r.report_type === 'Construction' ? 'warning' : 'info'}`} style={{ flexShrink: 0, marginTop: 2 }}>
-                        <i className={`fas ${TYPE_ICONS[r.report_type] || 'fa-flag'}`}></i>
+      {loading ? (
+        <div className="flex-col gap-3">{[0, 1, 2].map(i => <div key={i} className="skeleton" style={{ height: 140 }} />)}</div>
+      ) : list.length === 0 ? (
+        <div className="panel">
+          <EmptyState icon={tab === 'pending' ? 'fa-inbox' : 'fa-folder-open'} title={tab === 'pending' ? 'Queue is clear' : 'Nothing here yet'}>
+            {tab === 'pending' ? 'No citizen reports are waiting for review.' : `No ${tab === 'approved' ? 'published' : 'rejected'} reports.`}
+          </EmptyState>
+        </div>
+      ) : (
+        <ul className="review-list">
+          {list.map(r => {
+            const t = triage[r.id]
+            const rec = t ? REC_META[t.recommendation] : null
+            return (
+              <li key={r.id} className="panel review-card">
+                <div className="review-main">
+                  <div className="review-head">
+                    <TypeIcon type={r.report_type} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h2 className="review-title">{r.title}</h2>
+                      <div className="review-meta">
+                        <span>{typeMeta(r.report_type).label}</span>
+                        <span><i className="fas fa-user" aria-hidden="true"></i> {r.user?.username ?? 'Citizen'}</span>
+                        <span><i className="fas fa-clock" aria-hidden="true"></i> {timeAgo(r.created_at)}</span>
+                        <Link to={`/map?lat=${r.location_lat}&lng=${r.location_lng}`} className="mono">
+                          <i className="fas fa-location-dot" aria-hidden="true"></i> {r.location_lat.toFixed(4)}, {r.location_lng.toFixed(4)}
+                        </Link>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="flex-between flex-wrap gap-2 mb-1">
-                          <span className="font-semibold">{r.title}</span>
-                          <div className="flex gap-2">
-                            <span className="badge badge-info" style={{ fontSize: 10 }}>{r.report_type}</span>
-                            <span className={`badge ${STATUS_BADGE[r.status]}`} style={{ fontSize: 10 }}>{r.status}</span>
+                    </div>
+                  </div>
+                  <p className="review-desc">{r.description}</p>
+
+                  {r.status === 'pending' ? (
+                    <div className="review-actions">
+                      <label htmlFor={`note-${r.id}`} className="sr-only">Review note</label>
+                      <input
+                        id={`note-${r.id}`}
+                        className="input"
+                        placeholder="Optional note to the reporter"
+                        value={notes[r.id] ?? ''}
+                        onChange={e => setNotes(p => ({ ...p, [r.id]: e.target.value }))}
+                      />
+                      <button type="button" className="btn btn-primary" onClick={() => approve(r)} disabled={busyId === r.id}>
+                        {busyId === r.id ? <span className="spinner" /> : <><i className="fas fa-check" aria-hidden="true"></i> Approve &amp; publish</>}
+                      </button>
+                      <button type="button" className="btn btn-danger-light" onClick={() => reject(r)} disabled={busyId === r.id}>
+                        <i className="fas fa-xmark" aria-hidden="true"></i> Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="review-outcome">
+                      {r.review_note && <p><i className="fas fa-comment-dots" aria-hidden="true"></i> {r.review_note}</p>}
+                      {r.promoted_to && <p className="is-success"><i className="fas fa-circle-check" aria-hidden="true"></i> Published as alert #{r.promoted_to}</p>}
+                    </div>
+                  )}
+                </div>
+
+                {r.status === 'pending' && (
+                  <aside className="review-ai" aria-live="polite">
+                    {!t && !triaging[r.id] && (
+                      <div className="review-ai-empty">
+                        <span className="ai-chip on-light"><i className="fas fa-wand-magic-sparkles" aria-hidden="true"></i> AI triage</span>
+                        <p>Check credibility, severity and whether this duplicates an existing alert.</p>
+                        <button type="button" className="btn btn-ai btn-sm" onClick={() => runTriage(r.id)}>
+                          <i className="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Run triage
+                        </button>
+                        {triageErr[r.id] && <p className="text-danger text-xs">{triageErr[r.id]}</p>}
+                      </div>
+                    )}
+                    {triaging[r.id] && <AiShimmer lines={5} onLight />}
+                    {t && rec && (
+                      <div className="review-ai-result">
+                        <div className="flex-between gap-2">
+                          <span className="ai-chip on-light"><i className="fas fa-wand-magic-sparkles" aria-hidden="true"></i> AI triage</span>
+                          <button type="button" className="btn btn-ghost btn-sm" onClick={() => runTriage(r.id)} aria-label="Re-run triage" title="Re-run">
+                            <i className="fas fa-rotate"></i>
+                          </button>
+                        </div>
+
+                        <div className="review-ai-scores">
+                          <div className={`risk-gauge risk-${credLevel(t.credibility)}`} style={{ ['--risk' as string]: t.credibility }} data-score={t.credibility}
+                            role="img" aria-label={`Credibility ${t.credibility} out of 100`} />
+                          <div className="flex-col gap-1">
+                            <span className="text-xs text-muted">Credibility</span>
+                            <span className={`rec-chip ${rec.cls}`}><i className={`fas ${rec.icon}`} aria-hidden="true"></i> {rec.label}</span>
+                            <span className="text-xs">Severity <span className={`badge ${SEV_CLS[t.severity] ?? 'badge-neutral'}`}>{t.severity}</span></span>
                           </div>
                         </div>
-                        <p className="text-secondary text-sm mb-2" style={{ lineHeight: 1.5 }}>{r.description}</p>
-                        <div className="flex gap-4 text-xs text-muted mb-2">
-                          <span><i className="fas fa-user mr-1"></i>{r.user?.username || 'Unknown'}</span>
-                          <span><i className="fas fa-map-marker-alt mr-1"></i>{r.location_lat?.toFixed(4)}, {r.location_lng?.toFixed(4)}</span>
-                          <span><i className="fas fa-clock mr-1"></i>{new Date(r.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
 
-                        {r.status === 'pending' && (
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                            <input
-                              className="input"
-                              style={{ flex: 1, minWidth: 160, height: 32, fontSize: 12 }}
-                              placeholder="Optional review note..."
-                              value={noteMap[r.id] || ''}
-                              onChange={e => setNoteMap(prev => ({ ...prev, [r.id]: e.target.value }))}
-                            />
-                            <button className="btn btn-sm btn-primary" disabled={actionId === r.id} onClick={() => handleApprove(r.id)}>
-                              {actionId === r.id ? <span className="spinner" style={{ width: 12, height: 12, borderWidth: 2 }}></span> : <><i className="fas fa-check mr-1"></i>Approve & Post Alert</>}
-                            </button>
-                            <button className="btn btn-sm btn-ghost" style={{ color: 'var(--color-danger)', border: '1px solid var(--color-danger)' }} disabled={actionId === r.id} onClick={() => handleReject(r.id)}>
-                              <i className="fas fa-times mr-1"></i>Reject
+                        {t.reasoning && <p className="review-ai-reason">{t.reasoning}</p>}
+
+                        {t.duplicate_of && (
+                          <div className="review-ai-dup">
+                            <i className="fas fa-code-merge" aria-hidden="true"></i>
+                            <span>Likely duplicate of <strong>#{t.duplicate_of.id}</strong> “{t.duplicate_of.title}”</span>
+                            <button type="button" className="btn btn-secondary btn-sm" disabled={busyId === r.id}
+                              onClick={() => reject(r, `Duplicate of existing alert #${t.duplicate_of!.id}`)}>
+                              Mark duplicate
                             </button>
                           </div>
                         )}
 
-                        {r.review_note && <p className="text-xs mt-2" style={{ color: 'var(--color-primary)' }}><i className="fas fa-comment-dots mr-1"></i>{r.review_note}</p>}
-                        {r.promoted_to && <p className="text-xs mt-1 text-primary"><i className="fas fa-external-link-alt mr-1"></i>Created alert #{r.promoted_to}</p>}
+                        <div className="review-ai-rewrite">
+                          <label className="checkbox-label">
+                            <input type="checkbox" checked={!!useAiText[r.id]} onChange={e => setUseAiText(p => ({ ...p, [r.id]: e.target.checked }))} />
+                            <span>Publish with AI-cleaned wording ({typeMeta(t.suggested_type).label})</span>
+                          </label>
+                          <div className="review-ai-preview">
+                            <strong>{t.suggested_title}</strong>
+                            <p>{t.suggested_description}</p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-    </>
+                    )}
+                  </aside>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }

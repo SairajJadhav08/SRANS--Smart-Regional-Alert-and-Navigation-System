@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { prisma } from '../config/db'
-import { groq } from '../lib/groq'
+import { createCompletion, DATA_RULE, fenceData } from '../lib/ai'
 import { authenticate } from '../middleware/auth'
 import type { AuthRequest } from '../middleware/auth'
 
@@ -72,8 +72,7 @@ Based on these alerts, provide a concise, practical travel recommendation. Inclu
 
 Keep your response under 150 words. Write in a helpful, conversational tone.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await createCompletion({
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 300,
       temperature: 0.7,
@@ -116,15 +115,27 @@ router.post('/chat', authenticate, async (req: AuthRequest, res: any) => {
     const systemPrompt = `You are SRANS Travel Assistant, an AI that helps commuters navigate safely around road disruptions, infrastructure projects, utility work, traffic diversions, and natural disasters like flooding.
 
 Current regional alerts:
-${alertContext}
+${fenceData('alerts', alertContext)}
 
-Answer the user's question helpfully and concisely. Focus on travel safety, route planning, and regional conditions. Keep your response under 200 words.`
+${DATA_RULE}
+Answer the user's question helpfully and concisely. Focus on travel safety, route planning, and regional conditions. Use short paragraphs or bullet points. Keep your response under 200 words.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    // Optional prior turns so the assistant can follow up on earlier answers
+    const history = Array.isArray(req.body.history)
+      ? (req.body.history as unknown[])
+          .filter((m): m is { role: 'user' | 'assistant'; content: string } =>
+            !!m && typeof m === 'object' &&
+            ((m as any).role === 'user' || (m as any).role === 'assistant') &&
+            typeof (m as any).content === 'string')
+          .slice(-10)
+          .map(m => ({ role: m.role, content: m.content.slice(0, 2000) }))
+      : []
+
+    const completion = await createCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: message.trim() },
+        ...history,
+        { role: 'user', content: message.trim().slice(0, 2000) },
       ],
       max_tokens: 400,
       temperature: 0.7,
@@ -210,8 +221,7 @@ For each hazard, respond with EXACTLY this JSON format (nothing else — pure JS
 If no new hazards are likely, respond with an empty array: []
 Only include alerts that are genuinely plausible. Do not fabricate implausible hazards.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await createCompletion({
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 500,
       temperature: 0.4,
@@ -373,8 +383,7 @@ ${alertContext}
 
 Answer the user's question helpfully and concisely. You are a friendly co-pilot — be direct, practical, and safety-focused. Keep your response under 150 words. If the user asks about their current route, use the context above to give specific guidance.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await createCompletion({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: message.trim() },
@@ -457,8 +466,7 @@ Generate a concise, friendly morning commute briefing for this commuter. Include
 
 Format as short bullet points. Keep it under 180 words. Be specific about locations and disruption types. Write like a helpful local navigation assistant.`
 
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+    const completion = await createCompletion({
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 350,
       temperature: 0.6,

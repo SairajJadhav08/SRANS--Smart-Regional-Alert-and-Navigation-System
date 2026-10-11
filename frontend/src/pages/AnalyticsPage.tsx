@@ -1,203 +1,234 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
-  getAnalyticsSummary, getAnalyticsByType,
-  getAnalyticsWeekly, getAnalyticsHotspots, getAnalyticsRecentActivity
+  getAnalyticsSummary, getAnalyticsByType, getAnalyticsWeekly,
+  getAnalyticsHotspots, getAnalyticsRecentActivity, getAiAnalyticsInsights,
 } from '../api'
+import { readCache, writeCache, clearCache } from '../lib/aiCache'
+import { timeAgo, typeMeta } from '../lib/alertMeta'
+import Seo from '../components/Seo'
+import { AiChip, AiShimmer, EmptyState, Kpi, PageHead, TypeIcon } from '../components/ui'
+import '../styles/pages/analytics.css'
 
-const TYPE_COLORS: Record<string, string> = {
-  Traffic: '#EF4444', Emergency: '#8B5CF6',
-  Construction: '#F59E0B', Weather: '#3B82F6', Other: '#94A3B8',
+interface Summary { totalAlerts: number; totalUsers: number; totalRoutes: number; totalReports: number }
+interface Insights { insights: string[]; forecast: string | null; generated_at: string }
+interface Activity {
+  recentAlerts: Array<{ id: number; title: string; type: string; author: string; createdAt: string }>
+  recentReports: Array<{ id: number; title: string; type: string; status: string; submittedBy: string; createdAt: string }>
 }
-const TYPE_ICONS: Record<string, string> = {
-  Traffic: 'fa-car-crash', Emergency: 'fa-exclamation-triangle',
-  Construction: 'fa-hard-hat', Weather: 'fa-cloud-rain',
-}
+
+const INSIGHTS_TTL = 15 * 60_000
 
 export default function AnalyticsPage() {
-  const [summary, setSummary] = useState<any>(null)
-  const [byType, setByType] = useState<any[]>([])
-  const [weekly, setWeekly] = useState<any[]>([])
-  const [hotspots, setHotspots] = useState<any[]>([])
-  const [activity, setActivity] = useState<any>(null)
+  const [summary, setSummary] = useState<Summary | null>(null)
+  const [byType, setByType] = useState<Array<{ type: string; count: number }>>([])
+  const [weekly, setWeekly] = useState<Array<{ date: string; count: number }>>([])
+  const [hotspots, setHotspots] = useState<Array<{ lat: number; lng: number; count: number; types: string[] }>>([])
+  const [activity, setActivity] = useState<Activity | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const [insights, setInsights] = useState<Insights | null>(() => readCache<Insights>('insights', INSIGHTS_TTL))
+  const [insightsLoading, setInsightsLoading] = useState(false)
+  const [insightsError, setInsightsError] = useState<string | null>(null)
+
   useEffect(() => {
-    Promise.all([
-      getAnalyticsSummary(), getAnalyticsByType(),
-      getAnalyticsWeekly(), getAnalyticsHotspots(), getAnalyticsRecentActivity()
+    Promise.allSettled([
+      getAnalyticsSummary(), getAnalyticsByType(), getAnalyticsWeekly(),
+      getAnalyticsHotspots(), getAnalyticsRecentActivity(),
     ]).then(([s, t, w, h, a]) => {
-      setSummary(s.data); setByType(t.data)
-      setWeekly(w.data); setHotspots(h.data); setActivity(a.data)
-    }).catch(console.error).finally(() => setLoading(false))
+      if (s.status === 'fulfilled') setSummary(s.value.data)
+      if (t.status === 'fulfilled') setByType(t.value.data)
+      if (w.status === 'fulfilled') setWeekly(w.value.data)
+      if (h.status === 'fulfilled') setHotspots(h.value.data)
+      if (a.status === 'fulfilled') setActivity(a.value.data)
+      setLoading(false)
+    })
   }, [])
 
-  const maxWeekly = Math.max(...weekly.map(d => d.count), 1)
-  const totalByType = byType.reduce((s, t) => s + t.count, 0)
+  const loadInsights = useCallback(async (force = false) => {
+    if (force) clearCache('insights')
+    setInsightsLoading(true)
+    setInsightsError(null)
+    try {
+      const res = await getAiAnalyticsInsights()
+      setInsights(res.data)
+      writeCache('insights', res.data)
+    } catch (err: any) {
+      setInsightsError(err?.response?.data?.message || 'AI insights are unavailable right now.')
+    } finally {
+      setInsightsLoading(false)
+    }
+  }, [])
 
-  if (loading) return (
-    <div className="flex-center py-20"><span className="spinner" style={{ width: 32, height: 32, borderWidth: 3 }}></span></div>
-  )
+  useEffect(() => {
+    if (!insights) loadInsights()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const typeTotal = byType.reduce((s, t) => s + t.count, 0)
+  const weekTotal = weekly.reduce((s, d) => s + d.count, 0)
+  const maxDay = Math.max(1, ...weekly.map(d => d.count))
+  const busiest = weekly.reduce<{ date: string; count: number } | null>((b, d) => (!b || d.count > b.count ? d : b), null)
+  const topHotspotMax = Math.max(1, ...hotspots.map(h => h.count))
+
+  const feed = [
+    ...(activity?.recentAlerts ?? []).map(a => ({ kind: 'alert' as const, id: `a${a.id}`, title: a.title, type: a.type, who: a.author, at: a.createdAt, status: '' })),
+    ...(activity?.recentReports ?? []).map(r => ({ kind: 'report' as const, id: `r${r.id}`, title: r.title, type: r.type, who: r.submittedBy, at: r.createdAt, status: r.status })),
+  ].sort((x, y) => +new Date(y.at) - +new Date(x.at))
 
   return (
-    <>
-      <div className="page-header bg-white">
-        <div className="container">
-          <div className="flex-between flex-wrap gap-4">
-            <div>
-              <h1 className="font-display font-bold text-3xl mb-1">Analytics Dashboard</h1>
-              <p className="text-secondary">System-wide insights for government officials</p>
-            </div>
-            <span className="badge badge-primary"><i className="fas fa-chart-bar mr-1"></i> Live Data</span>
-          </div>
-        </div>
+    <div className="app-page">
+      <Seo title="Analytics" noindex />
+      <PageHead
+        title="Analytics"
+        subtitle="Region-wide incident trends, hotspots and AI insights for planning."
+        eyebrow={<><span className="live-dot" aria-hidden="true"></span> Live data</>}
+        actions={<Link to="/dashboard" className="btn btn-secondary"><i className="fas fa-tower-broadcast" aria-hidden="true"></i> Command Center</Link>}
+      />
+
+      <div className="kpi-grid mb-6">
+        <Kpi label="Total alerts" value={summary?.totalAlerts ?? '—'} icon="fa-bell" tone="danger" foot={`${weekTotal} in the last 7 days`} />
+        <Kpi label="Commuters" value={summary?.totalUsers ?? '—'} icon="fa-users" tone="primary" foot="Registered citizen accounts" />
+        <Kpi label="Saved routes" value={summary?.totalRoutes ?? '—'} icon="fa-route" tone="ink" foot="Monitored by AI risk scoring" />
+        <Kpi label="Citizen reports" value={summary?.totalReports ?? '—'} icon="fa-flag" tone="signal" foot="All time" />
       </div>
 
-      <section className="section pt-6">
-        <div className="container">
+      {/* AI insights */}
+      <section className="ai-card mb-6" aria-labelledby="ins-title">
+        <div className="flex-between flex-wrap gap-3 mb-4">
+          <AiChip label="AI trend insights · last 14 days" />
+          <button type="button" className="btn btn-outline-white btn-sm" onClick={() => loadInsights(true)} disabled={insightsLoading}>
+            <i className={`fas fa-rotate${insightsLoading ? ' fa-spin' : ''}`} aria-hidden="true"></i> Refresh
+          </button>
+        </div>
+        <h2 id="ins-title" className="sr-only">AI trend insights</h2>
+        {insightsLoading && <AiShimmer lines={4} />}
+        {insightsError && !insightsLoading && <p className="ai-text">{insightsError}</p>}
+        {insights && !insightsLoading && (
+          <div className="an-insights">
+            <ul className="sitrep-list">
+              {insights.insights.map(i => <li key={i}>{i}</li>)}
+            </ul>
+            {insights.forecast && (
+              <div className="an-forecast">
+                <span className="sitrep-label">3-day outlook</span>
+                <p>{insights.forecast}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
-          {/* Summary Stats */}
-          <div className="grid grid-4 mb-8">
-            {[
-              { label: 'Total Alerts', value: summary?.totalAlerts ?? 0, icon: 'fa-bell', color: 'danger' },
-              { label: 'Active Users', value: summary?.totalUsers ?? 0, icon: 'fa-users', color: 'primary' },
-              { label: 'Saved Routes', value: summary?.totalRoutes ?? 0, icon: 'fa-route', color: 'info' },
-              { label: 'Citizen Reports', value: summary?.totalReports ?? 0, icon: 'fa-flag', color: 'warning' },
-            ].map((s, i) => (
-              <div key={i} className="stat-card">
-                <div className={`stat-icon ${s.color}`}><i className={`fas ${s.icon}`}></i></div>
-                <div>
-                  <p className="stat-label">{s.label}</p>
-                  <p className="stat-value" style={{ fontSize: '28px' }}>{s.value}</p>
+      <div className="an-grid mb-5">
+        {/* Weekly column chart */}
+        <section className="panel" aria-labelledby="week-title">
+          <div className="panel-head">
+            <h2 id="week-title" className="section-title"><i className="fas fa-chart-column" aria-hidden="true"></i> Alerts — last 7 days</h2>
+            {busiest && busiest.count > 0 && (
+              <span className="text-xs text-muted">Busiest: {new Date(busiest.date).toLocaleDateString('en-IN', { weekday: 'long' })}</span>
+            )}
+          </div>
+          <div className="panel-body">
+            {loading ? <div className="skeleton" style={{ height: 200 }} /> : (
+              <ol className="an-columns" aria-label="Alerts per day">
+                {weekly.map(d => {
+                  const day = new Date(d.date)
+                  return (
+                    <li key={d.date} aria-label={`${day.toDateString()}: ${d.count} alerts`}>
+                      <span className="an-col-value">{d.count}</span>
+                      <span className="an-col-track">
+                        <span className="an-col-bar" style={{ height: `${Math.max((d.count / maxDay) * 100, d.count ? 6 : 2)}%` }} />
+                      </span>
+                      <span className="an-col-label">{day.toLocaleDateString('en-IN', { weekday: 'short' })}</span>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </div>
+        </section>
+
+        {/* By type */}
+        <section className="panel" aria-labelledby="type-title">
+          <div className="panel-head">
+            <h2 id="type-title" className="section-title"><i className="fas fa-chart-simple" aria-hidden="true"></i> Alerts by type</h2>
+            <span className="text-xs text-muted">{typeTotal} total</span>
+          </div>
+          <div className="panel-body flex-col gap-4">
+            {loading ? <div className="skeleton" style={{ height: 160 }} /> : byType.length === 0 ? (
+              <p className="text-sm text-muted">No alerts yet.</p>
+            ) : byType.map(t => {
+              const pct = typeTotal ? Math.round((t.count / typeTotal) * 100) : 0
+              return (
+                <div key={t.type}>
+                  <div className="flex-between mb-1 text-sm">
+                    <span className="flex items-center gap-2 font-medium"><TypeIcon type={t.type} size={26} /> {typeMeta(t.type).label}</span>
+                    <span><span className="mono font-semibold">{t.count}</span> <span className="text-muted">· {pct}%</span></span>
+                  </div>
+                  <div className="bar-track" role="img" aria-label={`${t.type}: ${pct} percent`}>
+                    <div className="bar-fill" style={{ width: `${pct}%`, background: typeMeta(t.type).color }} />
+                  </div>
                 </div>
+              )
+            })}
+          </div>
+        </section>
+      </div>
+
+      <div className="an-grid">
+        {/* Hotspots */}
+        <section className="panel panel-flush" aria-labelledby="hot-title">
+          <div className="panel-head">
+            <h2 id="hot-title" className="section-title"><i className="fas fa-fire" aria-hidden="true"></i> Incident hotspots</h2>
+            <span className="text-xs text-muted">≈1 km zones</span>
+          </div>
+          <div className="panel-body">
+            {loading ? (
+              <div className="flex-col gap-2" style={{ padding: 'var(--space-5)' }}>{[0, 1, 2].map(i => <div key={i} className="skeleton" style={{ height: 44 }} />)}</div>
+            ) : hotspots.length === 0 ? (
+              <EmptyState icon="fa-fire" title="No hotspots yet">Hotspots appear once several alerts cluster in the same area.</EmptyState>
+            ) : hotspots.map((h, i) => (
+              <Link key={`${h.lat},${h.lng}`} to={`/map?lat=${h.lat}&lng=${h.lng}`} className="list-row an-hot">
+                <span className="an-rank">{i + 1}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="mono text-sm font-semibold">{h.lat.toFixed(3)}°N, {h.lng.toFixed(3)}°E</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    {h.types.map(t => <span key={t} className="type-dot" style={{ background: typeMeta(t).color }} title={t} />)}
+                    <span className="list-row-meta">{h.types.join(' · ')}</span>
+                  </div>
+                </div>
+                <div className="an-hot-bar" aria-hidden="true"><span style={{ width: `${(h.count / topHotspotMax) * 100}%` }} /></div>
+                <span className="badge badge-danger">{h.count}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Activity */}
+        <section className="panel panel-flush" aria-labelledby="act-title">
+          <div className="panel-head">
+            <h2 id="act-title" className="section-title"><i className="fas fa-clock-rotate-left" aria-hidden="true"></i> Recent activity</h2>
+          </div>
+          <div className="panel-body">
+            {loading ? (
+              <div className="flex-col gap-2" style={{ padding: 'var(--space-5)' }}>{[0, 1, 2].map(i => <div key={i} className="skeleton" style={{ height: 44 }} />)}</div>
+            ) : feed.length === 0 ? (
+              <EmptyState icon="fa-clock-rotate-left" title="No recent activity" />
+            ) : feed.map(f => (
+              <div key={f.id} className="list-row">
+                <TypeIcon type={f.type} size={30} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="list-row-title">{f.title}</div>
+                  <div className="list-row-meta">{f.kind === 'alert' ? 'Alert by' : 'Report by'} {f.who} · {timeAgo(f.at)}</div>
+                </div>
+                {f.kind === 'alert'
+                  ? <span className="badge badge-ink">Alert</span>
+                  : <span className={`badge ${f.status === 'approved' ? 'badge-success' : f.status === 'rejected' ? 'badge-danger' : 'badge-warning'}`}>{f.status}</span>}
               </div>
             ))}
           </div>
-
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
-
-            {/* Alerts by Type — horizontal bar chart */}
-            <div className="card">
-              <div className="card-header">
-                <span className="font-semibold"><i className="fas fa-chart-pie text-primary mr-2"></i>Alerts by Type</span>
-              </div>
-              <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {byType.length === 0 ? <p className="text-muted text-sm">No data yet.</p> : byType.map(t => (
-                  <div key={t.type}>
-                    <div className="flex-between mb-1">
-                      <span className="text-sm font-medium" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <i className={`fas ${TYPE_ICONS[t.type] || 'fa-bell'}`} style={{ color: TYPE_COLORS[t.type] || '#94A3B8', width: 14 }}></i>
-                        {t.type}
-                      </span>
-                      <span className="text-sm text-muted">{t.count} ({totalByType > 0 ? Math.round(t.count / totalByType * 100) : 0}%)</span>
-                    </div>
-                    <div style={{ height: 8, background: 'var(--bg-subtle)', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 4,
-                        width: `${totalByType > 0 ? (t.count / totalByType) * 100 : 0}%`,
-                        background: TYPE_COLORS[t.type] || '#94A3B8',
-                        transition: 'width 0.6s ease',
-                      }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Weekly trend — bar chart */}
-            <div className="card">
-              <div className="card-header">
-                <span className="font-semibold"><i className="fas fa-chart-bar text-primary mr-2"></i>Alerts — Last 7 Days</span>
-              </div>
-              <div className="card-body">
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}>
-                  {weekly.map(d => (
-                    <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{d.count || ''}</span>
-                      <div
-                        title={`${d.date}: ${d.count} alerts`}
-                        style={{
-                          width: '100%', borderRadius: '4px 4px 0 0',
-                          height: `${maxWeekly > 0 ? Math.max((d.count / maxWeekly) * 90, d.count > 0 ? 8 : 2) : 2}px`,
-                          background: d.count > 0 ? 'var(--color-primary)' : 'var(--bg-subtle)',
-                          transition: 'height 0.4s ease',
-                        }}
-                      />
-                      <span style={{ fontSize: 9, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                        {new Date(d.date).toLocaleDateString('en-IN', { weekday: 'short' })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
-
-            {/* Hotspots */}
-            <div className="card">
-              <div className="card-header">
-                <span className="font-semibold"><i className="fas fa-fire text-danger mr-2"></i>Alert Hotspots</span>
-                <span className="badge badge-danger">{hotspots.length} zones</span>
-              </div>
-              <div className="card-body" style={{ padding: 0 }}>
-                {hotspots.length === 0 ? (
-                  <p className="text-muted text-sm p-4">No hotspot data yet.</p>
-                ) : hotspots.map((h, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderBottom: i < hotspots.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--color-danger-light)', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
-                      {i + 1}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600 }}>
-                        {h.lat.toFixed(3)}°N, {h.lng.toFixed(3)}°E
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        {h.types.join(' · ')}
-                      </div>
-                    </div>
-                    <span className="badge badge-danger">{h.count} alerts</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent activity */}
-            <div className="card">
-              <div className="card-header">
-                <span className="font-semibold"><i className="fas fa-history text-primary mr-2"></i>Recent Activity</span>
-              </div>
-              <div className="card-body" style={{ padding: 0 }}>
-                {activity?.recentAlerts?.map((a: any, i: number) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', borderBottom: '1px solid var(--border-color)' }}>
-                    <div className={`icon-box-sm ${a.type === 'Traffic' ? 'danger' : a.type === 'Emergency' ? 'purple' : a.type === 'Construction' ? 'warning' : 'info'}`}>
-                      <i className={`fas ${TYPE_ICONS[a.type] || 'fa-bell'}`}></i>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{a.author} · {new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    </div>
-                    <span className="badge badge-primary" style={{ fontSize: 10 }}>Alert</span>
-                  </div>
-                ))}
-                {activity?.recentReports?.map((r: any, i: number) => (
-                  <div key={`r${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 16px', borderBottom: i < activity.recentReports.length - 1 ? '1px solid var(--border-color)' : 'none' }}>
-                    <div className="icon-box-sm warning"><i className="fas fa-flag"></i></div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{r.submittedBy} · {new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    </div>
-                    <span className={`badge ${r.status === 'approved' ? 'badge-success' : r.status === 'rejected' ? 'badge-danger' : 'badge-warning'}`} style={{ fontSize: 10 }}>{r.status}</span>
-                  </div>
-                ))}
-                {!activity?.recentAlerts?.length && !activity?.recentReports?.length && (
-                  <p className="text-muted text-sm p-4">No recent activity.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
+        </section>
+      </div>
+    </div>
   )
 }
