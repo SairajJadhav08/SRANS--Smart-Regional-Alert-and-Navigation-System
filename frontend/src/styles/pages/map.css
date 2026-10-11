@@ -844,3 +844,16 @@ html.map-lock body {
 
 .mp-quick-cta i { color: var(--signal-strong); margin-top: 3px; }
 .mp-quick-cta a { font-weight: var(--weight-bold); color: var(--signal-strong); }
+
+/* Co-pilot: only the message list scrolls. Flex items shrink by default, which
+   squashed bubbles (text spilling over the next message) and the chip row. */
+.mp-copilot-head,
+.mp-copilot-chips,
+.mp-copilot-input,
+.mp-copilot-msgs > * {
+  flex-shrink: 0;
+}
+
+.mp-copilot-msgs { min-height: 0; }
+.mp-copilot-msg { min-width: 0; overflow-wrap: anywhere; }
+.mp-copilot-chips { padding-bottom: var(--space-1); }
